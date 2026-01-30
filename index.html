@@ -148,153 +148,189 @@
             box-shadow: 0 6px 16px rgba(13, 148, 136, 0.4);
         }
         
-        /* ================= 【质押记录卡片样式 - 卡片大小和字体调整区域】 ================= */
-        /* 【调整点1：卡片容器网格布局】修改minmax中的240px可调整卡片最小宽度 */
-        .stake-card-container {
+        /* ================= 【质押记录卡片样式 - 基于文档1的黄色主题优化】 ================= */
+        /* 卡片容器网格布局 */
+        .cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 12px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
         }
         
-        /* 【卡片整体样式】 */
+        /* 卡片整体样式 */
         .stake-card {
             background: linear-gradient(145deg, #0d9488, #134e4a);
-            border-radius: 8px;
-            padding: 8px;  /* ← 这是控制卡片高度的主要参数 */
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
             position: relative;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            border: 1px solid #14b8a6;
         }
         
-        .stake-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-        
-        /* 【卡片头部】 */
-        .stake-card-header {
+        /* 顶部区域：编号 | 期限 | 金额 */
+        .card-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
         
-        /* 【调整点2：卡片ID字体大小】修改此值改变ID显示的字体大小 */
-        .stake-card-id {
-            font-size: 0.9rem;  /* 调整此值改变ID字体大小 */
-            font-weight: bold;
-            color: #fff;
+        .card-id {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
         }
         
-        /* 【调整点3：状态标签字体大小】 */
-        .stake-card-status {
-            font-size: 0.9rem;  /* 调整此值改变状态标签字体大小 */
-            padding: 2px 8px;
-            border-radius: 15px;
+        .card-duration {
+            font-size: 1.4rem;
             font-weight: 600;
+            color: #ffffff;
         }
         
-        .status-locked {
-            background-color: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+        .card-amount {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #ffffff;
         }
         
-        .status-unlocked {
-            background-color: rgba(34, 197, 94, 0.2);
-            color: #34d399;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-        
-        .status-completed {
-            background-color: rgba(156, 163, 175, 0.2);
-            color: #9ca3af;
-            border: 1px solid rgba(156, 163, 175, 0.3);
-        }
-        
-        /* 【卡片信息区域】 */
-        .stake-card-info {
-            margin-bottom: 8px;  /* ← 这是控制卡片高度的主要参数 */
-        }
-        
-        /* 【调整点4：质押金额字体大小】 */
-        .stake-amount {
-            font-size: 1rem;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-        
-        .stake-meta {
+        /* 中间区域：时间和剩余时间 */
+        .card-middle-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 20px;
         }
         
-        /* 【调整点5：质押周期字体大小】 */
-        .stake-duration {
-            color: #38bdf8;
-            font-size: 1rem;  /* 调整此值改变周期字体大小 */
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        /* 【调整点6：质押时间字体大小】 */
         .stake-time {
-            color: #34d399;
-            font-size: 1rem;  /* 调整此值改变时间字体大小 */
+            font-size: 1.2rem;
+            color: #ffffff;
+            font-weight: 500;
         }
         
-        /* 【进度条区域】 */
-        .stake-progress {
-            margin: 8px 0;
+        .remaining-time {
+            font-size: 1rem;
+            color: #ffffff;
         }
         
-        .stake-progress-info {
+        /* 进度条区域 - 改为黄色 */
+        .progress-container {
+            margin-bottom: 25px;
+        }
+        
+        .progress-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 0.9rem; /* 【调整点7：进度条信息字体大小】 */
+            margin-bottom: 8px;
         }
         
-        .stake-remaining-time {
-            color: #e2e8f0;
+        .progress-label {
+            font-size: 0.9rem;
+            color: #cbd5e1;
         }
         
-        .stake-progress-percent {
-            color: #38bdf8;
-            font-weight: 600;
+        .progress-percentage {
+            font-size: 0.9rem;
+            color: #ffffff;
+            font-weight: 500;
         }
         
-        .stake-progress-bar {
-            height: 4px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
+        .progress-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
             overflow: hidden;
         }
         
-        .stake-progress-fill {
+        .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-            border-radius: 2px;
-            transition: width 0.5s ease;
+            border-radius: 5px;
         }
         
-        /* 【卡片操作按钮区域】 */
-        .stake-card-actions {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
+        /* 按钮区域 - 调整宽度 */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
         }
         
-        /* 【空状态样式】 */
+        .btn {
+            flex: none;
+            width: 140px;
+            color: white;
+            border: none;
+            padding: 12px 0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        /* 锁定中按钮样式 - 红色 */
+        .btn-locked {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .btn-locked:hover:not(:disabled) {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+        }
+        
+        /* 可赎回按钮样式 - 绿色 */
+        .btn-redeemable {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .btn-redeemable:hover:not(:disabled) {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+        }
+        
+        /* 已提取按钮样式 - 灰色 */
+        .btn-extracted {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            cursor: not-allowed;
+        }
+        
+        /* 等待解锁按钮样式 - 灰色 */
+        .btn-waiting {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            cursor: not-allowed;
+        }
+        
+        /* 立即赎回按钮样式 - 改为黄色，更显眼 */
+        .btn-redeem-now {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #1c1917;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-redeem-now:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        /* 已赎回按钮样式 - 灰色 */
+        .btn-redeemed {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            cursor: not-allowed;
+        }
+        
+        /* 禁用状态 */
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        /* 空状态样式 */
         .stake-empty-state {
             grid-column: 1 / -1;
             text-align: center;
@@ -353,12 +389,12 @@
         
         /* ================= 【响应式调整 - 手机端优化】 ================= */
         @media (max-width: 768px) {
-            /* 【调整点8：手机端卡片布局】改为单列显示 */
-            .stake-card-container {
+            /* 手机端卡片布局 */
+            .cards-container {
                 grid-template-columns: 1fr;
             }
             
-            /* 【调整点9：手机端按钮进一步缩小】 */
+            /* 手机端按钮进一步缩小 */
             .duration-buttons {
                 flex-wrap: nowrap; /* 确保不换行 */
                 gap: 4px; /* 减少间距 */
@@ -370,26 +406,37 @@
                 min-width: 50px; /* 手机端进一步缩小 */
             }
             
-            /* 【调整点10：手机端卡片内字体大小】 */
-            .stake-card-id {
-                font-size: 0.85rem;
+            /* 手机端卡片内字体大小 */
+            .card-duration, .card-amount {
+                font-size: 1.2rem;
             }
             
-            .stake-amount {
+            .stake-time {
+                font-size: 1rem;
+            }
+            
+            /* 手机端进一步缩小按钮 */
+            .btn {
+                width: 120px;
                 font-size: 0.95rem;
+                padding: 10px 0;
+            }
+            
+            .button-container {
+                gap: 10px;
             }
         }
         
         @media (min-width: 769px) and (max-width: 1200px) {
-            /* 【调整点11：平板端显示列数】 */
-            .stake-card-container {
+            /* 平板端显示列数 */
+            .cards-container {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
         
         @media (min-width: 1201px) {
-            /* 【调整点12：桌面端显示列数】 */
-            .stake-card-container {
+            /* 桌面端显示列数 */
+            .cards-container {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
@@ -458,7 +505,7 @@
         <button class="stake-action-btn" onclick="handleStake()">立即质押</button>
     </div>
 
-    <!-- 【我的质押记录区域 - 移除总质押记录选项卡】 -->
+    <!-- 【我的质押记录区域 - 使用文档1的黄色主题优化布局】 -->
     <div class="card">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -475,8 +522,8 @@
                 <button class="status-filter-btn" onclick="filterMyStakes('all')">全部记录</button>
             </div>
             
-            <!-- 【卡片式布局容器】 -->
-            <div id="stakeCardsContainer" class="stake-card-container">
+            <!-- 【卡片式布局容器 - 使用文档1的样式】 -->
+            <div id="stakeCardsContainer" class="cards-container">
                 <div class="stake-empty-state">
                     <div class="stake-empty-icon">📊</div>
                     <div class="stake-empty-text">暂无质押记录</div>
@@ -577,6 +624,56 @@
         return Math.min(100, Math.floor((elapsedTime / durationSeconds) * 100));
     }
 
+    // 根据状态获取按钮配置
+    function getButtonConfig(status) {
+        switch(status) {
+            case "locked":
+                return {
+                    leftBtn: {
+                        text: "锁定中",
+                        class: "btn btn-locked",
+                        disabled: false
+                    },
+                    rightBtn: {
+                        text: "等待解锁",
+                        class: "btn btn-waiting",
+                        disabled: true
+                    },
+                    progressColor: "linear-gradient(90deg, #fbbf24, #f59e0b)" // 黄色渐变
+                };
+            case "redeemable":
+                return {
+                    leftBtn: {
+                        text: "可赎回",
+                        class: "btn btn-redeemable",
+                        disabled: false
+                    },
+                    rightBtn: {
+                        text: "立即赎回",
+                        class: "btn btn-redeem-now",
+                        disabled: false
+                    },
+                    progressColor: "linear-gradient(90deg, #fbbf24, #f59e0b)" // 黄色渐变
+                };
+            case "redeemed":
+                return {
+                    leftBtn: {
+                        text: "已提取",
+                        class: "btn btn-extracted",
+                        disabled: true
+                    },
+                    rightBtn: {
+                        text: "已赎回",
+                        class: "btn btn-redeemed",
+                        disabled: true
+                    },
+                    progressColor: "linear-gradient(90deg, #a1a1aa, #71717a)" // 灰色渐变
+                };
+            default:
+                return getButtonConfig("locked");
+        }
+    }
+
     // 选择质押周期
     function selectDuration(days, element) {
         selectedDuration = days;
@@ -645,7 +742,7 @@
         }
     }
 
-    // 3. 渲染质押卡片
+    // 3. 渲染质押卡片 - 使用文档1的布局
     async function renderStakeCards() {
         const container = document.getElementById('stakeCardsContainer');
         container.innerHTML = '<div class="text-center py-3"><div class="loading-spinner"></div> 加载中...</div>';
@@ -689,18 +786,11 @@
                 const isUnlocked = timeRemaining <= 0 && !isActive;
                 const progressPercent = calculateProgress(stakeTime, durationSeconds);
                 
-                let statusText = '';
-                let statusClass = '';
-                
+                let status = "locked";
                 if (isActive) {
-                    statusText = '已提取';
-                    statusClass = 'status-completed';
-                } else if (isLocked) {
-                    statusText = '锁定中';
-                    statusClass = 'status-locked';
+                    status = "redeemed";
                 } else if (isUnlocked) {
-                    statusText = '可赎回';
-                    statusClass = 'status-unlocked';
+                    status = "redeemable";
                 }
                 
                 let shouldDisplay = false;
@@ -713,38 +803,42 @@
                 const remainingTimeStr = isLocked ? formatTimeRemaining(timeRemaining) : 
                                           isUnlocked ? '已解锁' : '已完成';
 
+                const btnConfig = getButtonConfig(status);
+
                 html += `
                     <div class="stake-card" id="stake-card-${i}">
-                        <div class="stake-card-header">
-                            <div class="stake-card-id">No.${i + 1}</div>
-                            <div class="stake-card-status ${statusClass}">${statusText}</div>
+                        <!-- 顶部区域：编号 | 期限 | 金额 -->
+                        <div class="card-top-row">
+                            <div class="card-id">No.${i + 1}</div>
+                            <div class="card-duration">${durationLabel}</div>
+                            <div class="card-amount">${amount.toFixed(0)} USDT</div>
                         </div>
                         
-                        <div class="stake-card-info">
-                            <div class="stake-amount">${amount.toFixed(0)} USDT</div>
-                            <div class="stake-meta">
-                                <div class="stake-duration">
-                                    <span class="badge-duration">${durationLabel}</span>
-                                </div>
-                                <div class="stake-time">${stakeTimeStr}</div>
+                        <!-- 中间区域：时间和剩余时间 -->
+                        <div class="card-middle-row">
+                            <div class="stake-time">${stakeTimeStr}</div>
+                            <div class="remaining-time">${remainingTimeStr}</div>
+                        </div>
+                        
+                        <!-- 进度条区域 - 使用黄色 -->
+                        <div class="progress-container">
+                            <div class="progress-header">
+                                <div class="progress-label">质押进度</div>
+                                <div class="progress-percentage">${progressPercent}%</div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-${i}" style="width: ${progressPercent}%; background: ${btnConfig.progressColor};"></div>
                             </div>
                         </div>
                         
-                        <div class="stake-progress">
-                            <div class="stake-progress-info">
-                                <div class="stake-remaining-time">剩余: ${remainingTimeStr}</div>
-                                <div class="stake-progress-percent">${progressPercent}%</div>
-                            </div>
-                            <div class="stake-progress-bar">
-                                <div class="stake-progress-fill" id="progress-${i}" style="width: ${progressPercent}%"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="stake-card-actions">
-                            ${isUnlocked ? 
-                                `<button class="btn btn-warning btn-sm" id="unstake-btn-${i}" onclick="handleUnstake(${i})">赎回</button>` : 
-                                `<button class="btn btn-secondary btn-sm" disabled>${isActive ? '已赎回' : '等待解锁'}</button>`
-                            }
+                        <!-- 按钮区域 -->
+                        <div class="button-container">
+                            <button class="${btnConfig.leftBtn.class}" ${btnConfig.leftBtn.disabled ? 'disabled' : ''} data-card-id="${i}" data-action="left">
+                                ${btnConfig.leftBtn.text}
+                            </button>
+                            <button class="${btnConfig.rightBtn.class}" ${btnConfig.rightBtn.disabled ? 'disabled' : ''} data-card-id="${i}" data-action="right">
+                                ${btnConfig.rightBtn.text}
+                            </button>
                         </div>
                     </div>
                 `;
@@ -768,6 +862,7 @@
                 `;
             } else {
                 container.innerHTML = html;
+                attachButtonEvents();
             }
         } catch (error) {
             console.error("卡片加载失败:", error);
@@ -781,11 +876,43 @@
         }
     }
 
+    // 添加按钮点击事件
+    function attachButtonEvents() {
+        document.querySelectorAll('.btn:not(:disabled)').forEach(button => {
+            button.addEventListener('click', function() {
+                const cardId = this.getAttribute('data-card-id');
+                const action = this.getAttribute('data-action');
+                const buttonText = this.textContent;
+                
+                // 保存原始文本
+                const originalText = this.textContent;
+                
+                // 根据按钮文本执行不同操作
+                if (buttonText === "锁定中") {
+                    this.textContent = "处理中...";
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                        alert(`卡片 No.${parseInt(cardId)+1} 的锁定状态无法更改，请等待解锁。`);
+                    }, 1000);
+                } else if (buttonText === "可赎回") {
+                    this.textContent = "检查中...";
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                        alert(`卡片 No.${parseInt(cardId)+1} 的可赎回状态确认，请点击"立即赎回"按钮进行赎回操作。`);
+                    }, 1000);
+                } else if (buttonText === "立即赎回") {
+                    this.textContent = "赎回中...";
+                    handleUnstake(cardId);
+                }
+            });
+        });
+    }
+
     // 启动进度条倒计时
     function startProgressCountdown(id, initialSeconds, totalSeconds) {
         let remaining = initialSeconds;
         const progressElement = document.getElementById(`progress-${id}`);
-        const timeElement = document.querySelector(`#stake-card-${id} .stake-remaining-time`);
+        const timeElement = document.querySelector(`#stake-card-${id} .remaining-time`);
         
         if (!progressElement || !timeElement) return;
         
@@ -804,7 +931,7 @@
             const progressPercent = Math.min(100, Math.floor((elapsedSeconds / totalSeconds) * 100));
             progressElement.style.width = `${progressPercent}%`;
             
-            const percentElement = document.querySelector(`#stake-card-${id} .stake-progress-percent`);
+            const percentElement = document.querySelector(`#stake-card-${id} .progress-percentage`);
             if (percentElement) percentElement.textContent = `${progressPercent}%`;
             
         }, 1000);
@@ -910,7 +1037,7 @@
     async function handleUnstake(index) {
         if (!userAddress) return;
         
-        const btn = document.getElementById(`unstake-btn-${index}`);
+        const btn = document.querySelector(`button[data-card-id="${index}"][data-action="right"]`);
         if(btn) {
             btn.disabled = true;
             btn.innerText = "处理中...";
@@ -926,7 +1053,7 @@
             console.error(error);
             if(btn) {
                 btn.disabled = false;
-                btn.innerText = "赎回";
+                btn.innerText = "立即赎回";
             }
             if(error.reason) alert("合约错误: " + error.reason);
             else alert("赎回失败");
