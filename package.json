@@ -1,19 +1,14 @@
 {
-  "name": "aift-staking-dapp",
+  "name": "gana-stake-monitor",
   "version": "1.0.0",
-  "description": "AIFT质押管理DApp前端界面",
-  "private": true,
+  "description": "GANA质押数据监控系统",
   "scripts": {
-    "dev": "echo '此项目为静态网站，无需构建命令'",
-    "start": "echo '此项目为静态网站，无需启动命令'",
-    "test": "echo '无测试脚本'"
+    "dev": "vercel dev"
   },
-  "keywords": ["dapp", "staking", "defi", "ethereum", "aift"],
-  "author": "AIFT Team",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.x"
+  "dependencies": {
+    "ethers": "^5.7.2"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
 }
