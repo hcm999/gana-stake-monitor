@@ -1,14 +1,7 @@
 {
   "name": "gana-stake-monitor",
   "version": "1.0.0",
-  "description": "GANA质押数据监控系统",
   "scripts": {
     "dev": "vercel dev"
-  },
-  "dependencies": {
-    "ethers": "^5.7.2"
-  },
-  "devDependencies": {
-    "vercel": "^32.0.0"
   }
 }
