@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GANA数据管理后台 · 管理员</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 使用 ethers v5 版本，与之前的代码兼容 -->
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         * {
@@ -15,57 +14,57 @@
         }
 
         body { 
-            背景颜色: #0f172a;
-            颜色: #e2e8f0;
+            background-color: #0f172a; 
+            color: #e2e8f0; 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             padding: 20px;
         }
         
         .container {
             max-width: 1200px;
-            边距: 0 自动;
+            margin: 0 auto;
         }
         
         .login-panel {
-            : linear-gradient(145deg, #1e293b, #0f172a);
-            边框: 2px 实线 #334155;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 2px solid #334155;
             border-radius: 32px;
             padding: 40px;
             max-width: 400px;
             margin: 100px auto;
-            文本对齐: 居中;
+            text-align: center;
         }
         
         .login-panel h2 {
-            颜色: #e2e8f0;
+            color: #e2e8f0;
             margin-bottom: 30px;
-            字体大小: 1.8rem;
+            font-size: 1.8rem;
         }
         
-        .登录面板 输入框 {
-            宽度: 100%;
-            内边距: 15像素;
-            背景: #0f172a;
-            边框: 2px 实线 #334155;
-            圆角: 30px;
-            颜色: #e2e8f0;
-            字体大小: 1rem;
+        .login-panel input {
+            width: 100%;
+            padding: 15px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 30px;
+            color: #e2e8f0;
+            font-size: 1rem;
             margin-bottom: 20px;
-            轮廓: 无;
+            outline: none;
         }
         
-        .登录面板 input:聚焦 {
+        .login-panel input:focus {
             border-color: #3b82f6;
         }
         
-        .登录面板 按钮 {
-            宽度: 100%;
-            内边距: 15像素;
-            背景: linear-gradient(135deg, #3b82f6, #2563eb);
-            边框: 无;
-            圆角: 30px;
-            颜色: 白色;
-            字体大小: 1rem;
+        .login-panel button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -76,15 +75,15 @@
             box-shadow: 0 5px 15px rgba(59,130,246,0.3);
         }
         
-        .管理员头部 {
-            显示: flex;
+        .admin-header {
+            display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
             padding: 20px;
-            背景: linear-gradient(145deg, #1e293b, #0f172a);
+            background: linear-gradient(145deg, #1e293b, #0f172a);
             border-radius: 16px;
-            边框: 1像素 实线 #334155;
+            border: 1px solid #334155;
         }
         
         .admin-header h1 {
@@ -97,14 +96,14 @@
         
         .admin-header .badge {
             background: #f59e0b;
-            颜色: 白色;
+            color: white;
             padding: 8px 16px;
-            圆角: 30px;
+            border-radius: 30px;
             font-size: 0.9rem;
         }
         
         .query-panel {
-            背景: linear-gradient(145deg, #1e293b, #0f172a);
+            background: linear-gradient(145deg, #1e293b, #0f172a);
             border: 1px solid #334155;
             border-radius: 16px;
             padding: 20px;
@@ -210,7 +209,7 @@
             border: 1px solid #334155;
             border-radius: 12px;
             padding: 15px;
-            文本对齐: 居中;
+            text-align: center;
         }
         
         .stat-label {
@@ -229,11 +228,11 @@
             margin-top: 15px;
             padding: 15px;
             background: #1e293b;
-            圆角: 30px;
+            border-radius: 30px;
         }
         
         .progress-bar {
-            宽度: 100%;
+            width: 100%;
             height: 8px;
             background: #334155;
             border-radius: 4px;
@@ -248,8 +247,8 @@
         
         .github-config {
             background: #1e293b;
-            边框: 1像素 实线 #334155;
-            圆角: 12px;
+            border: 1px solid #334155;
+            border-radius: 12px;
             padding: 20px;
             margin: 20px 0;
         }
@@ -268,6 +267,41 @@
         .github-config input:focus {
             outline: none;
             border-color: #3b82f6;
+        }
+        
+        .token-status {
+            margin-top: 10px;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 8px;
+            background: #0f172a;
+            border-radius: 30px;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-error {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #f59e0b;
+            color: white;
         }
         
         .preview-table {
@@ -316,6 +350,12 @@
             padding: 40px;
             color: #64748b;
         }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -334,16 +374,34 @@
                 <span class="badge">管理员模式</span>
             </div>
 
-            <!-- GitHub 配置 -->
+            <!-- GitHub 配置 - 使用环境变量 -->
             <div class="github-config">
                 <h4 style="color: #94a3b8; margin-bottom: 15px;">📦 GitHub 配置</h4>
-                <input type="text" id="githubOwner" placeholder="GitHub用户名" value="hcm999">
+                
+                <div class="flex-row">
+                    <input type="text" id="githubOwner" placeholder="GitHub用户名" value="hcm999" style="flex: 2;">
+                    <button class="btn-primary" onclick="loadTokenFromEnv()" style="flex: 0 0 auto; padding: 12px 20px;">🔑 加载Token</button>
+                </div>
+                
                 <input type="text" id="githubRepo" placeholder="仓库名" value="gana-stake-data">
-                <input type="password" id="githubToken" placeholder="个人访问令牌" value="">
+                
+                <div class="flex-row">
+                    <input type="password" id="githubToken" placeholder="Personal Access Token" value="" style="flex: 3;">
+                    <button class="btn-primary" onclick="toggleTokenVisibility()" style="flex: 0 0 auto; padding: 12px 20px;">👁️ 显示</button>
+                </div>
+                
                 <input type="text" id="githubPath" placeholder="文件路径" value="data/stake-data.json">
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button class="btn-primary" onclick="testGithubConnection()" style="flex: 1;">测试连接</button>
-                    <button class="btn-primary" onclick="createGithubFolder()" style="flex: 1;">创建data文件夹</button>
+                
+                <div class="token-status">
+                    <span>🔑 Token状态: <span id="tokenStatus" class="status-badge status-warning">未加载</span></span>
+                    <span>🌐 环境变量: <span id="envStatus" class="status-badge status-warning">未知</span></span>
+                    <span>📁 仓库: <span id="repoStatus" class="status-badge status-warning">未检查</span></span>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="testGithubConnection()" style="flex: 1;">🔌 测试连接</button>
+                    <button class="btn-primary" onclick="createGithubFolder()" style="flex: 1;">📁 创建data文件夹</button>
+                    <button class="btn-success" onclick="uploadToGithub()" style="flex: 1;">📤 上传数据</button>
                 </div>
             </div>
 
@@ -392,6 +450,7 @@
                 <button class="btn-success" onclick="uploadToGithub()">📤 上传到 GitHub</button>
                 <button class="btn-primary" onclick="loadFromGithub()">📥 从 GitHub 加载</button>
                 <button class="btn-danger" onclick="resetData()">🗑️ 重置数据</button>
+                <button class="btn-primary" onclick="downloadData()">📥 下载JSON</button>
             </div>
 
             <!-- 数据预览 -->
@@ -419,7 +478,7 @@
 
     <script>
         // ================= 配置 =================
-        const ADMIN_PASSWORD = "admin9120"; // 请修改为你自己的密码
+        const ADMIN_PASSWORD = "admin123456"; // 请修改为你自己的密码
         
         const CONFIG = {
             STAKING: "0x72212F35aC448FE7763aA1BFdb360193Fa098E52",
@@ -467,99 +526,112 @@
             document.getElementById('loginPanel').style.display = 'block';
         });
 
-        // ================= 管理员登录 =================
-        function adminLogin() {
-            const pwd = document.getElementById('adminPassword').value;
-            if (pwd === ADMIN_PASSWORD) {
-                document.getElementById('loginPanel').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-                initContract();
-                loadLastData();
-                updateAddressCount();
-            } else {
-                alert('❌ 密码错误');
-            }
-        }
+        // ================= GitHub Token 环境变量相关 =================
 
-        // ================= 更新地址计数 =================
-        function updateAddressCount() {
-            const text = document.getElementById('addressList').value;
-            const addresses = text.split('\n')
-                .map(l => l.trim())
-                .filter(l => l.startsWith('0x') && l.length === 42);
-            document.getElementById('statAddresses').innerText = addresses.length;
-        }
-
-        // ================= 初始化合约 =================
-        async function initContract() {
-            try {
-                const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
-                stakingContract = new ethers.Contract(CONFIG.STAKING, ABI_STAKING, provider);
-                console.log('✅ 合约初始化成功');
-            } catch (error) {
-                console.error('❌ 合约初始化失败:', error);
-                alert('合约初始化失败，请刷新重试');
-            }
-        }
-
-        // ================= 从GitHub加载上次数据 =================
-        async function loadLastData() {
-            const owner = document.getElementById('githubOwner').value;
-            const repo = document.getElementById('githubRepo').value;
-            const path = document.getElementById('githubPath').value;
-            
-            if (!owner || owner === '你的GitHub用户名') {
-                console.log('请先配置GitHub用户名');
-                return;
-            }
+        // 从环境变量加载Token
+        async function loadTokenFromEnv() {
+            updateStatus('tokenStatus', '加载中...', 'status-warning');
             
             try {
-                const response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    queryResults = data.queryResults || [];
-                    allStakeRecords = data.allStakeRecords || [];
-                    stats = data.stats || stats;
-                    updatePreview();
-                    updateStats();
-                    console.log('✅ 从GitHub加载数据成功');
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                
+                // 更新环境变量状态
+                if (data.hasToken) {
+                    updateStatus('envStatus', '✅ 已配置', 'status-success');
+                } else {
+                    updateStatus('envStatus', '❌ 未配置', 'status-error');
                 }
-            } catch (e) {
-                console.log('无历史数据或加载失败');
+                
+                if (data.token) {
+                    document.getElementById('githubToken').value = data.token;
+                    updateStatus('tokenStatus', '✅ 已加载', 'status-success');
+                    // 自动测试连接
+                    setTimeout(() => testGithubConnection(), 500);
+                } else {
+                    updateStatus('tokenStatus', '❌ 无Token', 'status-error');
+                }
+            } catch (error) {
+                console.error('加载Token失败:', error);
+                updateStatus('envStatus', '❌ 加载失败', 'status-error');
+                updateStatus('tokenStatus', '❌ 加载失败', 'status-error');
             }
         }
 
-        // ================= 测试GitHub连接 =================
+        // 更新状态显示
+        function updateStatus(elementId, text, className) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerText = text;
+                element.className = 'status-badge ' + className;
+            }
+        }
+
+        // 切换Token显示/隐藏
+        function toggleTokenVisibility() {
+            const tokenInput = document.getElementById('githubToken');
+            const button = event.target;
+            if (tokenInput.type === 'password') {
+                tokenInput.type = 'text';
+                button.innerText = '👁️ 隐藏';
+            } else {
+                tokenInput.type = 'password';
+                button.innerText = '👁️ 显示';
+            }
+        }
+
+        // 测试GitHub连接
         async function testGithubConnection() {
             const token = document.getElementById('githubToken').value;
+            const owner = document.getElementById('githubOwner').value;
+            
             if (!token) {
-                alert('请输入GitHub Token');
+                alert('请输入GitHub Token或从环境变量加载');
                 return;
             }
 
+            updateStatus('tokenStatus', '测试中...', 'status-warning');
+
             try {
-                const response = await fetch('https://api.github.com/user', {
+                // 测试用户信息
+                const userResponse = await fetch('https://api.github.com/user', {
                     headers: { 'Authorization': `token ${token}` }
                 });
-                if (response.ok) {
-                    const user = await response.json();
-                    alert(`✅ GitHub连接成功！欢迎 ${user.login}`);
+                
+                if (userResponse.ok) {
+                    const user = await userResponse.json();
+                    updateStatus('tokenStatus', `✅ 有效 (${user.login})`, 'status-success');
+                    
+                    // 测试仓库访问
+                    const repoResponse = await fetch(`https://api.github.com/repos/${owner}/gana-stake-data`, {
+                        headers: { 'Authorization': `token ${token}` }
+                    });
+                    
+                    if (repoResponse.ok) {
+                        updateStatus('repoStatus', '✅ 可访问', 'status-success');
+                        alert(`✅ GitHub连接成功！用户: ${user.login}, 仓库可访问`);
+                    } else {
+                        updateStatus('repoStatus', '❌ 仓库不存在', 'status-error');
+                        alert(`✅ 用户验证成功，但仓库访问失败，请检查仓库名`);
+                    }
                 } else {
-                    alert('❌ 连接失败，请检查Token');
+                    updateStatus('tokenStatus', '❌ 无效', 'status-error');
+                    alert('❌ Token无效或已过期');
                 }
             } catch (error) {
+                updateStatus('tokenStatus', '❌ 网络错误', 'status-error');
                 alert('❌ 连接失败: ' + error.message);
             }
         }
 
-        // ================= 创建GitHub文件夹 =================
+        // 创建data文件夹
         async function createGithubFolder() {
             const token = document.getElementById('githubToken').value;
             const owner = document.getElementById('githubOwner').value;
             const repo = document.getElementById('githubRepo').value;
 
-            if (!token || !owner || !repo) {
-                alert('请填写完整的GitHub配置');
+            if (!token) {
+                alert('请先加载Token');
                 return;
             }
 
@@ -590,15 +662,15 @@
             }
         }
 
-        // ================= 上传到GitHub =================
+        // 上传到GitHub
         async function uploadToGithub() {
             const token = document.getElementById('githubToken').value;
             const owner = document.getElementById('githubOwner').value;
             const repo = document.getElementById('githubRepo').value;
             const path = document.getElementById('githubPath').value;
 
-            if (!token || !owner || !repo) {
-                alert('请填写完整的GitHub配置');
+            if (!token) {
+                alert('请先加载Token');
                 return;
             }
 
@@ -656,7 +728,7 @@
             }
         }
 
-        // ================= 从GitHub加载 =================
+        // 从GitHub加载
         async function loadFromGithub() {
             const owner = document.getElementById('githubOwner').value;
             const repo = document.getElementById('githubRepo').value;
@@ -673,10 +745,96 @@
                     updateStats();
                     alert('✅ 加载成功');
                 } else {
-                    alert('❌ 加载失败');
+                    alert('❌ 加载失败，文件可能不存在');
                 }
             } catch (error) {
                 alert('❌ 加载失败: ' + error.message);
+            }
+        }
+
+        // 下载JSON到本地
+        function downloadData() {
+            if (queryResults.length === 0) {
+                alert('没有数据可下载');
+                return;
+            }
+
+            const data = {
+                lastUpdate: new Date().toISOString(),
+                stats: stats,
+                queryResults: queryResults,
+                allStakeRecords: allStakeRecords,
+                addressCount: queryResults.length,
+                totalRecords: allStakeRecords.length
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stake-data-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ 数据已下载到本地');
+        }
+
+        // ================= 管理员登录 =================
+        function adminLogin() {
+            const pwd = document.getElementById('adminPassword').value;
+            if (pwd === ADMIN_PASSWORD) {
+                document.getElementById('loginPanel').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                initContract();
+                loadLastData();
+                updateAddressCount();
+                // 自动加载Token
+                setTimeout(() => loadTokenFromEnv(), 500);
+            } else {
+                alert('❌ 密码错误');
+            }
+        }
+
+        // ================= 更新地址计数 =================
+        function updateAddressCount() {
+            const text = document.getElementById('addressList').value;
+            const addresses = text.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.startsWith('0x') && l.length === 42);
+            document.getElementById('statAddresses').innerText = addresses.length;
+        }
+
+        // ================= 初始化合约 =================
+        async function initContract() {
+            try {
+                const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+                stakingContract = new ethers.Contract(CONFIG.STAKING, ABI_STAKING, provider);
+                console.log('✅ 合约初始化成功');
+            } catch (error) {
+                console.error('❌ 合约初始化失败:', error);
+                alert('合约初始化失败，请刷新重试');
+            }
+        }
+
+        // ================= 从GitHub加载上次数据 =================
+        async function loadLastData() {
+            const owner = document.getElementById('githubOwner').value;
+            const repo = document.getElementById('githubRepo').value;
+            const path = document.getElementById('githubPath').value;
+            
+            try {
+                const response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    queryResults = data.queryResults || [];
+                    allStakeRecords = data.allStakeRecords || [];
+                    stats = data.stats || stats;
+                    updatePreview();
+                    updateStats();
+                    console.log('✅ 从GitHub加载数据成功');
+                }
+            } catch (e) {
+                console.log('无历史数据或加载失败');
             }
         }
 
