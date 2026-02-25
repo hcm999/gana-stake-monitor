@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GANA数据管理后台 · 管理员</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 使用 ethers v5 版本，与之前的代码兼容 -->
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         * {
@@ -67,6 +68,12 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .login-panel button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59,130,246,0.3);
         }
         
         .admin-header {
@@ -85,6 +92,7 @@
             background: linear-gradient(135deg, #60a5fa, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin: 0;
         }
         
         .admin-header .badge {
@@ -103,6 +111,11 @@
             margin-bottom: 20px;
         }
         
+        .query-panel h4 {
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+        
         .query-panel textarea {
             width: 100%;
             min-height: 150px;
@@ -114,6 +127,11 @@
             font-family: monospace;
             margin-bottom: 15px;
             resize: vertical;
+        }
+        
+        .query-panel textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
         }
         
         .button-group {
@@ -133,6 +151,17 @@
             cursor: pointer;
             flex: 1;
             min-width: 120px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59,130,246,0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         .btn-success {
@@ -143,6 +172,13 @@
             color: white;
             font-weight: 600;
             cursor: pointer;
+            flex: 1;
+            transition: all 0.3s;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16,185,129,0.3);
         }
         
         .btn-danger {
@@ -153,6 +189,13 @@
             color: white;
             font-weight: 600;
             cursor: pointer;
+            flex: 1;
+            transition: all 0.3s;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239,68,68,0.3);
         }
         
         .stats-summary {
@@ -166,18 +209,19 @@
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 12px;
-            padding: 10px;
+            padding: 15px;
             text-align: center;
         }
         
         .stat-label {
             color: #94a3b8;
             font-size: 0.8rem;
+            margin-bottom: 5px;
         }
         
         .stat-value {
             color: #38bdf8;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: bold;
         }
         
@@ -206,18 +250,24 @@
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 12px;
-            padding: 15px;
+            padding: 20px;
             margin: 20px 0;
         }
         
         .github-config input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: #0f172a;
             border: 1px solid #334155;
             border-radius: 30px;
             color: #e2e8f0;
-            margin: 5px 0;
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+        
+        .github-config input:focus {
+            outline: none;
+            border-color: #3b82f6;
         }
         
         .preview-table {
@@ -230,27 +280,50 @@
         
         .preview-table table {
             width: 100%;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
         }
         
         .preview-table th {
             color: #94a3b8;
-            padding: 8px;填充: 8像素;
-            text-align: left;文本对齐: 左;
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
         }
         
         .preview-table td {
-            填充8px 填充8像素填充: 8像素;填充: 8像素;
+            padding: 8px;
             border-bottom: 1px solid #334155;
         }
-    </style样式>
+        
+        .address-cell {
+            color: #60a5fa;
+            font-family: monospace;
+        }
+        
+        .badge-duration {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-1d { background: #3b82f6; color: white; }
+        .badge-15d { background: #8b5cf6; color: white; }
+        .badge-30d { background: #ec4899; color: white; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <!-- 登录面板 -->
         <div id="loginPanel" class="login-panel">
             <h2>🔐 管理员登录</h2>
-            <input type="password" id="adminPassword" placeholder="请输入管理员密码">
+            <input type="password" id="adminPassword" placeholder="请输入管理员密码" onkeypress="if(event.key==='Enter') adminLogin()">
             <button onclick="adminLogin()">登录</button>
         </div>
 
@@ -263,17 +336,20 @@
 
             <!-- GitHub 配置 -->
             <div class="github-config">
-                <h4 style="color: #94a3b8; margin-bottom: 10px;">📦 GitHub 配置</h4>
+                <h4 style="color: #94a3b8; margin-bottom: 15px;">📦 GitHub 配置</h4>
                 <input type="text" id="githubOwner" placeholder="GitHub用户名" value="hcm999">
                 <input type="text" id="githubRepo" placeholder="仓库名" value="gana-stake-data">
-                <input type="text" id="githubToken" placeholder="Personal Access Token" value="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"><input type="text" id="githubToken" placeholder="个人访问令牌" value="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">                <input type="text" id="githubToken" placeholder="个人访问令牌" value="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"><input type="text" id="githubToken" placeholder="个人访问令牌" value="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">
+                <input type="password" id="githubToken" placeholder="Personal Access Token" value="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">
                 <input type="text" id="githubPath" placeholder="文件路径" value="data/stake-data.json">
-                <button class="btn-primary" onclick="testGithubConnection测试Github连接()" style样式="margin-top上边距: 10px;">测试连接</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn-primary" onclick="testGithubConnection()" style="flex: 1;">测试连接</button>
+                    <button class="btn-primary" onclick="createGithubFolder()" style="flex: 1;">创建data文件夹</button>
+                </div>
             </div>
 
             <!-- 查询面板 -->
             <div class="query-panel">
-                <h4 style="color: #94a3b8; margin-bottom: 10px;">🔍 链上查询</h4>
+                <h4>🔍 链上查询</h4>
                 <textarea id="addressList" placeholder="每行一个地址，最多5000个">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</textarea>
                 
                 <div class="button-group">
@@ -291,9 +367,9 @@
                 </div>
 
                 <!-- 统计摘要 -->
-                <div class="stats-summary" id="statsSummary">
+                <div class="stats-summary">
                     <div class="stat-item">
-                        <div class="stat-label">总质押</div>
+                        <div class="stat-label">总质押 (USDT)</div>
                         <div class="stat-value" id="statTotal">0.00</div>
                     </div>
                     <div class="stat-item">
@@ -301,7 +377,7 @@
                         <div class="stat-value" id="statCount">0</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-label">LP池</div>
+                        <div class="stat-label">LP池余额</div>
                         <div class="stat-value" id="statLP">0.00</div>
                     </div>
                     <div class="stat-item">
@@ -320,7 +396,7 @@
 
             <!-- 数据预览 -->
             <div class="query-panel">
-                <h4 style="color: #94a3b8; margin-bottom: 10px;">👁️ 数据预览 (最新20条)</h4>
+                <h4>👁️ 数据预览 (最新20条)</h4>
                 <div class="preview-table" id="previewArea">
                     <table>
                         <thead>
@@ -329,10 +405,11 @@
                                 <th>金额</th>
                                 <th>周期</th>
                                 <th>状态</th>
+                                <th>质押时间</th>
                             </tr>
                         </thead>
                         <tbody id="previewBody">
-                            <tr><td colspan="4" style="text-align: center;">暂无数据</td></tr>
+                            <tr><td colspan="5" class="empty-state">暂无数据</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -342,7 +419,7 @@
 
     <script>
         // ================= 配置 =================
-        const ADMIN_PASSWORD = "hcm9120"; // 修改为你自己的密码
+        const ADMIN_PASSWORD = "admin9120"; // 请修改为你自己的密码
         
         const CONFIG = {
             STAKING: "0x72212F35aC448FE7763aA1BFdb360193Fa098E52",
@@ -350,11 +427,12 @@
             USDT: "0x55d398326f99059fF775485246999027B3197955",
             MAX_ADDRESSES: 5000,
             BATCH_SIZE: 10,
+            PARALLEL_BATCHES: 2,
             RETRY_LIMIT: 3,
             RETRY_DELAY: 1000
         };
 
-        // ABI (从原文件复制完整ABI)
+        // ABI
         const ABI_STAKING = [{"inputs":[{"internalType":"address","name":"marketingAddress_","type":"address"},{"internalType":"address","name":"devAddress_","type":"address"},{"internalType":"address","name":"threesevenAddress_","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"uint256","name":"x","type":"uint256"},{"internalType":"uint256","name":"y","type":"uint256"}],"name":"PRBMath_MulDiv18_Overflow","type":"error"},{"inputs":[{"internalType":"uint256","name":"x","type":"uint256"},{"internalType":"uint256","name":"y","type":"uint256"},{"internalType":"uint256","name":"denominator","type":"uint256"}],"name":"PRBMath_MulDiv_Overflow","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"reward","type":"uint256"},{"indexed":false,"internalType":"uint40","name":"timestamp","type":"uint40"},{"indexed":false,"internalType":"uint256","name":"index","type":"uint256"}],"name":"RewardPaid","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"index","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"stakeTime","type":"uint256"}],"name":"Staked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[],"name":"GANA","outputs":[{"internalType":"contract IGANA","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MIN_STAKE_USDT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"back_Fee","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"balances","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"devAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"isPreacher","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"market_Fee","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"marketingAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxStakeAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"network1In","outputs":[{"internalType":"uint256","name":"value","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint8","name":"index","type":"uint8"}],"name":"principalPlusRewardOfSlot","outputs":[{"internalType":"uint256","name":"reward","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"ratePerSec","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_gana","type":"address"}],"name":"setGANA","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint160","name":"_amount","type":"uint160"},{"internalType":"uint256","name":"amountOutMin","type":"uint256"},{"internalType":"uint8","name":"_stakeIndex","type":"uint8"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"stakeCount","outputs":[{"internalType":"uint256","name":"count","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sync","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"t_supply","outputs":[{"internalType":"uint40","name":"stakeTime","type":"uint40"},{"internalType":"uint160","name":"tamount","type":"uint160"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"threesevenAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"threeseven_Fee","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"index","type":"uint256"}],"name":"unstake","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"userStakeRecord","outputs":[{"internalType":"uint40","name":"stakeTime","type":"uint40"},{"internalType":"uint160","name":"amount","type":"uint160"},{"internalType":"bool","name":"status","type":"bool"},{"internalType":"uint8","name":"stakeIndex","type":"uint8"}],"stateMutability":"view","type":"function"}];
 
         const USDT_ABI = [
@@ -363,18 +441,31 @@
         ];
 
         const STAKE_DURATIONS = {0: 86400, 1: 1296000, 2: 2592000};
+        const STAKE_DURATION_LABELS = {0: "1天", 1: "15天", 2: "30天"};
 
         // ================= 全局变量 =================
         let stakingContract;
         let isQuerying = false;
+        let failedAddresses = [];
+        let addressCache = new Map();
+        let recordCache = new Map();
         let queryResults = [];
         let allStakeRecords = [];
+        let lastAddressList = '';
+        
         let stats = {
             totalStaked: 0, totalStaked1d: 0, totalStaked15d: 0, totalStaked30d: 0,
             count1d: 0, count15d: 0, count30d: 0,
             unlock2d: 0, unlock7d: 0, unlock15d: 0,
             lpWithdrawable: 0
         };
+
+        // ================= 页面加载初始化 =================
+        window.addEventListener('load', function() {
+            console.log('页面加载完成');
+            // 确保登录面板显示
+            document.getElementById('loginPanel').style.display = 'block';
+        });
 
         // ================= 管理员登录 =================
         function adminLogin() {
@@ -384,9 +475,19 @@
                 document.getElementById('adminPanel').style.display = 'block';
                 initContract();
                 loadLastData();
+                updateAddressCount();
             } else {
                 alert('❌ 密码错误');
             }
+        }
+
+        // ================= 更新地址计数 =================
+        function updateAddressCount() {
+            const text = document.getElementById('addressList').value;
+            const addresses = text.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.startsWith('0x') && l.length === 42);
+            document.getElementById('statAddresses').innerText = addresses.length;
         }
 
         // ================= 初始化合约 =================
@@ -397,6 +498,7 @@
                 console.log('✅ 合约初始化成功');
             } catch (error) {
                 console.error('❌ 合约初始化失败:', error);
+                alert('合约初始化失败，请刷新重试');
             }
         }
 
@@ -405,6 +507,11 @@
             const owner = document.getElementById('githubOwner').value;
             const repo = document.getElementById('githubRepo').value;
             const path = document.getElementById('githubPath').value;
+            
+            if (!owner || owner === '你的GitHub用户名') {
+                console.log('请先配置GitHub用户名');
+                return;
+            }
             
             try {
                 const response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/${path}?t=${Date.now()}`);
@@ -435,12 +542,51 @@
                     headers: { 'Authorization': `token ${token}` }
                 });
                 if (response.ok) {
-                    alert('✅ GitHub连接成功');
+                    const user = await response.json();
+                    alert(`✅ GitHub连接成功！欢迎 ${user.login}`);
                 } else {
                     alert('❌ 连接失败，请检查Token');
                 }
             } catch (error) {
-                alert('❌ 连接失败');
+                alert('❌ 连接失败: ' + error.message);
+            }
+        }
+
+        // ================= 创建GitHub文件夹 =================
+        async function createGithubFolder() {
+            const token = document.getElementById('githubToken').value;
+            const owner = document.getElementById('githubOwner').value;
+            const repo = document.getElementById('githubRepo').value;
+
+            if (!token || !owner || !repo) {
+                alert('请填写完整的GitHub配置');
+                return;
+            }
+
+            try {
+                // 创建一个空的 .gitkeep 文件来创建文件夹
+                const content = btoa('');
+                
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/data/.gitkeep`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: '创建 data 文件夹',
+                        content: content
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ data 文件夹创建成功！');
+                } else {
+                    const error = await response.json();
+                    alert(`❌ 创建失败: ${error.message}`);
+                }
+            } catch (error) {
+                alert('❌ 创建失败: ' + error.message);
             }
         }
 
@@ -453,6 +599,11 @@
 
             if (!token || !owner || !repo) {
                 alert('请填写完整的GitHub配置');
+                return;
+            }
+
+            if (queryResults.length === 0) {
+                alert('没有数据可上传');
                 return;
             }
 
@@ -534,6 +685,8 @@
             if (confirm('确定要重置所有数据吗？')) {
                 queryResults = [];
                 allStakeRecords = [];
+                addressCache.clear();
+                recordCache.clear();
                 stats = {
                     totalStaked: 0, totalStaked1d: 0, totalStaked15d: 0, totalStaked30d: 0,
                     count1d: 0, count15d: 0, count30d: 0,
@@ -551,24 +704,23 @@
             document.getElementById('statCount').innerText = queryResults.length;
             document.getElementById('statLP').innerText = stats.lpWithdrawable.toFixed(2);
             
-            const addresses = document.getElementById('addressList').value.split('\n').filter(l => l.trim().startsWith('0x'));
-            document.getElementById('statAddresses').innerText = addresses.length;
-
             const previewBody = document.getElementById('previewBody');
             if (queryResults.length === 0) {
-                previewBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">暂无数据</td></tr>';
+                previewBody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无数据</td></tr>';
                 return;
             }
 
-            const periodLabels = ['1天', '15天', '30天'];
-            previewBody.innerHTML = queryResults.slice(0, 20).map(r => `
+            previewBody.innerHTML = queryResults.slice(0, 20).map(r => {
+                const stakeTime = new Date(r.stakeTime * 1000).toLocaleString();
+                return `
                 <tr>
-                    <td>${r.address.slice(0, 6)}...${r.address.slice(-4)}</td>
+                    <td class="address-cell">${r.address.slice(0, 6)}...${r.address.slice(-4)}</td>
                     <td>${r.amount.toFixed(2)}</td>
-                    <td>${periodLabels[r.stakeIndex]}</td>
+                    <td><span class="badge-duration badge-${r.stakeIndex === 0 ? '1d' : r.stakeIndex === 1 ? '15d' : '30d'}">${STAKE_DURATION_LABELS[r.stakeIndex]}</span></td>
                     <td>${r.isRedeemed ? '已赎回' : '活跃'}</td>
-                </tr>
-            `).join('');
+                    <td>${stakeTime}</td>
+                </tr>`;
+            }).join('');
         }
 
         function updateStats() {
@@ -577,9 +729,7 @@
             document.getElementById('statLP').innerText = stats.lpWithdrawable.toFixed(2);
         }
 
-        // ================= 以下是链上查询函数 =================
-        
-        // 带重试的合约调用
+        // ================= 带重试的合约调用 =================
         async function callWithRetry(fn, context, retryCount = 0) {
             try {
                 return await fn();
@@ -595,7 +745,7 @@
             }
         }
 
-        // 获取LP池USDT余额
+        // ================= 获取LP池USDT余额 =================
         async function getLPPoolBalance() {
             try {
                 const usdtContract = new ethers.Contract(CONFIG.USDT, USDT_ABI, stakingContract.provider);
@@ -611,7 +761,7 @@
             }
         }
 
-        // 刷新LP池余额
+        // ================= 刷新LP池余额 =================
         async function refreshLPPool() {
             if (!stakingContract) {
                 alert("❌ 合约未初始化");
@@ -639,7 +789,7 @@
             }
         }
 
-        // 查询单个地址
+        // ================= 查询单个地址 =================
         async function queryAddress(address, now, limits) {
             const result = {
                 address,
@@ -656,6 +806,7 @@
                 );
                 
                 const stakeCount = Number(count);
+                addressCache.set(address, { count: stakeCount, lastUpdate: Date.now() });
                 
                 for (let j = 0; j < stakeCount; j++) {
                     try {
@@ -720,12 +871,13 @@
             } catch (e) {
                 console.log(`查询地址失败: ${address}`, e);
                 result.error = e.message;
+                failedAddresses.push(address);
             }
             
             return result;
         }
 
-        // 全量查询
+        // ================= 全量查询 =================
         async function fullQuery() {
             if (!stakingContract) {
                 alert("❌ 合约未初始化");
@@ -750,6 +902,8 @@
             }
 
             isQuerying = true;
+            failedAddresses = [];
+            lastAddressList = text;
             
             document.getElementById('incrementalBtn').disabled = true;
             document.getElementById('fullQueryBtn').disabled = true;
@@ -758,6 +912,7 @@
             // 重置所有数据
             queryResults = [];
             allStakeRecords = [];
+            addressCache.clear();
             stats = {
                 totalStaked: 0, totalStaked1d: 0, totalStaked15d: 0, totalStaked30d: 0,
                 count1d: 0, count15d: 0, count30d: 0,
@@ -798,6 +953,12 @@
                         queryResults.push(...result.active);
                         allStakeRecords.push(...result.all);
                         totalActiveRecords += result.active.length;
+                        
+                        // 更新缓存
+                        result.all.forEach(record => {
+                            const key = `${record.address}_${record.stakeTime}`;
+                            recordCache.set(key, record);
+                        });
                     }
                 });
 
@@ -819,6 +980,9 @@
             updateStats();
 
             let completeMsg = `✅ 完成: ${totalActiveRecords}条活跃记录`;
+            if (failedAddresses.length > 0) {
+                completeMsg += `, ${failedAddresses.length}个地址查询失败`;
+            }
             document.getElementById('progressText').innerHTML = completeMsg;
             
             setTimeout(() => {
@@ -829,11 +993,224 @@
             }, 3000);
         }
 
-        // 增量查询（简化版，实际使用时可以从原文件复制完整版本）
+        // ================= 增量查询 =================
         async function incrementalQuery() {
-            alert('增量查询功能需要从原文件复制完整代码');
-            // 这里应该复制原文件的 incrementalQuery 函数
+            if (!stakingContract) {
+                alert("❌ 合约未初始化");
+                return;
+            }
+            
+            if (isQuerying) return;
+
+            const text = document.getElementById('addressList').value;
+            const addresses = text.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.startsWith('0x') && l.length === 42);
+            
+            if (addresses.length === 0) {
+                alert("❌ 没有有效地址");
+                return;
+            }
+            
+            if (addresses.length > CONFIG.MAX_ADDRESSES) {
+                alert(`❌ 最多 ${CONFIG.MAX_ADDRESSES} 个地址`);
+                return;
+            }
+
+            isQuerying = true;
+            failedAddresses = [];
+            lastAddressList = text;
+            
+            document.getElementById('incrementalBtn').disabled = true;
+            document.getElementById('fullQueryBtn').disabled = true;
+            document.getElementById('progressContainer').style.display = 'block';
+
+            // 清空查询结果，重新构建
+            queryResults = [];
+            
+            const now = Math.floor(Date.now() / 1000);
+            const limits = {
+                '2d': now + 172800,
+                '7d': now + 604800,
+                '15d': now + 1296000
+            };
+
+            // 获取LP池USDT余额
+            try {
+                const lpBalance = await getLPPoolBalance();
+                stats.lpWithdrawable = lpBalance;
+            } catch (error) {
+                console.error("获取LP池USDT余额失败:", error);
+            }
+
+            let processed = 0;
+            let newRecords = 0;
+            let redeemedRecords = 0;
+            let successCount = 0;
+
+            // 分批处理
+            for (let i = 0; i < addresses.length; i += CONFIG.BATCH_SIZE) {
+                const batch = addresses.slice(i, i + CONFIG.BATCH_SIZE);
+                
+                const promises = batch.map(async (address) => {
+                    let newForAddress = 0;
+                    let redeemedForAddress = 0;
+                    const addressRecords = [];
+                    
+                    try {
+                        const currentCount = await callWithRetry(
+                            () => stakingContract.stakeCount(address),
+                            `stakeCount(${address})`
+                        );
+                        
+                        // 查询所有记录
+                        for (let j = 0; j < Number(currentCount); j++) {
+                            try {
+                                const record = await callWithRetry(
+                                    () => stakingContract.userStakeRecord(address, j),
+                                    `userStakeRecord(${address}, ${j})`
+                                );
+                                
+                                const stakeTime = Number(record[0]);
+                                const amount = record[1];
+                                const isRedeemed = record[2];
+                                const stakeIndex = Number(record[3]);
+                                const key = `${address}_${stakeTime}`;
+                                const amountNum = parseFloat(ethers.utils.formatUnits(amount, 18));
+                                
+                                addressRecords.push({
+                                    address,
+                                    amount: amountNum,
+                                    stakeTime,
+                                    stakeIndex,
+                                    isRedeemed
+                                });
+                                
+                                if (!isRedeemed) {
+                                    const unlockTime = stakeTime + STAKE_DURATIONS[stakeIndex];
+                                    const timeRemaining = unlockTime - now;
+                                    
+                                    const recordData = {
+                                        address,
+                                        amount: amountNum,
+                                        stakeTime,
+                                        stakeIndex,
+                                        unlockTime,
+                                        timeRemaining,
+                                        isRedeemed
+                                    };
+                                    
+                                    // 检查是否是新记录
+                                    if (!recordCache.has(key)) {
+                                        recordData.isNew = true;
+                                        newForAddress++;
+                                        
+                                        // 更新统计
+                                        stats.totalStaked += amountNum;
+                                        
+                                        if (stakeIndex === 0) {
+                                            stats.totalStaked1d += amountNum;
+                                            stats.count1d++;
+                                        } else if (stakeIndex === 1) {
+                                            stats.totalStaked15d += amountNum;
+                                            stats.count15d++;
+                                        } else if (stakeIndex === 2) {
+                                            stats.totalStaked30d += amountNum;
+                                            stats.count30d++;
+                                        }
+                                        
+                                        if (unlockTime <= limits['2d']) stats.unlock2d += amountNum;
+                                        if (unlockTime <= limits['7d']) stats.unlock7d += amountNum;
+                                        if (unlockTime <= limits['15d']) stats.unlock15d += amountNum;
+                                    }
+                                    
+                                    queryResults.push(recordData);
+                                    recordCache.set(key, recordData);
+                                    
+                                } else {
+                                    // 已赎回的记录 - 检查之前是否活跃
+                                    if (recordCache.has(key)) {
+                                        const oldRecord = recordCache.get(key);
+                                        recordCache.delete(key);
+                                        redeemedForAddress++;
+                                        
+                                        // 从统计中减去
+                                        stats.totalStaked -= oldRecord.amount;
+                                        
+                                        if (oldRecord.stakeIndex === 0) {
+                                            stats.totalStaked1d -= oldRecord.amount;
+                                            stats.count1d--;
+                                        } else if (oldRecord.stakeIndex === 1) {
+                                            stats.totalStaked15d -= oldRecord.amount;
+                                            stats.count15d--;
+                                        } else if (oldRecord.stakeIndex === 2) {
+                                            stats.totalStaked30d -= oldRecord.amount;
+                                            stats.count30d--;
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                console.log(`读取记录失败: ${address}[${j}]`, e);
+                            }
+                        }
+                        
+                        addressCache.set(address, { 
+                            count: Number(currentCount), 
+                            lastUpdate: Date.now() 
+                        });
+                        
+                        // 添加到所有记录
+                        allStakeRecords.push(...addressRecords);
+                        
+                        successCount++;
+                        
+                    } catch (e) {
+                        console.log(`查询地址失败: ${address}`, e);
+                        failedAddresses.push(address);
+                    }
+                    
+                    return { new: newForAddress, redeemed: redeemedForAddress };
+                });
+
+                const results = await Promise.all(promises);
+                results.forEach(r => {
+                    newRecords += r.new;
+                    redeemedRecords += r.redeemed;
+                });
+
+                processed += batch.length;
+                const progress = Math.min(100, Math.round((processed / addresses.length) * 100));
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').innerHTML = 
+                    `增量更新: +${newRecords}新, -${redeemedRecords}赎回 (${processed}/${addresses.length})`;
+                
+                updatePreview();
+                
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            // 重新排序
+            queryResults.sort((a, b) => b.stakeTime - a.stakeTime);
+            
+            updatePreview();
+            updateStats();
+
+            let completeMsg = `✅ 完成: +${newRecords}新, -${redeemedRecords}赎回`;
+            if (failedAddresses.length > 0) {
+                completeMsg += `, ${failedAddresses.length}个地址查询失败`;
+            }
+            document.getElementById('progressText').innerHTML = completeMsg;
+            
+            setTimeout(() => {
+                document.getElementById('incrementalBtn').disabled = false;
+                document.getElementById('fullQueryBtn').disabled = false;
+                document.getElementById('progressContainer').style.display = 'none';
+                isQuerying = false;
+            }, 3000);
         }
+
+        // 监听地址输入变化
+        document.getElementById('addressList').addEventListener('input', updateAddressCount);
     </script>
 </body>
 </html>
