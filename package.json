@@ -2,6 +2,6 @@
   "name": "gana-stake-monitor",
   "version": "1.0.0",
   "scripts": {
-    "dev": "vercel dev"
+    "build": "bash build.sh"
   }
 }
