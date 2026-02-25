@@ -528,35 +528,48 @@
 
         // ================= GitHub Token 环境变量相关 =================
 
-        // 从环境变量加载Token
-        async function loadTokenFromEnv() {
-            updateStatus('tokenStatus', '加载中...', 'status-warning');
-            
-            try {
-                const response = await fetch('/api/config');
-                const data = await response.json();
-                
-                // 更新环境变量状态
-                if (data.hasToken) {
-                    updateStatus('envStatus', '✅ 已配置', 'status-success');
-                } else {
-                    updateStatus('envStatus', '❌ 未配置', 'status-error');
-                }
-                
-                if (data.token) {
-                    document.getElementById('githubToken').value = data.token;
-                    updateStatus('tokenStatus', '✅ 已加载', 'status-success');
-                    // 自动测试连接
-                    setTimeout(() => testGithubConnection(), 500);
-                } else {
-                    updateStatus('tokenStatus', '❌ 无Token', 'status-error');
-                }
-            } catch (error) {
-                console.error('加载Token失败:', error);
-                updateStatus('envStatus', '❌ 加载失败', 'status-error');
-                updateStatus('tokenStatus', '❌ 加载失败', 'status-error');
+// 从环境变量加载Token
+async function loadTokenFromEnv() {
+    updateStatus('tokenStatus', '加载中...', 'status-warning');
+    updateStatus('envStatus', '请求中...', 'status-warning');
+    
+    try {
+        console.log('正在请求 /api/config...');
+        const response = await fetch('/api/config');
+        console.log('API响应状态:', response.status);
+        
+        const data = await response.json();
+        console.log('API返回数据:', data);
+        
+        if (data.success) {
+            // 更新环境变量状态
+            if (data.hasToken) {
+                updateStatus('envStatus', '✅ 已配置', 'status-success');
+            } else {
+                updateStatus('envStatus', '❌ 未配置', 'status-error');
             }
+            
+            if (data.token) {
+                document.getElementById('githubToken').value = data.token;
+                updateStatus('tokenStatus', '✅ 已加载', 'status-success');
+                // 自动测试连接
+                setTimeout(() => testGithubConnection(), 500);
+            } else {
+                updateStatus('tokenStatus', '❌ 无Token', 'status-error');
+                alert('环境变量中未找到 GITHUB_TOKEN，请在 Vercel 中设置');
+            }
+        } else {
+            updateStatus('envStatus', '❌ API错误', 'status-error');
+            updateStatus('tokenStatus', '❌ 加载失败', 'status-error');
+            console.error('API返回错误:', data);
         }
+    } catch (error) {
+        console.error('加载Token失败:', error);
+        updateStatus('envStatus', '❌ 连接失败', 'status-error');
+        updateStatus('tokenStatus', '❌ 网络错误', 'status-error');
+        alert('无法连接到API: ' + error.message);
+    }
+}
 
         // 更新状态显示
         function updateStatus(elementId, text, className) {
