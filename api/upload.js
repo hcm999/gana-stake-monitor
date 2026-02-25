@@ -1,3 +1,11 @@
+// 设置超时
+export const config = {
+    api: {
+        bodyParser: false,
+        externalResolver: true,
+        maxDuration: 60  // Vercel 最大允许60秒
+    },
+};
 import multer from 'multer';
 import XLSX from 'xlsx';
 import { CONFIG } from './config.js';
