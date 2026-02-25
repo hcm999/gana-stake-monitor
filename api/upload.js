@@ -1,24 +1,20 @@
-// 在文件顶部引入 query 函数
-import { queryAddresses } from './query.js';
 import multer from 'multer';
 import XLSX from 'xlsx';
-
-// 配置multer内存存储
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-    }
-});
+import { CONFIG } from './config.js';
+import { queryAddresses } from './query.js';  // 导入查询函数
 
 export const config = {
     api: {
-        bodyParser: false, // 禁用bodyParser，让multer处理
+        bodyParser: false,
     },
 };
 
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+});
+
 export default async function handler(req, res) {
-    // 设置CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     
@@ -32,25 +28,21 @@ export default async function handler(req, res) {
     }
     
     try {
-        // 使用multer处理文件上传
         upload.single('file')(req, res, async (err) => {
             if (err) {
                 console.error('上传错误:', err);
-                return res.status(400).json({ 
-                    success: false, 
-                    error: err.message 
-                });
+                return res.status(400).json({ success: false, error: err.message });
             }
             
             if (!req.file) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'No file uploaded' 
-                });
+                return res.status(400).json({ success: false, error: 'No file uploaded' });
             }
             
-            // 解析文件中的地址
+            console.log('收到文件:', req.file.originalname, '大小:', req.file.size);
+            
+            // 提取地址
             const addresses = await extractAddresses(req.file);
+            console.log('提取到地址数量:', addresses.length);
             
             if (addresses.length === 0) {
                 return res.status(400).json({ 
@@ -59,25 +51,41 @@ export default async function handler(req, res) {
                 });
             }
             
-            // 保存地址列表到KV
-            await saveAddressesToKV(addresses);
+            // 去重
+            const uniqueAddresses = [...new Set(addresses)];
+            console.log('去重后地址数量:', uniqueAddresses.length);
             
-            // 触发自动查询
-            const queryResult = await triggerQuery(addresses);
+            // 保存地址到KV
+            await saveAddressesToKV(uniqueAddresses);
+            
+            // 直接调用查询函数，避免HTTP请求
+            console.log('开始直接查询...');
+            let queryResult = null;
+            try {
+                queryResult = await queryAddresses(uniqueAddresses, 'full');
+                console.log('查询完成:', {
+                    records: queryResult?.activeRecords?.length || 0,
+                    stats: queryResult?.stats
+                });
+            } catch (queryError) {
+                console.error('直接查询失败:', queryError);
+                // 继续返回成功，但标记查询失败
+            }
             
             res.status(200).json({
                 success: true,
-                addresses: addresses,
-                count: addresses.length,
-                queryResult: queryResult
+                addresses: uniqueAddresses.slice(0, 10), // 只返回前10个用于预览
+                count: uniqueAddresses.length,
+                queryResult: queryResult ? {
+                    stats: queryResult.stats,
+                    recordCount: queryResult.activeRecords?.length || 0
+                } : null,
+                queryError: queryResult ? null : '查询失败'
             });
         });
     } catch (error) {
-        console.error('上传错误:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        console.error('上传处理错误:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 }
 
@@ -87,18 +95,15 @@ async function extractAddresses(file) {
     const filename = file.originalname.toLowerCase();
     
     if (filename.endsWith('.csv') || filename.endsWith('.txt')) {
-        // 处理CSV/TXT文件
         const content = file.buffer.toString('utf-8');
         const lines = content.split(/\r?\n/);
         
-        // 从第二行开始（跳过表头）
-        for (let i = 1; i < lines.length; i++) {
+        for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
             
-            // CSV可能包含逗号，取第一列
+            // 处理CSV格式
             let firstCol = line.split(',')[0].trim();
-            // 移除可能的引号
             firstCol = firstCol.replace(/^["']|["']$/g, '');
             
             if (isValidAddress(firstCol)) {
@@ -106,14 +111,12 @@ async function extractAddresses(file) {
             }
         }
     } else {
-        // 处理Excel文件
         const workbook = XLSX.read(file.buffer, { type: 'buffer' });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
         
-        // 从第二行开始（跳过表头）
-        for (let i = 1; i < rows.length; i++) {
+        for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
             
@@ -124,20 +127,17 @@ async function extractAddresses(file) {
         }
     }
     
-    // 去重
-    return [...new Set(addresses)];
+    return addresses;
 }
 
-// 验证地址格式
 function isValidAddress(addr) {
     return addr && 
+           typeof addr === 'string' &&
            addr.startsWith('0x') && 
-           addr.length >= 40 && 
-           addr.length <= 42 &&
+           addr.length === 42 &&
            /^0x[a-fA-F0-9]+$/.test(addr);
 }
 
-// 保存地址列表到KV
 async function saveAddressesToKV(addresses) {
     if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
         console.log('未配置KV存储，跳过保存地址');
@@ -145,20 +145,20 @@ async function saveAddressesToKV(addresses) {
     }
     
     try {
-        const response = await fetch(
-            `${process.env.KV_REST_API_URL}/set/address_list`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${process.env.KV_REST_API_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(JSON.stringify({
-                    addresses,
-                    uploadTime: Date.now()
-                }))
-            }
-        );
+        const url = `${process.env.KV_REST_API_URL}/set/address_list`;
+        console.log('保存地址到KV:', url);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.KV_REST_API_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(JSON.stringify({
+                addresses,
+                uploadTime: Date.now()
+            }))
+        });
         
         if (!response.ok) {
             console.error('保存地址失败:', await response.text());
@@ -167,25 +167,5 @@ async function saveAddressesToKV(addresses) {
         }
     } catch (error) {
         console.error('保存地址错误:', error);
-    }
-}
-
-// 触发自动查询
-async function triggerQuery(addresses) {
-    try {
-        console.log('直接调用查询函数...');
-        
-        // 直接调用 query 函数
-        const result = await queryAddresses(addresses, 'full');
-        
-        console.log('查询完成:', {
-            total: result.stats?.totalStaked,
-            records: result.activeRecords?.length
-        });
-        
-        return result;
-    } catch (error) {
-        console.error('直接查询失败:', error);
-        return null;
     }
 }
