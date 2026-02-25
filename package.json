@@ -12,8 +12,5 @@
     "node-cron": "^3.0.3",
     "multer": "^1.4.5-lts.1",
     "xlsx": "^0.18.5"
-  },
-  "engines": {
-    "node": "22.x"
   }
 }
