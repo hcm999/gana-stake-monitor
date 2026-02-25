@@ -1,9 +1,10 @@
-// api/config.js
+// api/config.js - 文件路径必须是 /api/config.js
 export default function handler(req, res) {
-    // 设置CORS头，允许前端访问
+    // 设置CORS头
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Content-Type', 'application/json');
     
     // 处理预检请求
     if (req.method === 'OPTIONS') {
@@ -27,7 +28,7 @@ export default function handler(req, res) {
         res.status(200).json({
             success: true,
             hasToken: !!token,
-            token: token,  // 返回给前端使用
+            token: token,
             message: token ? 'Token loaded successfully' : 'No token found in environment'
         });
     } catch (error) {
