@@ -97,19 +97,30 @@ export default async function handler(req, res) {
 
 // ================= 以下都是原有的辅助函数，保持不变 =================
 
-// 连接到BSC
+// 连接到BSC - 改进版本
 async function connectToBSC() {
+    let lastError = null;
+    
     for (const node of CONFIG.BSC_NODES) {
         try {
-            const provider = new ethers.JsonRpcProvider(node);
-            await provider.getBlockNumber();
-            console.log(`✅ 连接成功: ${node}`);
+            console.log(`尝试连接节点: ${node}`);
+            const provider = new ethers.JsonRpcProvider(node, undefined, {
+                timeout: 10000,  // 10秒超时
+                polling: false
+            });
+            
+            // 测试连接
+            const blockNumber = await provider.getBlockNumber();
+            console.log(`✅ 连接成功: ${node}, 区块高度: ${blockNumber}`);
             return provider;
         } catch (e) {
-            console.log(`节点 ${node} 连接失败`);
+            console.log(`节点 ${node} 连接失败:`, e.message);
+            lastError = e;
+            // 继续尝试下一个节点
         }
     }
-    throw new Error('无法连接到BSC网络');
+    
+    throw new Error(`无法连接到BSC网络: ${lastError?.message || '未知错误'}`);
 }
 
 // 获取LP池余额
