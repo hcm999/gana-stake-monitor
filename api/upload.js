@@ -1,3 +1,5 @@
+// 在文件顶部引入 query 函数
+import { queryAddresses } from './query.js';
 import multer from 'multer';
 import XLSX from 'xlsx';
 
@@ -171,30 +173,19 @@ async function saveAddressesToKV(addresses) {
 // 触发自动查询
 async function triggerQuery(addresses) {
     try {
-        // 调用本地的query API
-        const baseUrl = process.env.VERCEL_URL 
-            ? `https://${process.env.VERCEL_URL}`
-            : 'http://localhost:3000';
+        console.log('直接调用查询函数...');
         
-        const response = await fetch(`${baseUrl}/api/query`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                addresses,
-                mode: 'full'
-            })
+        // 直接调用 query 函数
+        const result = await queryAddresses(addresses, 'full');
+        
+        console.log('查询完成:', {
+            total: result.stats?.totalStaked,
+            records: result.activeRecords?.length
         });
         
-        if (!response.ok) {
-            throw new Error(`Query failed: ${response.status}`);
-        }
-        
-        const result = await response.json();
         return result;
     } catch (error) {
-        console.error('触发查询失败:', error);
+        console.error('直接查询失败:', error);
         return null;
     }
 }
