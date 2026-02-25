@@ -335,3 +335,35 @@ async function saveToKV(results, addresses) {
         console.error('KV保存错误:', error);
     }
 }
+// 在 query.js 底部添加
+export async function queryAddresses(addresses, mode = 'full') {
+    // 这里是原来 handler 中的主要逻辑
+    // 把 handler 中的代码提取出来
+    const provider = await connectToBSC();
+    const stakingContract = new ethers.Contract(CONFIG.STAKING, STAKING_ABI, provider);
+    
+    const now = Math.floor(Date.now() / 1000);
+    const limits = {
+        '2d': now + 172800,
+        '7d': now + 604800,
+        '15d': now + 1296000
+    };
+    
+    const results = await batchQueryAddresses(addresses, stakingContract, now, limits, mode);
+    
+    // 保存到 KV
+    await saveToKV(results, addresses);
+    
+    return results;
+}
+
+// 原来的 handler 改为调用这个函数
+export default async function handler(req, res) {
+    try {
+        const { addresses, mode = 'full' } = req.body;
+        const results = await queryAddresses(addresses, mode);
+        res.status(200).json({ success: true, data: results });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
