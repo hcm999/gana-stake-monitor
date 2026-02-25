@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GANA数据管理后台 · 管理员</title>
+    <script src="/config.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
@@ -531,43 +532,23 @@
 // 从环境变量加载Token
 async function loadTokenFromEnv() {
     updateStatus('tokenStatus', '加载中...', 'status-warning');
-    updateStatus('envStatus', '请求中...', 'status-warning');
     
     try {
-        console.log('正在请求 /api/config...');
-        const response = await fetch('/api/config');
-        console.log('API响应状态:', response.status);
-        
-        const data = await response.json();
-        console.log('API返回数据:', data);
-        
-        if (data.success) {
-            // 更新环境变量状态
-            if (data.hasToken) {
-                updateStatus('envStatus', '✅ 已配置', 'status-success');
-            } else {
-                updateStatus('envStatus', '❌ 未配置', 'status-error');
-            }
-            
-            if (data.token) {
-                document.getElementById('githubToken').value = data.token;
-                updateStatus('tokenStatus', '✅ 已加载', 'status-success');
-                // 自动测试连接
-                setTimeout(() => testGithubConnection(), 500);
-            } else {
-                updateStatus('tokenStatus', '❌ 无Token', 'status-error');
-                alert('环境变量中未找到 GITHUB_TOKEN，请在 Vercel 中设置');
-            }
+        // 尝试从 window.APP_CONFIG 读取
+        if (window.APP_CONFIG && window.APP_CONFIG.GITHUB_TOKEN) {
+            document.getElementById('githubToken').value = window.APP_CONFIG.GITHUB_TOKEN;
+            updateStatus('tokenStatus', '✅ 已加载', 'status-success');
+            updateStatus('envStatus', '✅ 已配置', 'status-success');
+            setTimeout(() => testGithubConnection(), 500);
         } else {
-            updateStatus('envStatus', '❌ API错误', 'status-error');
-            updateStatus('tokenStatus', '❌ 加载失败', 'status-error');
-            console.error('API返回错误:', data);
+            // 如果没找到，提示手动输入
+            updateStatus('tokenStatus', '⚠️ 手动输入', 'status-warning');
+            updateStatus('envStatus', '❌ 未配置', 'status-error');
+            console.log('未找到Token，请手动输入');
         }
     } catch (error) {
         console.error('加载Token失败:', error);
-        updateStatus('envStatus', '❌ 连接失败', 'status-error');
-        updateStatus('tokenStatus', '❌ 网络错误', 'status-error');
-        alert('无法连接到API: ' + error.message);
+        updateStatus('tokenStatus', '❌ 加载失败', 'status-error');
     }
 }
 
