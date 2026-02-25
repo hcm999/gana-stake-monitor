@@ -1,6 +1,51 @@
 import { ethers } from 'ethers';
-import { CONFIG, STAKING_ABI, USDT_ABI } from './config.js';
+import { CONFIG, STAKING_ABI, USDT_ABI, STAKE_DURATIONS } from './config.js';
 
+// ================= 核心查询函数 =================
+export async function queryAddresses(addresses, mode = 'full') {
+    console.log(`开始查询: ${addresses.length}个地址, 模式: ${mode}`);
+    
+    // 连接到BSC
+    const provider = await connectToBSC();
+    
+    // 创建合约实例
+    const stakingContract = new ethers.Contract(
+        CONFIG.STAKING, 
+        STAKING_ABI, 
+        provider
+    );
+    
+    // 获取LP池余额
+    const lpBalance = await getLPPoolBalance(provider);
+    
+    // 查询所有地址
+    const now = Math.floor(Date.now() / 1000);
+    const limits = {
+        '2d': now + 172800,
+        '7d': now + 604800,
+        '15d': now + 1296000
+    };
+    
+    // 分批查询
+    const results = await batchQueryAddresses(
+        addresses, 
+        stakingContract, 
+        now, 
+        limits,
+        mode
+    );
+    
+    // 保存到KV存储
+    await saveToKV(results, addresses);
+    
+    return {
+        ...results,
+        lpBalance,
+        timestamp: Date.now()
+    };
+}
+
+// ================= 原handler改为调用新函数 =================
 export default async function handler(req, res) {
     // 设置CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,7 +56,6 @@ export default async function handler(req, res) {
         return;
     }
     
-    // 只允许POST请求
     if (req.method !== 'POST') {
         return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
@@ -26,7 +70,6 @@ export default async function handler(req, res) {
             });
         }
         
-        // 限制地址数量
         if (addresses.length > 50000) {
             return res.status(400).json({ 
                 success: false, 
@@ -34,46 +77,12 @@ export default async function handler(req, res) {
             });
         }
         
-        console.log(`开始查询: ${addresses.length}个地址, 模式: ${mode}`);
-        
-        // 连接到BSC
-        const provider = await connectToBSC();
-        
-        // 创建合约实例
-        const stakingContract = new ethers.Contract(
-            CONFIG.STAKING, 
-            STAKING_ABI, 
-            provider
-        );
-        
-        // 获取LP池余额
-        const lpBalance = await getLPPoolBalance(provider);
-        
-        // 查询所有地址
-        const now = Math.floor(Date.now() / 1000);
-        const limits = {
-            '2d': now + 172800,
-            '7d': now + 604800,
-            '15d': now + 1296000
-        };
-        
-        // 分批查询
-        const results = await batchQueryAddresses(
-            addresses, 
-            stakingContract, 
-            now, 
-            limits,
-            mode
-        );
-        
-        // 保存到KV存储
-        await saveToKV(results, addresses);
+        // 调用核心查询函数
+        const results = await queryAddresses(addresses, mode);
         
         res.status(200).json({
             success: true,
             data: results,
-            stats: results.stats,
-            lpBalance,
             timestamp: Date.now()
         });
         
@@ -85,6 +94,8 @@ export default async function handler(req, res) {
         });
     }
 }
+
+// ================= 以下都是原有的辅助函数，保持不变 =================
 
 // 连接到BSC
 async function connectToBSC() {
@@ -175,7 +186,7 @@ async function queryAddress(address, contract, now, limits) {
                 result.all.push(recordData);
                 
                 if (!isRedeemed) {
-                    const unlockTime = stakeTime + CONFIG.STAKE_DURATIONS[stakeIndex];
+                    const unlockTime = stakeTime + STAKE_DURATIONS[stakeIndex];
                     
                     result.active.push({
                         ...recordData,
@@ -210,7 +221,8 @@ async function batchQueryAddresses(addresses, contract, now, limits, mode) {
         count30d: 0,
         unlock2d: 0,
         unlock7d: 0,
-        unlock15d: 0
+        unlock15d: 0,
+        recordCount: 0
     };
     
     const allRecords = [];
@@ -218,7 +230,6 @@ async function batchQueryAddresses(addresses, contract, now, limits, mode) {
     const failedAddresses = [];
     const dailyStats = new Map();
     
-    // 分批处理
     for (let i = 0; i < addresses.length; i += CONFIG.BATCH_SIZE) {
         const batch = addresses.slice(i, i + CONFIG.BATCH_SIZE);
         
@@ -227,11 +238,9 @@ async function batchQueryAddresses(addresses, contract, now, limits, mode) {
         
         results.forEach(result => {
             if (result.success) {
-                // 处理记录
                 result.all.forEach(record => {
                     allRecords.push(record);
                     
-                    // 更新每日统计
                     const dateStr = getDateStrFromTimestamp(record.stakeTime);
                     if (!dailyStats.has(dateStr)) {
                         dailyStats.set(dateStr, {
@@ -247,11 +256,11 @@ async function batchQueryAddresses(addresses, contract, now, limits, mode) {
                     dayData.count[record.stakeIndex]++;
                 });
                 
-                // 处理活跃记录并更新统计
                 result.active.forEach(record => {
                     activeRecords.push(record);
                     
                     stats.totalStaked += record.amount;
+                    stats.recordCount++;
                     
                     if (record.stakeIndex === 0) {
                         stats.totalStaked1d += record.amount;
@@ -273,11 +282,9 @@ async function batchQueryAddresses(addresses, contract, now, limits, mode) {
             }
         });
         
-        // 每批查询后延迟
         await new Promise(r => setTimeout(r, 200));
     }
     
-    // 按时间倒序排序
     activeRecords.sort((a, b) => b.stakeTime - a.stakeTime);
     
     return {
@@ -309,61 +316,31 @@ async function saveToKV(results, addresses) {
     
     try {
         const data = {
-            ...results,
+            stats: results.stats,
+            records: results.activeRecords,
+            allRecords: results.allRecords,
             addresses,
             lastUpdate: Date.now()
         };
         
-        const response = await fetch(
-            `${process.env.KV_REST_API_URL}/set/${CONFIG.KV.DATA_KEY}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${process.env.KV_REST_API_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(JSON.stringify(data))
-            }
-        );
+        const url = `${process.env.KV_REST_API_URL}/set/${CONFIG.KV.DATA_KEY}`;
+        console.log('保存到KV:', url);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.KV_REST_API_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(JSON.stringify(data))
+        });
         
         if (!response.ok) {
             console.error('KV保存失败:', await response.text());
         } else {
-            console.log('✅ 数据已保存到KV');
+            console.log(`✅ 已保存 ${results.activeRecords?.length || 0} 条活跃记录到KV`);
         }
     } catch (error) {
         console.error('KV保存错误:', error);
-    }
-}
-// 在 query.js 底部添加
-export async function queryAddresses(addresses, mode = 'full') {
-    // 这里是原来 handler 中的主要逻辑
-    // 把 handler 中的代码提取出来
-    const provider = await connectToBSC();
-    const stakingContract = new ethers.Contract(CONFIG.STAKING, STAKING_ABI, provider);
-    
-    const now = Math.floor(Date.now() / 1000);
-    const limits = {
-        '2d': now + 172800,
-        '7d': now + 604800,
-        '15d': now + 1296000
-    };
-    
-    const results = await batchQueryAddresses(addresses, stakingContract, now, limits, mode);
-    
-    // 保存到 KV
-    await saveToKV(results, addresses);
-    
-    return results;
-}
-
-// 原来的 handler 改为调用这个函数
-export default async function handler(req, res) {
-    try {
-        const { addresses, mode = 'full' } = req.body;
-        const results = await queryAddresses(addresses, mode);
-        res.status(200).json({ success: true, data: results });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
     }
 }
