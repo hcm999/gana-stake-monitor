@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* 样式基本保持不变，但移除不需要的折叠功能 */
         * {
             margin: 0;
             padding: 0;
@@ -204,11 +203,12 @@
             word-break: break-all;
         }
         
+        /* 上传区域 - 确保可见 */
         .upload-area {
             background: linear-gradient(145deg, #1e293b, #0f172a);
-            border: 2px dashed #334155;
+            border: 2px dashed #3b82f6;
             border-radius: 16px;
-            padding: 30px;
+            padding: 40px 20px;
             text-align: center;
             margin: 20px 0;
             cursor: pointer;
@@ -216,29 +216,40 @@
         }
         
         .upload-area:hover {
-            border-color: #3b82f6;
+            border-color: #4ade80;
             background: #1e293b;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
         }
         
         .upload-area.dragover {
             border-color: #4ade80;
             background: #1e293b;
+            transform: scale(1.02);
         }
         
         .upload-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+            font-size: 64px;
+            margin-bottom: 15px;
+            color: #3b82f6;
         }
         
         .upload-text {
-            color: #94a3b8;
-            font-size: 1rem;
-            margin-bottom: 5px;
+            color: #e2e8f0;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
         
         .upload-hint {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .upload-hint small {
+            display: block;
+            margin-top: 5px;
             color: #64748b;
-            font-size: 0.8rem;
         }
         
         .status-bar {
@@ -273,11 +284,18 @@
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
         }
         
         .btn-refresh:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
         
         .btn-lp {
@@ -289,6 +307,12 @@
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-lp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
         }
         
         .data-tabs {
@@ -357,7 +381,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -374,6 +398,12 @@
             animation: spin 1s linear infinite;
         }
         
+        .loading-text {
+            color: #e2e8f0;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -382,13 +412,31 @@
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 12px;
-            padding: 10px;
-            margin: 10px 0;
-            max-height: 100px;
+            padding: 15px;
+            margin: 10px 0 20px;
+            max-height: 150px;
             overflow-y: auto;
             font-family: monospace;
-            font-size: 0.75rem;
-            color: #94a3b8;
+            font-size: 0.8rem;
+            color: #60a5fa;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 12px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        /* 成功提示动画 */
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; }
         }
     </style>
 </head>
@@ -396,7 +444,7 @@
     <div class="container-fluid">
         <!-- 头部 -->
         <div class="header">
-            <h1>🔍 GANA 质押数据监控平台 <span id="queryMode" class="stats-badge">Vercel版</span></h1>
+            <h1>🔍 GANA 质押数据监控平台 <span class="stats-badge" style="font-size: 0.8rem;">Vercel云端版</span></h1>
             <div class="subtitle">每日上传地址 · 后端自动查询 · 实时展示</div>
             <div class="contract-address" id="stakingContractAddress">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</div>
         </div>
@@ -464,11 +512,14 @@
             </div>
         </div>
 
-        <!-- 上传区域 -->
+        <!-- 上传区域 - 明显可见 -->
         <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
             <div class="upload-icon">📤</div>
             <div class="upload-text">点击或拖拽上传地址文件</div>
-            <div class="upload-hint">支持 Excel/CSV/TXT，自动跳过表头，最大5万地址</div>
+            <div class="upload-hint">
+                支持 Excel/CSV/TXT，自动跳过表头<br>
+                <small>最大支持 50,000 个地址</small>
+            </div>
             <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" style="display: none;" onchange="uploadFile(this)">
         </div>
 
@@ -505,7 +556,7 @@
                             </tr>
                         </thead>
                         <tbody id="resultTableBody">
-                            <tr><td colspan="8" class="empty-state">📭 请上传地址文件</td></tr>
+                            <tr><td colspan="8" class="empty-state">📭 请上传地址文件开始查询</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -568,6 +619,7 @@
     <!-- 加载遮罩 -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">处理中...</div>
     </div>
 
     <script>
@@ -590,6 +642,8 @@
 
         // ================= 初始化 =================
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('页面加载完成');
+            
             // 设置拖拽上传
             setupDragAndDrop();
             
@@ -598,6 +652,7 @@
             
             // 设置自动刷新（每5分钟）
             autoRefreshInterval = setInterval(() => {
+                console.log('自动刷新数据...');
                 loadData(true);
             }, 5 * 60 * 1000);
         });
@@ -635,6 +690,8 @@
         }
 
         async function handleFileUpload(file) {
+            console.log('开始上传文件:', file.name);
+            
             const formData = new FormData();
             formData.append('file', file);
             
@@ -647,17 +704,26 @@
                 });
                 
                 const result = await response.json();
+                console.log('上传结果:', result);
                 
                 if (result.success) {
                     // 显示地址预览
                     const preview = document.getElementById('addressPreview');
                     preview.style.display = 'block';
-                    preview.innerHTML = `📋 已上传 ${result.count} 个地址<br>${result.addresses.slice(0, 5).join('<br>')}${result.count > 5 ? '<br>...' : ''}`;
+                    
+                    let previewHtml = `📋 已上传 ${result.count} 个地址<br>`;
+                    result.addresses.slice(0, 5).forEach(addr => {
+                        previewHtml += `${addr}<br>`;
+                    });
+                    if (result.count > 5) {
+                        previewHtml += `... 等 ${result.count} 个地址`;
+                    }
+                    preview.innerHTML = previewHtml;
                     
                     // 加载新数据
                     await loadData(true);
                     
-                    showToast(`✅ 上传成功，找到 ${result.count} 个地址`);
+                    showToast(`✅ 上传成功，找到 ${result.count} 个地址，正在查询数据...`);
                 } else {
                     showToast(`❌ 上传失败: ${result.error}`, 'error');
                 }
@@ -675,8 +741,10 @@
             if (showLoadingOverlay) showLoading('加载数据中...');
             
             try {
+                console.log('请求数据...');
                 const response = await fetch(`${API_BASE}/`);
                 const result = await response.json();
+                console.log('收到数据:', result);
                 
                 if (result.success && result.data) {
                     currentData = result.data;
@@ -685,12 +753,16 @@
                         updateStats(currentData.stats);
                     }
                     
-                    if (currentData.records) {
+                    if (currentData.records && currentData.records.length > 0) {
                         renderResults(currentData.records);
+                    } else {
+                        document.getElementById('resultTableBody').innerHTML = '<tr><td colspan="8" class="empty-state">📭 暂无质押记录</td></tr>';
                     }
                     
-                    if (currentData.allRecords) {
+                    if (currentData.allRecords && currentData.allRecords.length > 0) {
                         renderDailyStats(currentData.allRecords);
+                    } else {
+                        document.getElementById('dailyStatsBody').innerHTML = '<tr><td colspan="6" class="empty-state">📊 暂无数据</td></tr>';
                     }
                     
                     if (currentData.lastUpdate) {
@@ -765,11 +837,13 @@
             document.getElementById('unlock2d').innerText = (stats.unlock2d || 0).toFixed(2);
             document.getElementById('unlock7d').innerText = (stats.unlock7d || 0).toFixed(2);
             document.getElementById('unlock15d').innerText = (stats.unlock15d || 0).toFixed(2);
-            document.getElementById('lpWithdrawable').innerText = (lpBalance || 0).toFixed(2);
             document.getElementById('count1d').innerText = stats.count1d || 0;
             document.getElementById('count15d').innerText = stats.count15d || 0;
             document.getElementById('count30d').innerText = stats.count30d || 0;
-            document.getElementById('resultCount').innerText = (stats.recordCount || 0);
+            
+            // 计算记录数
+            const recordCount = stats.count1d + stats.count15d + stats.count30d;
+            document.getElementById('resultCount').innerText = recordCount;
         }
 
         // ================= 更新时间显示 =================
@@ -872,7 +946,14 @@
 
         // ================= 更新图表 =================
         function updateCharts() {
-            if (!currentData.records || currentData.records.length === 0) return;
+            if (!currentData.records || currentData.records.length === 0) {
+                // 清空图表
+                if (trendChart) trendChart.destroy();
+                if (pieChart) pieChart.destroy();
+                if (unlockChart) unlockChart.destroy();
+                trendChart = pieChart = unlockChart = null;
+                return;
+            }
 
             // 周期分布
             let sum1d = 0, sum15d = 0, sum30d = 0;
@@ -894,7 +975,20 @@
                 else unlock25plus += r.amount;
             });
 
-            // 趋势图
+            // 趋势图数据
+            const dailyMap = new Map();
+            currentData.allRecords.forEach(record => {
+                const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, 0);
+                dailyMap.set(dateStr, dailyMap.get(dateStr) + record.amount);
+            });
+            
+            const allDates = Array.from(dailyMap.keys()).sort((a,b)=>a.localeCompare(b));
+            const recentDates = allDates.slice(-30);
+            const trendLabels = recentDates;
+            const trendData = recentDates.map(d => dailyMap.get(d) || 0);
+
+            // 获取canvas上下文
             const trendCtx = document.getElementById('trendChart')?.getContext('2d');
             const pieCtx = document.getElementById('pieChart')?.getContext('2d');
             const unlockCtx = document.getElementById('unlockChart')?.getContext('2d');
@@ -906,7 +1000,32 @@
             if (pieChart) pieChart.destroy();
             if (unlockChart) unlockChart.destroy();
 
-            // 创建新图表
+            // 创建趋势图
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: '新增质押',
+                        data: trendData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { ticks: { color: '#94a3b8', maxRotation: 45 } } 
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+
+            // 创建饼图
             pieChart = new Chart(pieCtx, {
                 type: 'doughnut',
                 data: {
@@ -925,6 +1044,7 @@
                 }
             });
 
+            // 创建解锁分布图
             unlockChart = new Chart(unlockCtx, {
                 type: 'bar',
                 data: {
@@ -1095,6 +1215,8 @@
         // ================= UI辅助 =================
         function showLoading(message) {
             const overlay = document.getElementById('loadingOverlay');
+            const text = document.getElementById('loadingText');
+            text.textContent = message || '处理中...';
             overlay.style.display = 'flex';
         }
 
@@ -1119,13 +1241,18 @@
                 z-index: 10001;
                 animation: slideDown 0.3s ease;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                border: 1px solid rgba(255,255,255,0.2);
+                max-width: 80%;
+                text-align: center;
             `;
             toast.textContent = message;
             document.body.appendChild(toast);
 
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, 300);
             }, 3000);
         }
 
