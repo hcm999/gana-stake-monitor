@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>GANA 质押数据展示</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- ECharts CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #020617;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 50%, #000 100%);
+      color: var(--text);
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title span.badge {
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .time-range {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .btn.active {
+      background: var(--accent);
+      color: #020617;
+      border-color: var(--accent);
+    }
+    .card {
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 60%),
+                  linear-gradient(to bottom right, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+      margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .summary-item {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .summary-label {
+      color: var(--muted);
+    }
+    .summary-value {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    /* 未来可赎回卡片高亮 */
+    .summary-item.highlight {
+      background: rgba(34, 197, 94, 0.06);
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+    .summary-item.highlight .summary-value {
+      color: #4ade80;
+    }
+
+    #chart {
+      width: 100%;
+      height: 360px;
+    }
+    .table-wrapper {
+      max-height: 260px;
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(15, 23, 42, 0.9);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead {
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.98);
+      z-index: 1;
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: right;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.8);
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+    }
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.85);
+    }
+    .footer {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+    }
+    .admin-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      transition: all 0.15s ease;
+    }
+    .admin-link:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    @media (max-width: 768px) {
+      .card {
+        padding: 12px;
+      }
+      #chart {
+        height: 260px;
+      }
+      .header {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部 -->
+    <header class="header">
+      <div class="title">
+        GANA 质押数据展示
+        <span class="badge">每日质押量</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <a href="/admin.html" class="admin-link">👑 管理后台</a>
+        <div class="time-range" id="rangeButtons">
+          <button class="btn active" data-days="7">最近 7 天</button>
+          <button class="btn" data-days="30">最近 30 天</button>
+          <button class="btn" data-days="90">最近 90 天</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主卡片：图表 + summary -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">每日质押趋势</div>
+          <div class="card-subtitle">单位：USDT</div>
+        </div>
+        <div id="dateRangeLabel" class="card-subtitle"></div>
+      </div>
+
+      <div class="summary">
+        <div class="summary-item">
+          <span class="summary-label">累计新增质押：</span>
+          <span class="summary-value" id="sumTotal">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">仍在质押：</span>
+          <span class="summary-value" id="sumActive">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">数据点数：</span>
+          <span class="summary-value" id="pointCount">-</span>
+        </div>
+        <div class="summary-item highlight">
+          <span class="summary-label">未来 2 天可解押：</span>
+          <span class="summary-value" id="upcoming2Days">-</span>
+        </div>
+        <div class="summary-item highlight">
+          <span class="summary-label">未来 7 天可解押：</span>
+          <span class="summary-value" id="upcoming7Days">-</span>
+        </div>
+        <div class="summary-item highlight">
+          <span class="summary-label">未来 15 天可解押：</span>
+          <span class="summary-value" id="upcoming15Days">-</span>
+        </div>
+      </div>
+
+      <div id="chart"></div>
+    </section>
+
+    <!-- 明细表 -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-title">每日明细</div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>当天新增质押量</th>
+              <th>当前仍在质押</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- 动态填充 -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ===== 配置：API 地址（与管理端保持一致） =====
+    const API_BASE = '/api';  // 如果和管理端同域，就用这个
+    
+    // 格式化数字（保留 2 位小数）
+    function formatAmount(num) {
+      if (num == null) return '-';
+      const n = Number(num);
+      if (!Number.isFinite(n)) return '-';
+      return n.toFixed(2);
+    }
+
+    // ===== 从云端加载数据（与管理端相同的接口） =====
+    async function loadCloudData() {
+      try {
+        const response = await fetch(`${API_BASE}/`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          let cloudData = result.data;
+          if (typeof cloudData === 'string') {
+            try {
+              cloudData = JSON.parse(cloudData);
+            } catch (e) {}
+          }
+          
+          return {
+            records: cloudData.records || [],
+            allRecords: cloudData.allRecords || [],
+            stats: cloudData.stats || {}
+          };
+        }
+        throw new Error('加载失败');
+      } catch (error) {
+        console.error('加载云端数据失败:', error);
+        return null;
+      }
+    }
+
+    // ===== 处理数据，生成每日统计 =====
+    function processDailyStats(allRecords, days) {
+      if (!allRecords || allRecords.length === 0) return [];
+      
+      // 按日期分组统计
+      const dailyMap = new Map();
+      const activeMap = new Map();
+      
+      allRecords.forEach(record => {
+        // 从时间戳获取日期 YYYY-MM-DD
+        const date = new Date(record.stakeTime * 1000);
+        const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+        const amount = record.amount || 0;
+        
+        // 新增质押（所有记录都算）
+        dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + amount);
+        
+        // 仍在质押（只算未赎回的）
+        if (!record.isRedeemed) {
+          activeMap.set(dateStr, (activeMap.get(dateStr) || 0) + amount);
+        }
+      });
+      
+      // 转换为数组并排序
+      const allDates = Array.from(dailyMap.keys()).sort((a, b) => a.localeCompare(b));
+      
+      // 取最近 days 天
+      const recentDates = allDates.slice(-days);
+      
+      return recentDates.map(date => ({
+        stat_date: date,
+        new_stake_amount_token: dailyMap.get(date) || 0,
+        new_active_stake_amount_token: activeMap.get(date) || 0
+      }));
+    }
+
+    // ===== 计算未来可解押金额 =====
+    function calculateUpcomingUnlock(records, days) {
+      if (!records || records.length === 0) return 0;
+      
+      const nowSec = Math.floor(Date.now() / 1000);
+      const limit = days * 86400; // days 转换成秒
+      let total = 0;
+      
+      records.forEach(record => {
+        if (record.isRedeemed) return; // 已赎回的不算
+        
+        const stakeTime = record.stakeTime || 0;
+        const stakeIndex = record.stakeIndex || 0;
+        const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
+        const unlockTime = stakeTime + duration;
+        const remain = unlockTime - nowSec;
+        
+        if (remain <= limit) {
+          total += record.amount || 0;
+        }
+      });
+      
+      return total;
+    }
+
+    // ===== 渲染页面 =====
+    async function loadAndRender(days) {
+      try {
+        // 加载云端数据
+        const cloudData = await loadCloudData();
+        if (!cloudData) {
+          throw new Error('无法加载数据');
+        }
+        
+        const allRecords = cloudData.allRecords || [];
+        const stats = cloudData.stats || {};
+        
+        // 处理每日统计数据
+        const dailyRows = processDailyStats(allRecords, days);
+        
+        // 计算未来可解押
+        const upcoming2 = calculateUpcomingUnlock(allRecords, 2);
+        const upcoming7 = calculateUpcomingUnlock(allRecords, 7);
+        const upcoming15 = calculateUpcomingUnlock(allRecords, 15);
+        
+        // 更新界面
+        if (dailyRows.length > 0) {
+          dateRangeLabel.textContent = `${dailyRows[0].stat_date} ~ ${dailyRows[dailyRows.length - 1].stat_date}`;
+        } else {
+          dateRangeLabel.textContent = '无数据';
+        }
+        
+        updateSummaryAndTable(dailyRows);
+        updateChart(dailyRows);
+        
+        upcoming2DaysEl.textContent = formatAmount(upcoming2);
+        upcoming7DaysEl.textContent = formatAmount(upcoming7);
+        upcoming15DaysEl.textContent = formatAmount(upcoming15);
+        
+      } catch (err) {
+        console.error(err);
+        dateRangeLabel.textContent = '数据加载失败';
+        upcoming2DaysEl.textContent = '-';
+        upcoming7DaysEl.textContent = '-';
+        upcoming15DaysEl.textContent = '-';
+        sumTotalEl.textContent = '-';
+        sumActiveEl.textContent = '-';
+        pointCountEl.textContent = '0';
+        tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">加载失败</td></tr>';
+      }
+    }
+
+    // 更新统计和表格
+    function updateSummaryAndTable(rows) {
+      let sumTotal = 0;
+      let sumActive = 0;
+      tableBody.innerHTML = '';
+
+      rows.forEach(row => {
+        const total = Number(row.new_stake_amount_token || 0);
+        const active = Number(row.new_active_stake_amount_token || 0);
+        sumTotal += total;
+        sumActive += active;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.stat_date}</td>
+          <td>${formatAmount(total)}</td>
+          <td>${formatAmount(active)}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      sumTotalEl.textContent = formatAmount(sumTotal);
+      sumActiveEl.textContent = formatAmount(sumActive);
+      pointCountEl.textContent = rows.length.toString();
+    }
+
+    // 更新图表
+    function updateChart(rows) {
+      const dates = rows.map(r => r.stat_date);
+      const totalSeries = rows.map(r => Number(r.new_stake_amount_token || 0));
+      const activeSeries = rows.map(r => Number(r.new_active_stake_amount_token || 0));
+
+      const option = {
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(15,23,42,0.95)',
+          borderColor: '#1f2937',
+          textStyle: { color: '#e5e7eb' },
+          borderWidth: 1,
+          padding: 8,
+          formatter: params => {
+            const p0 = params[0];
+            const p1 = params[1];
+            return [
+              `<div>${p0.axisValue}</div>`,
+              `<div style="margin-top:4px;">新增质押：<span style="color:#22c55e;">${formatAmount(p0.data)}</span></div>`,
+              `<div>仍在质押：<span style="color:#38bdf8;">${formatAmount(p1.data)}</span></div>`
+            ].join('');
+          }
+        },
+        grid: {
+          left: 40,
+          right: 20,
+          top: 30,
+          bottom: 40
+        },
+        xAxis: {
+          type: 'category',
+          data: dates,
+          boundaryGap: false,
+          axisLine: { lineStyle: { color: '#4b5563' } },
+          axisLabel: { color: '#9ca3af' }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { lineStyle: { color: '#4b5563' } },
+          splitLine: { lineStyle: { color: 'rgba(55,65,81,0.5)' } },
+          axisLabel: { color: '#9ca3af' }
+        },
+        legend: {
+          data: ['新增质押', '仍在质押'],
+          top: 4,
+          right: 10,
+          textStyle: { color: '#9ca3af', fontSize: 11 },
+          itemWidth: 14,
+          itemHeight: 8
+        },
+        series: [
+          {
+            name: '新增质押',
+            type: 'line',
+            data: totalSeries,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 4,
+            areaStyle: {
+              color: 'rgba(34,197,94,0.18)'
+            },
+            lineStyle: {
+              width: 2
+            }
+          },
+          {
+            name: '仍在质押',
+            type: 'line',
+            data: activeSeries,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 4,
+            areaStyle: {
+              color: 'rgba(56,189,248,0.12)'
+            },
+            lineStyle: {
+              width: 2
+            }
+          }
+        ]
+      };
+
+      chart.setOption(option);
+    }
+
+    // DOM 元素
+    const rangeButtons = document.getElementById('rangeButtons');
+    const dateRangeLabel = document.getElementById('dateRangeLabel');
+    const sumTotalEl = document.getElementById('sumTotal');
+    const sumActiveEl = document.getElementById('sumActive');
+    const pointCountEl = document.getElementById('pointCount');
+    const upcoming2DaysEl = document.getElementById('upcoming2Days');
+    const upcoming7DaysEl = document.getElementById('upcoming7Days');
+    const upcoming15DaysEl = document.getElementById('upcoming15Days');
+    const tableBody = document.getElementById('tableBody');
+    
+    const chartDom = document.getElementById('chart');
+    const chart = echarts.init(chartDom);
+    window.addEventListener('resize', () => chart.resize());
+
+    // 绑定时间范围按钮
+    rangeButtons.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-days]');
+      if (!btn) return;
+      const days = Number(btn.getAttribute('data-days') || 7);
+
+      Array.from(rangeButtons.querySelectorAll('button')).forEach(b => {
+        b.classList.toggle('active', b === btn);
+      });
+
+      loadAndRender(days);
+    });
+
+    // 默认加载最近7天
+    loadAndRender(7);
+  </script>
+</body>
+</html>
