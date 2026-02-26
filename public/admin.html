@@ -756,6 +756,103 @@
         #dailyStatsBody td {
             font-size: 0.75rem;
         }
+        
+        /* 管理员登录弹窗样式 */
+        .admin-login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .admin-login-dialog {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 2px solid #f59e0b;
+            border-radius: 32px;
+            padding: 30px;
+            max-width: 400px;
+            width: 95%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+            animation: slideUp 0.4s ease;
+        }
+        
+        .admin-login-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .admin-login-input {
+            width: 100%;
+            padding: 14px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 30px;
+            color: #e2e8f0;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            margin-bottom: 20px;
+        }
+        
+        .admin-login-input:focus {
+            border-color: #f59e0b;
+        }
+        
+        .admin-login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .admin-login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+        }
+        
+        .admin-login-close {
+            width: 100%;
+            background: #334155;
+            border: 1px solid #475569;
+            padding: 14px;
+            border-radius: 40px;
+            color: #e2e8f0;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .admin-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid #fbbf24;
+            cursor: pointer;
+        }
+        
+        .admin-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -763,7 +860,7 @@
         <!-- 头部 -->
         <div class="header">
             <div>
-                <h1>🔍 GANA 质押管理端 <span class="admin-badge">管理员</span></h1>
+                <h1>🔍 GANA 质押管理端 <span class="admin-badge" onclick="showAdminLogin()">管理员登录</span></h1>
                 <div class="subtitle">全量查询 · 增量更新 · 上传到云端</div>
                 <div class="contract-address" id="stakingContractAddress">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</div>
             </div>
@@ -1032,7 +1129,8 @@
             RETRY_LIMIT: 3,
             RETRY_DELAY: 1000,
             STORAGE_KEY: 'stakeData',
-            API_BASE: '/api'
+            API_BASE: '/api',
+            ADMIN_PASSWORD: 'admin9120'  // 管理员密码
         };
 
         // USDT的ABI
@@ -1076,6 +1174,49 @@
         };
 
         let trendChart, pieChart, unlockChart;
+        
+        let isAdmin = false;  // 管理员状态
+
+        // ================= 管理员登录 =================
+        function showAdminLogin() {
+            const overlay = document.createElement('div');
+            overlay.className = 'admin-login-overlay';
+            overlay.id = 'adminLoginOverlay';
+            
+            overlay.innerHTML = `
+                <div class="admin-login-dialog">
+                    <div class="admin-login-title">👑 管理员登录</div>
+                    <input type="password" id="adminPasswordInput" class="admin-login-input" placeholder="请输入管理员密码">
+                    <button class="admin-login-btn" onclick="verifyAdmin()">登录</button>
+                    <button class="admin-login-close" onclick="closeAdminLogin()">关闭</button>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // 回车键登录
+            document.getElementById('adminPasswordInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') verifyAdmin();
+            });
+        }
+        
+        function closeAdminLogin() {
+            const overlay = document.getElementById('adminLoginOverlay');
+            if (overlay) overlay.remove();
+        }
+        
+        function verifyAdmin() {
+            const password = document.getElementById('adminPasswordInput').value;
+            if (password === CONFIG.ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.querySelector('.admin-badge').innerHTML = '👑 管理员已登录';
+                document.querySelector('.admin-badge').style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                closeAdminLogin();
+                alert('✅ 管理员登录成功');
+            } else {
+                alert('❌ 密码错误');
+            }
+        }
 
         // ================= 初始化 =================
         window.addEventListener('load', async () => {
@@ -1776,27 +1917,19 @@
             return result;
         }
 
-        // ================= 全量查询 =================
+        // ================= 全量查询（从原版复制）=================
         async function fullQuery() {
-            console.log('全量查询开始');
             if (!stakingContract) {
                 alert("❌ 合约未初始化");
                 return;
             }
             
-            if (isQuerying) {
-                console.log('正在查询中，请等待');
-                return;
-            }
+            if (isQuerying) return;
 
             const text = document.getElementById('addressList').value;
-            console.log('地址列表:', text);
-            
             const addresses = text.split('\n')
                 .map(l => l.trim())
                 .filter(l => l.startsWith('0x') && l.length === 42);
-            
-            console.log('解析到地址:', addresses.length, '个');
             
             if (addresses.length === 0) {
                 alert("❌ 没有有效地址");
@@ -1817,13 +1950,8 @@
             document.getElementById('incrementalBtn').disabled = true;
             document.getElementById('fullQueryBtn').disabled = true;
             document.getElementById('progressContainer').style.display = 'block';
-            
-            const progressText = document.getElementById('progressText');
-            if (progressText) {
-                progressText.innerHTML = '初始化查询...';
-            }
 
-            // 重置数据
+            // 重置所有数据
             queryResults = [];
             allStakeRecords = [];
             addressCache.clear();
@@ -1854,9 +1982,11 @@
             let totalActiveRecords = 0;
             let successCount = 0;
 
+            // 用于每日统计的临时存储
             const dailyStats = new Map();
             const activeDaily = new Map();
 
+            // 分批处理
             for (let i = 0; i < addresses.length; i += CONFIG.BATCH_SIZE) {
                 const batch = addresses.slice(i, i + CONFIG.BATCH_SIZE);
                 
@@ -1871,6 +2001,7 @@
                         allStakeRecords.push(...result.all);
                         totalActiveRecords += result.active.length;
                         
+                        // 更新每日统计
                         result.all.forEach(record => {
                             const dateStr = getDateStrFromTimestamp(record.stakeTime);
                             
@@ -1899,19 +2030,19 @@
 
                 const progress = Math.round((processed / addresses.length) * 100);
                 document.getElementById('progressFill').style.width = progress + '%';
-                
-                if (progressText) {
-                    progressText.innerHTML = 
-                        `查询中 ${processed}/${addresses.length} (成功 ${successCount}, 失败 ${failedAddresses.length}, 找到 ${totalActiveRecords} 条活跃记录)`;
-                }
+                document.getElementById('progressText').innerHTML = 
+                    `查询中 ${processed}/${addresses.length} (成功 ${successCount}, 失败 ${failedAddresses.length}, 找到 ${totalActiveRecords} 条活跃记录)`;
                 
                 updateStats();
                 
+                // 每批查询后稍微延迟，避免请求过快
                 await new Promise(r => setTimeout(r, 100));
             }
 
+            // 按时间倒序排序
             queryResults.sort((a, b) => b.stakeTime - a.stakeTime);
             
+            // 更新缓存
             queryResults.forEach(record => {
                 const key = `${record.address}_${record.stakeTime}`;
                 recordCache.set(key, record);
@@ -1921,16 +2052,14 @@
             renderDailyStats(dailyStats, activeDaily);
             updateStats();
 
+            // 保存到本地存储
             saveToStorage();
 
             let completeMsg = `✅ 完成: ${totalActiveRecords}条活跃记录`;
             if (failedAddresses.length > 0) {
                 completeMsg += `, ${failedAddresses.length}个地址查询失败`;
             }
-            
-            if (progressText) {
-                progressText.innerHTML = completeMsg;
-            }
+            document.getElementById('progressText').innerHTML = completeMsg;
             
             setTimeout(() => {
                 document.getElementById('incrementalBtn').disabled = false;
@@ -1940,27 +2069,19 @@
             }, 3000);
         }
 
-        // ================= 增量查询 =================
+        // ================= 增量查询（从原版复制）=================
         async function incrementalQuery() {
-            console.log('增量查询开始');
             if (!stakingContract) {
                 alert("❌ 合约未初始化");
                 return;
             }
             
-            if (isQuerying) {
-                console.log('正在查询中，请等待');
-                return;
-            }
+            if (isQuerying) return;
 
             const text = document.getElementById('addressList').value;
-            console.log('地址列表:', text);
-            
             const addresses = text.split('\n')
                 .map(l => l.trim())
                 .filter(l => l.startsWith('0x') && l.length === 42);
-            
-            console.log('解析到地址:', addresses.length, '个');
             
             if (addresses.length === 0) {
                 alert("❌ 没有有效地址");
@@ -1981,16 +2102,12 @@
             document.getElementById('incrementalBtn').disabled = true;
             document.getElementById('fullQueryBtn').disabled = true;
             document.getElementById('progressContainer').style.display = 'block';
-            
-            const progressText = document.getElementById('progressText');
-            if (progressText) {
-                progressText.innerHTML = '初始化增量更新...';
-            }
 
-            // 注意：不清空 allStakeRecords，保留历史记录
-            // 但需要重新构建 queryResults
-            const oldQueryResults = [...queryResults];
+            // ========== 修复点：清空旧数据，重新构建 ==========
+            // 清空查询结果，避免重复
             queryResults = [];
+            // 注意：allStakeRecords 不清空，因为需要保留所有历史记录用于每日统计
+            // 但需要重新构建 queryResults
             
             const now = Math.floor(Date.now() / 1000);
             const limits = {
@@ -1999,13 +2116,14 @@
                 '15d': now + 1296000
             };
 
-            // 获取LP池USDT余额
+            // 获取LP池USDT余额（每次增量更新时也获取最新余额）
             try {
                 const lpBalance = await getLPPoolBalance();
                 stats.lpWithdrawable = lpBalance;
                 console.log(`LP池可提现USDT: ${lpBalance}`);
             } catch (error) {
                 console.error("获取LP池USDT余额失败:", error);
+                // 如果获取失败，保留原来的值
             }
 
             let processed = 0;
@@ -2013,9 +2131,11 @@
             let redeemedRecords = 0;
             let successCount = 0;
 
+            // 用于每日统计的临时存储
             const dailyStats = new Map();
             const activeDaily = new Map();
 
+            // 分批处理
             for (let i = 0; i < addresses.length; i += CONFIG.BATCH_SIZE) {
                 const batch = addresses.slice(i, i + CONFIG.BATCH_SIZE);
                 
@@ -2030,6 +2150,7 @@
                             `stakeCount(${address})`
                         );
                         
+                        // 查询所有记录，检查状态变化
                         for (let j = 0; j < Number(currentCount); j++) {
                             try {
                                 const record = await callWithRetry(
@@ -2125,15 +2246,8 @@
                             lastUpdate: Date.now() 
                         });
                         
-                        // 添加到所有记录（避免重复）
-                        const existingKeys = new Set(allStakeRecords.map(r => `${r.address}_${r.stakeTime}`));
-                        addressRecords.forEach(record => {
-                            const key = `${record.address}_${record.stakeTime}`;
-                            if (!existingKeys.has(key)) {
-                                allStakeRecords.push(record);
-                                existingKeys.add(key);
-                            }
-                        });
+                        // 添加到所有记录
+                        allStakeRecords.push(...addressRecords);
                         
                         // 更新每日统计
                         addressRecords.forEach(record => {
@@ -2179,42 +2293,28 @@
                 processed += batch.length;
                 const progress = Math.min(100, Math.round((processed / addresses.length) * 100));
                 document.getElementById('progressFill').style.width = progress + '%';
-                
-                if (progressText) {
-                    progressText.innerHTML = 
-                        `增量更新: +${newRecords}新, -${redeemedRecords}赎回 (${processed}/${addresses.length})`;
-                }
+                document.getElementById('progressText').innerHTML = 
+                    `增量更新: +${newRecords}新, -${redeemedRecords}赎回 (${processed}/${addresses.length})`;
                 
                 updateStats();
                 
                 await new Promise(r => setTimeout(r, 100));
             }
 
-            // 合并旧记录和新记录，去重
-            const allRecordsMap = new Map();
-            [...oldQueryResults, ...queryResults].forEach(record => {
-                const key = `${record.address}_${record.stakeTime}`;
-                if (!allRecordsMap.has(key) || record.isNew) {
-                    allRecordsMap.set(key, record);
-                }
-            });
-            queryResults = Array.from(allRecordsMap.values());
-            
+            // 重新排序并渲染
             queryResults.sort((a, b) => b.stakeTime - a.stakeTime);
             renderResults(true);
             renderDailyStats(dailyStats, activeDaily);
             updateStats();
 
+            // 保存到本地存储
             saveToStorage();
 
             let completeMsg = `✅ 完成: +${newRecords}新, -${redeemedRecords}赎回`;
             if (failedAddresses.length > 0) {
                 completeMsg += `, ${failedAddresses.length}个地址查询失败`;
             }
-            
-            if (progressText) {
-                progressText.innerHTML = completeMsg;
-            }
+            document.getElementById('progressText').innerHTML = completeMsg;
             
             setTimeout(() => {
                 document.getElementById('incrementalBtn').disabled = false;
@@ -2854,6 +2954,29 @@
             setupToggle(configBtn, configPanel);
             setupToggle(addressBtn, addressInput);
         });
+
+        // 暴露全局函数
+        window.fullQuery = fullQuery;
+        window.incrementalQuery = incrementalQuery;
+        window.refreshLPPool = refreshLPPool;
+        window.loadCloudData = loadCloudData;
+        window.uploadToCloud = uploadToCloud;
+        window.resetQuery = resetQuery;
+        window.switchDataTab = switchDataTab;
+        window.setTrendRange = setTrendRange;
+        window.exportCSV = exportCSV;
+        window.exportDailyStats = exportDailyStats;
+        window.copyAddress = copyAddress;
+        window.addSampleAddresses = addSampleAddresses;
+        window.clearAddresses = clearAddresses;
+        window.loadLastQuery = loadLastQuery;
+        window.downloadQueryData = downloadQueryData;
+        window.importQueryData = importQueryData;
+        window.importAddressesFromExcel = importAddressesFromExcel;
+        window.updateDailyStartTime = updateDailyStartTime;
+        window.showAdminLogin = showAdminLogin;
+        window.verifyAdmin = verifyAdmin;
+        window.closeAdminLogin = closeAdminLogin;
     </script>
 </body>
 </html>
