@@ -834,20 +834,20 @@
             </div>
         </div>
 
-        <!-- 状态栏 - 新增 -->
-        <div class="status-bar">
-            <div class="last-update">
-                📅 云端数据: <span id="lastUpdateTime">未同步</span>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-cloud" onclick="loadCloudData()" id="refreshBtn">
-                    ☁️ 加载云端数据
-                </button>
-                <button class="btn-cloud" onclick="uploadToCloud()" id="uploadBtn">
-                    ⬆️ 上传到云端
-                </button>
-            </div>
-        </div>
+<!-- 状态栏 - 新增 -->
+<div class="status-bar">
+    <div class="last-update">
+        📅 云端数据: <span id="lastUpdateTime">未同步</span>
+    </div>
+    <div style="display: flex; gap: 6px;">
+        <button class="btn-cloud" onclick="loadCloudData()" id="refreshBtn" style="padding: 6px 12px; font-size: 0.75rem;">
+            ☁️ 加载
+        </button>
+        <button class="btn-cloud" onclick="uploadToCloud()" id="uploadBtn" style="padding: 6px 12px; font-size: 0.75rem;">
+            ⬆️ 上传
+        </button>
+    </div>
+</div>
 
         <!-- 统计卡片 - 第一行 -->
         <div class="stats-grid">
