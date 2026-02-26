@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>GANA质押数据展示端 · 手动刷新版</title>
+    <title>GANA质押数据展示端 · 轻量版</title>
     <!-- 引入 Bootstrap 用于快速布局 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- 引入 Chart.js 轻量图表库 -->
@@ -99,89 +99,6 @@
             white-space: nowrap;
         }
         
-        .badge-duration { 
-            padding: 3px 8px; 
-            border-radius: 16px; 
-            font-size: 0.7rem;
-            white-space: nowrap;
-            display: inline-block;
-            font-weight: 600;
-        }
-        
-        .badge-1d { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
-        .badge-15d { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
-        .badge-30d { background: linear-gradient(135deg, #ec4899, #db2777); color: white; }
-        
-        .table-container {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-radius: 16px;
-            padding: 12px;
-            border: 1px solid #334155;
-            margin-top: 16px;
-        }
-        
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin: 0 -12px;
-            padding: 0 12px;
-            width: calc(100% + 24px);
-            scroll-behavior: smooth;
-        }
-        
-        .table { 
-            color: #e2e8f0; 
-            font-size: 0.8rem; 
-            width: 100%;
-            min-width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .table thead th { 
-            border-bottom: 2px solid #334155; 
-            color: #94a3b8; 
-            font-size: 0.7rem; 
-            padding: 12px 4px;
-            text-align: center;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        
-        .table td { 
-            border-bottom: 1px solid #334155; 
-            padding: 10px 4px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        
-        .address-cell {
-            font-size: 0.75rem;
-            color: #60a5fa;
-            cursor: pointer;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .amount-cell {
-            font-size: 0.75rem;
-            color: #38bdf8;
-            font-weight: 600;
-        }
-        
-        .time-two-lines {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.4;
-            font-size: 0.7rem;
-        }
-        .time-date { color: #94a3b8; }
-        .time-clock { color: #38bdf8; }
-        
-        .status-unlocked { color: #4ade80; font-weight: 500; }
-        .status-locked { color: #f87171; font-weight: 500; }
-        
         .header {
             margin-bottom: 16px;
             padding-bottom: 12px;
@@ -241,12 +158,9 @@
             color: #e2e8f0;
             font-size: 0.8rem;
             cursor: pointer;
-            width: 100%;
             touch-action: manipulation;
             min-height: 44px;
         }
-        
-        @media (min-width: 768px) { .btn-export { width: auto; } }
         
         .stats-info {
             display: flex;
@@ -272,7 +186,6 @@
             margin-bottom: 15px;
             border-bottom: 1px solid #334155;
             padding-bottom: 10px;
-            flex-wrap: wrap;
         }
         .data-tab {
             background-color: transparent;
@@ -433,6 +346,7 @@
             gap: 16px;
             margin-top: 8px;
             font-size: 0.75rem;
+            flex-wrap: wrap;
         }
         .legend-item {
             display: flex;
@@ -445,7 +359,48 @@
             border-radius: 50%;
         }
         
-        #resultTableBody td.amount-cell { color: #38bdf8 !important; }
+        /* 每日统计表格样式 */
+        .table-container {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid #334155;
+            margin-top: 16px;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -12px;
+            padding: 0 12px;
+            width: calc(100% + 24px);
+        }
+        
+        .table { 
+            color: #e2e8f0; 
+            font-size: 0.8rem; 
+            width: 100%;
+            min-width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table thead th { 
+            border-bottom: 2px solid #334155; 
+            color: #94a3b8; 
+            font-size: 0.7rem; 
+            padding: 12px 4px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .table td { 
+            border-bottom: 1px solid #334155; 
+            padding: 10px 4px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
         #dailyStatsBody tr td:nth-child(2) { color: #38bdf8 !important; }
         #dailyStatsBody tr td:nth-child(3) { color: #4ade80 !important; }
         #dailyStatsBody tr td:nth-child(4) { color: #38bdf8 !important; }
@@ -475,7 +430,7 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* 授权弹窗样式 */
+        /* 授权弹窗样式 - 恢复完整支付功能 */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -537,6 +492,48 @@
         .day-option.active { background: #3b82f6; border-color: #60a5fa; }
         .day-option:active { transform: translateY(-1px); }
         
+        .btn-pay {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-pay:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-admin {
+            width: 100%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-close {
+            background: #ef4444;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 30px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
         @media (max-width: 768px) {
             .auth-dialog { padding: 16px; }
             .auth-tab { font-size: 0.8rem; padding: 10px 3px; }
@@ -552,6 +549,7 @@
             .stat-title { font-size: 0.55rem; }
             .range-selector { gap: 2px; }
             .range-btn { padding: 4px 8px; font-size: 0.7rem; }
+            .pie-legend { gap: 8px; font-size: 0.7rem; }
         }
     </style>
 </head>
@@ -571,7 +569,7 @@
             </div>
         </div>
 
-        <!-- 状态栏 - 只显示更新时间，没有自动刷新 -->
+        <!-- 状态栏 -->
         <div class="status-bar">
             <div class="last-update">
                 📅 云端数据: <span id="lastUpdateTime">加载中...</span>
@@ -599,40 +597,34 @@
             <div class="stat-card"><div class="stat-title">💰 LP池余额</div><div class="stat-value" id="lpWithdrawable">0.00</div><div class="stat-sub">USDT</div></div>
         </div>
 
-        <!-- 数据选项卡 -->
+        <!-- 数据选项卡 - 移除了"质押记录" -->
         <div class="data-tabs">
-            <span class="data-tab active" data-tab="records">📋 质押记录</span>
-            <span class="data-tab" data-tab="daily">📅 每日统计</span>
+            <span class="data-tab active" data-tab="daily">📅 每日统计</span>
             <span class="data-tab" data-tab="charts">📊 图表</span>
         </div>
 
-        <!-- 质押记录面板 -->
-        <div id="panel-records" class="data-panel active">
-            <div class="table-container">
-                <div class="stats-info">
-                    <h5>📊 质押记录 <span class="stats-badge" id="resultCount">0</span></h5>
-                    <button class="btn-export" onclick="exportCSV()">📥 导出CSV</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead><tr><th>#</th><th>地址</th><th>金额</th><th>周期</th><th>质押时间</th><th>解锁时间</th><th>剩余</th><th>状态</th></tr></thead>
-                        <tbody id="resultTableBody"><tr><td colspan="8" class="empty-state"><div>⏳ 加载云端数据中...</div></td></tr></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 每日统计面板 -->
-        <div id="panel-daily" class="data-panel">
+        <!-- 每日统计面板 (现在默认显示) -->
+        <div id="panel-daily" class="data-panel active">
             <div class="table-container">
                 <div class="stats-info">
                     <h5>📅 每日质押统计</h5>
-                    <button class="btn-export" onclick="exportDailyStats()">📥 导出每日统计</button>
+                    <button class="btn-export" onclick="exportDailyStats()">📥 导出CSV</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table">
-                        <thead><tr><th>日期</th><th>新增</th><th>仍在</th><th>1天</th><th>15天</th><th>30天</th></tr></thead>
-                        <tbody id="dailyStatsBody"><tr><td colspan="6" class="empty-state"><div>⏳ 加载云端数据中...</div></td></tr></tbody>
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>新增质押</th>
+                                <th>仍在质押</th>
+                                <th>1天新增</th>
+                                <th>15天新增</th>
+                                <th>30天新增</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyStatsBody">
+                            <tr><td colspan="6" class="empty-state">⏳ 加载云端数据中...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -641,10 +633,10 @@
         <!-- 图表面板 -->
         <div id="panel-charts" class="data-panel">
             <div class="chart-grid">
-                <!-- 每日新增质押趋势图 - 带范围选择 -->
+                <!-- 每日质押趋势图 - 带两条线和范围选择 -->
                 <div class="chart-card">
                     <div class="chart-header">
-                        <span class="chart-title">📈 每日新增质押趋势</span>
+                        <span class="chart-title">📈 每日质押趋势</span>
                         <div class="range-selector">
                             <button class="range-btn" onclick="setTrendRange(7)">7天</button>
                             <button class="range-btn" onclick="setTrendRange(15)">15天</button>
@@ -692,78 +684,262 @@
             API_BASE: '/api',
             AUTH_STORAGE_KEY: 'HYBRID_AUTH'
         };
-        
-        const STAKE_DURATIONS = {0: 86400, 1: 1296000, 2: 2592000};
-        const STAKE_DURATION_LABELS = {0: "1天", 1: "15天", 2: "30天"};
-        const STAKE_DURATION_CLASS = {0: "badge-1d", 1: "badge-15d", 2: "badge-30d"};
 
         // USDT的ABI
-        const USDT_ABI = [ "function balanceOf(address account) view returns (uint256)", "function decimals() view returns (uint8)" ];
+        const USDT_ABI = [
+            "function balanceOf(address account) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function transfer(address to, uint amount) returns (bool)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)"
+        ];
 
         // ================= 全局变量 =================
         let currentData = {
-            stats: { totalStaked:0, totalStaked1d:0, totalStaked15d:0, totalStaked30d:0, count1d:0, count15d:0, count30d:0, unlock2d:0, unlock7d:0, unlock15d:0, lpWithdrawable:0 },
-            records: [],
-            allRecords: [],
+            stats: { 
+                totalStaked: 0, 
+                totalStaked1d: 0, 
+                totalStaked15d: 0, 
+                totalStaked30d: 0, 
+                count1d: 0, 
+                count15d: 0, 
+                count30d: 0, 
+                unlock2d: 0, 
+                unlock7d: 0, 
+                unlock15d: 0, 
+                lpWithdrawable: 0 
+            },
+            allRecords: [], // 只需要所有记录用于每日统计和图表
             lastUpdate: null
         };
         let trendChart, pieChart, unlockChart;
         let trendRange = 30; // 默认30天
         let isLoading = false; // 防止重复刷新
+        let provider = null;
 
-        // ================= 授权系统 (精简) =================
+        // ================= 授权配置 =================
         const AUTH_CONFIG = {
             enabled: true,
             payment: {
                 usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
                 receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
-                prices: { 1:5, 7:20, 15:30, 30:55 }
+                prices: { 1: 5, 7: 20, 15: 30, 30: 55 }
             },
             admin: {
                 password: "admin9120",
-                addresses: [ "0xEa77e6769A87c394062919FBaEf4F3B71bC991a8", "0xBfC937728bc5F911c1446470A3627508A29dF808", "0x9728D428764F846E8DD62C34371db716A9228238", "0x211402E8cF1c4117Bbe17e61Ee62F875E31f100B", "0x54Aeb4faF845e90DDA95C1966Ea151d8c431212a", "0x67f7eb9384f2AF616bF2Ec100E19eA774B48aba8" ]
+                addresses: [
+                    "0xEa77e6769A87c394062919FBaEf4F3B71bC991a8",
+                    "0xBfC937728bc5F911c1446470A3627508A29dF808",
+                    "0x9728D428764F846E8DD62C34371db716A9228238",
+                    "0x211402E8cF1c4117Bbe17e61Ee62F875E31f100B",
+                    "0x54Aeb4faF845e90DDA95C1966Ea151d8c431212a",
+                    "0x67f7eb9384f2AF616bF2Ec100E19eA774B48aba8"
+                ]
             }
         };
 
+        // ================= 授权工具函数 =================
         const DateUtils = {
-            getExpireTimestamp(days) { const now = new Date(); now.setDate(now.getDate() + days); return now.getTime(); },
-            formatDate(timestamp) { if (!timestamp) return '永久'; const d=new Date(timestamp); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
-            isExpired(timestamp) { return timestamp? new Date().getTime() > timestamp : false; }
+            getExpireTimestamp(days) { 
+                const now = new Date(); 
+                now.setDate(now.getDate() + days); 
+                return now.getTime(); 
+            },
+            formatDate(timestamp) { 
+                if (!timestamp) return '永久'; 
+                const d = new Date(timestamp); 
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
+            },
+            getRemainingDays(timestamp) {
+                if (!timestamp) return '永久';
+                const diff = timestamp - new Date().getTime();
+                if (diff <= 0) return 0;
+                return Math.ceil(diff / (86400000));
+            },
+            isExpired(timestamp) { 
+                return timestamp ? new Date().getTime() > timestamp : false; 
+            }
         };
 
         const AuthManager = {
-            isAdminAddress(address) { return AUTH_CONFIG.admin.addresses.some(a=>a.toLowerCase()===address?.toLowerCase()); },
-            validateAdminPassword(pwd) { return pwd === AUTH_CONFIG.admin.password; },
+            isAdminAddress(address) { 
+                return AUTH_CONFIG.admin.addresses.some(a => a.toLowerCase() === address?.toLowerCase()); 
+            },
+            validateAdminPassword(pwd) { 
+                return pwd === AUTH_CONFIG.admin.password; 
+            },
             isAuthorized() {
                 try {
                     const auth = localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
                     if (!auth) return false;
                     const data = JSON.parse(auth);
                     if (data.type === 'admin') return true;
-                    if (data.expireTime && DateUtils.isExpired(data.expireTime)) { this.clearAuth(); return false; }
+                    if (data.expireTime && DateUtils.isExpired(data.expireTime)) {
+                        this.clearAuth();
+                        return false;
+                    }
                     return true;
-                } catch { return false; }
+                } catch { 
+                    return false; 
+                }
             },
             getAuthInfo() {
                 try {
                     const auth = localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
                     if (!auth) return null;
                     const data = JSON.parse(auth);
-                    if (data.type==='admin') return { ...data, type:'admin', remainingDays:'永久', displayName:'👑 管理员' };
-                    if (data.type==='payment') {
-                        if (DateUtils.isExpired(data.expireTime)) { this.clearAuth(); return null; }
-                        return { ...data, type:'payment', remainingDays:DateUtils.getRemainingDays?.(data.expireTime) || '?', displayName:'💎 支付用户' };
+                    if (data.type === 'admin') {
+                        return { ...data, type: 'admin', remainingDays: '永久', displayName: '👑 管理员' };
+                    }
+                    if (data.type === 'payment') {
+                        if (DateUtils.isExpired(data.expireTime)) {
+                            this.clearAuth();
+                            return null;
+                        }
+                        return {
+                            ...data,
+                            type: 'payment',
+                            remainingDays: DateUtils.getRemainingDays(data.expireTime),
+                            displayName: '💎 支付用户'
+                        };
                     }
                     return null;
-                } catch { return null; }
+                } catch { 
+                    return null; 
+                }
             },
-            saveAuth(type, data) { const auth={type, timestamp:new Date().toISOString(), ...data}; localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(auth)); return auth; },
-            saveAdminAuth(address, method) { return this.saveAuth('admin', { address, method, loginTime:Date.now() }); },
-            savePaymentAuth(address, days, amount, txHash) { return this.saveAuth('payment', { address, days, amount, txHash, payTime:Date.now(), expireTime:DateUtils.getExpireTimestamp(days) }); },
-            clearAuth() { localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY); }
+            saveAuth(type, data) { 
+                const auth = { type, timestamp: new Date().toISOString(), ...data }; 
+                localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(auth)); 
+                return auth; 
+            },
+            saveAdminAuth(address, method) { 
+                return this.saveAuth('admin', { address, method, loginTime: Date.now() }); 
+            },
+            savePaymentAuth(address, days, amount, txHash) { 
+                return this.saveAuth('payment', { 
+                    address, 
+                    days, 
+                    amount, 
+                    txHash, 
+                    payTime: Date.now(), 
+                    expireTime: DateUtils.getExpireTimestamp(days) 
+                }); 
+            },
+            clearAuth() { 
+                localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY); 
+            },
+            async checkWallet() {
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('NO_WALLET');
+                }
+                return true;
+            },
+            async connectWallet() {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    return accounts[0];
+                } catch (error) {
+                    console.error('连接钱包失败:', error);
+                    throw error;
+                }
+            },
+            async checkNetwork() {
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const targetChainId = '0x38'; // BSC主网
+                
+                if (chainId !== targetChainId) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: targetChainId }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: targetChainId,
+                                    chainName: 'Binance Smart Chain',
+                                    rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                                    nativeCurrency: {
+                                        name: 'BNB',
+                                        symbol: 'BNB',
+                                        decimals: 18
+                                    }
+                                }],
+                            });
+                        } else {
+                            throw switchError;
+                        }
+                    }
+                }
+            },
+            async checkUSDTBalance(address, provider, requiredAmount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    USDT_ABI,
+                    provider
+                );
+                const balance = await contract.balanceOf(address);
+                const decimals = await contract.decimals();
+                const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                
+                if (formattedBalance < requiredAmount) {
+                    throw new Error(`INSUFFICIENT_BALANCE:${formattedBalance}`);
+                }
+                
+                return true;
+            },
+            async checkAllowance(owner, provider, requiredAmount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    USDT_ABI,
+                    provider
+                );
+                const allowance = await contract.allowance(owner, AUTH_CONFIG.payment.receiveAddress);
+                const decimals = await contract.decimals();
+                const formattedAllowance = parseFloat(ethers.formatUnits(allowance, decimals));
+                
+                return formattedAllowance >= requiredAmount;
+            },
+            async approveUSDT(owner, provider, amount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    USDT_ABI,
+                    provider
+                );
+                const decimals = await contract.decimals();
+                const amountWei = ethers.parseUnits(amount.toString(), decimals);
+                
+                const signer = await provider.getSigner();
+                const contractWithSigner = contract.connect(signer);
+                
+                const tx = await contractWithSigner.approve(AUTH_CONFIG.payment.receiveAddress, amountWei);
+                await tx.wait();
+                
+                return tx.hash;
+            },
+            async sendUSDT(fromAddress, provider, amount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    USDT_ABI,
+                    provider
+                );
+                const decimals = await contract.decimals();
+                const amountWei = ethers.parseUnits(amount.toString(), decimals);
+                
+                const signer = await provider.getSigner();
+                const contractWithSigner = contract.connect(signer);
+                
+                const tx = await contractWithSigner.transfer(AUTH_CONFIG.payment.receiveAddress, amountWei);
+                await tx.wait();
+                
+                return tx.hash;
+            }
         };
 
-        // 显示授权弹窗
+        // ================= 授权弹窗 =================
         function showAuthDialog() {
             const old = document.getElementById('authOverlay');
             if (old) old.remove();
@@ -775,40 +951,98 @@
             const authInfo = AuthManager.getAuthInfo();
             overlay.innerHTML = `
                 <div class="auth-dialog">
-                    <div style="text-align:center;margin-bottom:20px;"><div style="font-size:48px;">🔐</div><h2 style="color:#e2e8f0;font-size:1.5rem;">授权验证</h2><p style="color:#94a3b8;">请选择授权方式</p></div>
-                    ${authInfo?`<div style="margin-bottom:20px;padding:12px;background:#2d3a4f;border-radius:16px;border:1px solid #10b981;"><div style="display:flex;align-items:center;gap:8px;"><span style="color:#10b981;">✅</span><span style="color:#10b981;">您已授权</span></div><div style="color:#94a3b8;">类型: ${authInfo.displayName}${authInfo.expireTime?'<br>有效期至: '+DateUtils.formatDate(authInfo.expireTime):''}</div></div>`:''}
-                    <div class="d-flex gap-2 mb-3 pb-2 border-bottom border-secondary">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <div style="font-size:48px;">🔐</div>
+                        <h2 style="color:#e2e8f0;font-size:1.5rem;">授权验证</h2>
+                        <p style="color:#94a3b8;">请选择授权方式</p>
+                    </div>
+                    ${authInfo ? `
+                        <div style="margin-bottom:20px;padding:12px;background:#2d3a4f;border-radius:16px;border:1px solid #10b981;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <span style="color:#10b981;">✅</span>
+                                <span style="color:#10b981;font-weight:600;">您已授权</span>
+                            </div>
+                            <div style="color:#94a3b8;font-size:0.85rem;">
+                                <div>类型: ${authInfo.displayName}</div>
+                                ${authInfo.expireTime ? `<div>有效期至: ${DateUtils.formatDate(authInfo.expireTime)}</div>` : ''}
+                                ${authInfo.remainingDays && authInfo.remainingDays !== '永久' ? `<div>剩余: ${authInfo.remainingDays} 天</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #334155;padding-bottom:15px;">
                         <button class="auth-tab active" data-tab="pay">💎 钱包支付</button>
                         <button class="auth-tab" data-tab="admin">👑 管理员</button>
                     </div>
+
                     <div id="payPanel" class="auth-panel">
-                        <div class="mb-3"><div class="text-secondary mb-2">选择授权天数:</div><div class="d-grid gap-1" style="grid-template-columns:repeat(4,1fr);">
-                            ${[1,7,15,30].map(d=>`<button class="day-option ${d===30?'active':''}" data-days="${d}"><span>${d}天</span><span>${AUTH_CONFIG.payment.prices[d]} USDT</span></button>`).join('')}
-                        </div></div>
-                        <div class="my-3 p-3 bg-dark rounded-3 border">
-                            <div class="d-flex justify-content-between"><span class="text-secondary">支付金额:</span><span class="text-info fw-bold"><span id="payAmount">${AUTH_CONFIG.payment.prices[30]}</span> USDT</span></div>
-                            <div class="d-flex justify-content-between"><span class="text-secondary">有效期至:</span><span id="expireDate" class="text-success fw-bold">${DateUtils.formatDate(DateUtils.getExpireTimestamp(30))}</span></div>
+                        <div style="margin:20px 0;">
+                            <div style="color:#94a3b8;margin-bottom:10px;font-size:0.85rem;">选择授权天数:</div>
+                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                                ${[1, 7, 15, 30].map(days => {
+                                    const isActive = days === 30 ? 'active' : '';
+                                    return `<button class="day-option ${isActive}" data-days="${days}">
+                                        <span>${days}天</span>
+                                        <span>${AUTH_CONFIG.payment.prices[days]} USDT</span>
+                                    </button>`;
+                                }).join('')}
+                            </div>
                         </div>
-                        <button id="payBtn" class="w-100 btn btn-primary py-3 rounded-pill fw-bold">💎 连接钱包并支付</button>
+
+                        <div style="margin:20px 0;padding:12px;background:#0f172a;border-radius:16px;border:1px solid #334155;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                <span style="color:#94a3b8;">支付金额:</span>
+                                <span style="color:#38bdf8;font-size:1.1rem;font-weight:bold;">
+                                    <span id="payAmount">${AUTH_CONFIG.payment.prices[30]}</span> USDT
+                                </span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;">
+                                <span style="color:#94a3b8;">有效期至:</span>
+                                <span id="expireDate" style="color:#4ade80;font-weight:600;">
+                                    ${DateUtils.formatDate(DateUtils.getExpireTimestamp(30))}
+                                </span>
+                            </div>
+                        </div>
+
+                        <button id="payBtn" class="btn-pay">
+                            💎 连接钱包并支付
+                        </button>
                     </div>
+
                     <div id="adminPanel" class="auth-panel" style="display:none;">
-                        <div class="my-3">
-                            <input type="password" id="adminPassword" placeholder="请输入管理员密码" class="w-100 p-3 bg-dark border-2 rounded-pill text-center text-white mb-3" style="border-color:#334155;">
-                            <button id="adminBtn" class="w-100 btn py-3 rounded-pill fw-bold" style="background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:white;">👑 管理员登录</button>
+                        <div style="margin:20px 0;">
+                            <input type="password" id="adminPassword" placeholder="请输入管理员密码" 
+                                style="width:100%;padding:14px;background:#0f172a;border:2px solid #334155;border-radius:30px;color:#e2e8f0;font-size:1rem;text-align:center;outline:none;margin-bottom:15px;">
+                            
+                            <button id="adminBtn" class="btn-admin">
+                                👑 管理员登录
+                            </button>
                         </div>
-                        <div class="mt-3 p-3 bg-dark rounded-3"><div class="text-secondary small d-flex align-items-center gap-2"><span>ℹ️</span><span>请联系管理员获取密码</span></div></div>
+
+                        <div style="margin-top:15px;padding:10px;background:#1e293b;border-radius:16px;">
+                            <div style="color:#94a3b8;font-size:0.8rem;display:flex;align-items:center;gap:5px;">
+                                <span>ℹ️</span>
+                                <span>请联系管理员获取密码</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mt-4 text-center"><button id="closeBtn" class="btn btn-danger px-5 py-2 rounded-pill">关闭</button></div>
+
+                    <div style="margin-top:20px;text-align:center;">
+                        <button id="closeBtn" class="btn-close">
+                            关闭
+                        </button>
+                    </div>
                 </div>
             `;
 
             document.body.appendChild(overlay);
 
-            // 事件委托处理弹窗内的点击
+            let currentDays = 30;
+
+            // 选项卡切换
             overlay.addEventListener('click', (e) => {
                 const target = e.target;
                 
-                // 选项卡切换
                 if (target.classList.contains('auth-tab')) {
                     document.querySelectorAll('.auth-tab').forEach(t => {
                         t.classList.remove('active');
@@ -834,9 +1068,9 @@
                     btn.classList.add('active');
                     btn.style.background = '#3b82f6';
                     
-                    const days = parseInt(btn.dataset.days);
-                    document.getElementById('payAmount').textContent = AUTH_CONFIG.payment.prices[days];
-                    document.getElementById('expireDate').textContent = DateUtils.formatDate(DateUtils.getExpireTimestamp(days));
+                    currentDays = parseInt(btn.dataset.days);
+                    document.getElementById('payAmount').textContent = AUTH_CONFIG.payment.prices[currentDays];
+                    document.getElementById('expireDate').textContent = DateUtils.formatDate(DateUtils.getExpireTimestamp(currentDays));
                 }
                 
                 // 关闭按钮
@@ -850,19 +1084,76 @@
 
             // 支付按钮
             document.getElementById('payBtn').addEventListener('click', async () => {
-                alert('支付功能需连接钱包，演示版简化处理');
-                // 实际项目中需要完整实现支付逻辑
-                const authData = AuthManager.savePaymentAuth('demo_address', 30, 55, '0x...');
-                document.body.removeChild(overlay);
-                showSuccessToast('✅ 授权成功！');
-                showAuthBadge(authData);
-                checkAuthAndLoad();
+                const btn = document.getElementById('payBtn');
+                try {
+                    btn.disabled = true;
+                    btn.textContent = '支付处理中...';
+
+                    await AuthManager.checkWallet();
+                    await AuthManager.checkNetwork();
+
+                    const address = await AuthManager.connectWallet();
+
+                    // 检查是否是管理员地址（免支付）
+                    if (AuthManager.isAdminAddress(address)) {
+                        const authData = AuthManager.saveAdminAuth(address, 'address');
+                        document.body.removeChild(overlay);
+                        showSuccessToast('👑 管理员地址登录成功');
+                        showAuthBadge(authData);
+                        checkAuthAndLoad();
+                        return;
+                    }
+
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    
+                    const requiredAmount = AUTH_CONFIG.payment.prices[currentDays];
+                    await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
+
+                    // 检查授权
+                    const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
+                    
+                    if (!hasAllowance) {
+                        btn.textContent = '授权中...';
+                        await AuthManager.approveUSDT(address, provider, requiredAmount);
+                    }
+
+                    btn.textContent = '支付中...';
+                    const txHash = await AuthManager.sendUSDT(address, provider, requiredAmount);
+
+                    const authData = AuthManager.savePaymentAuth(address, currentDays, requiredAmount, txHash);
+
+                    document.body.removeChild(overlay);
+                    showSuccessToast(`✅ 授权成功！有效期至：${DateUtils.formatDate(authData.expireTime)}`);
+                    showAuthBadge(authData);
+                    checkAuthAndLoad();
+
+                } catch (error) {
+                    console.error('支付错误:', error);
+                    
+                    let errorMsg = '❌ 授权失败：';
+                    if (error.message === 'NO_WALLET') {
+                        errorMsg += '未安装钱包';
+                        if (confirm('未安装MetaMask，是否前往安装？')) {
+                            window.open('https://metamask.io/download/', '_blank');
+                        }
+                    } else if (error.message.includes('INSUFFICIENT_BALANCE')) {
+                        const balance = error.message.split(':')[1];
+                        errorMsg = `❌ USDT余额不足 (当前: ${balance} USDT)`;
+                    } else {
+                        errorMsg += error.message || '未知错误';
+                    }
+                    
+                    alert(errorMsg);
+                    btn.disabled = false;
+                    btn.textContent = '💎 连接钱包并支付';
+                }
             });
 
             // 管理员按钮
             document.getElementById('adminBtn').addEventListener('click', () => {
-                const pwd = document.getElementById('adminPassword').value;
-                if (AuthManager.validateAdminPassword(pwd)) {
+                const password = document.getElementById('adminPassword').value.trim();
+                
+                if (AuthManager.validateAdminPassword(password)) {
                     const authData = AuthManager.saveAdminAuth('password', 'password');
                     document.body.removeChild(overlay);
                     showSuccessToast('👑 管理员登录成功');
@@ -870,6 +1161,13 @@
                     checkAuthAndLoad();
                 } else {
                     alert('❌ 管理员密码错误');
+                }
+            });
+
+            // 回车键
+            document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('adminBtn').click();
                 }
             });
         }
@@ -907,13 +1205,17 @@
 
             const badge = document.createElement('div');
             badge.id = 'authBadge';
-            const bg = authData.type === 'admin' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #10b981, #059669)';
+            const bgColor = authData.type === 'admin' 
+                ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
+                : 'linear-gradient(135deg, #10b981, #059669)';
+            const borderColor = authData.type === 'admin' ? '#fbbf24' : '#34d399';
+            
             badge.style.cssText = `
                 position: fixed;
                 top: 10px;
                 right: 10px;
-                background: ${bg};
-                border: 1px solid ${authData.type === 'admin' ? '#fbbf24' : '#34d399'};
+                background: ${bgColor};
+                border: 1px solid ${borderColor};
                 color: white;
                 padding: 6px 12px;
                 border-radius: 30px;
@@ -926,13 +1228,19 @@
                 align-items: center;
                 gap: 6px;
             `;
-            badge.innerHTML = `<span>${authData.type === 'admin' ? '👑' : '💎'}</span><span>${authData.type === 'admin' ? '管理员' : '支付用户'}</span>`;
+            
+            badge.innerHTML = `
+                <span>${authData.type === 'admin' ? '👑' : '💎'}</span>
+                <span>${authData.type === 'admin' ? '管理员' : `支付用户${authData.remainingDays && authData.remainingDays !== '永久' ? `(${authData.remainingDays}天)` : ''}`}</span>
+            `;
+            
             badge.addEventListener('click', () => {
                 if (confirm('是否清除授权？')) {
                     AuthManager.clearAuth();
                     location.reload();
                 }
             });
+            
             document.body.appendChild(badge);
         }
 
@@ -1025,16 +1333,26 @@
                         try { cloudData = JSON.parse(cloudData); } catch (e) {}
                     }
                     
-                    if (cloudData?.records) currentData.records = cloudData.records;
-                    if (cloudData?.allRecords) currentData.allRecords = cloudData.allRecords;
-                    if (cloudData?.stats) currentData.stats = cloudData.stats;
+                    if (cloudData?.stats) {
+                        currentData.stats = cloudData.stats;
+                    }
+                    
+                    if (cloudData?.allRecords) {
+                        currentData.allRecords = cloudData.allRecords;
+                    } else if (cloudData?.records) {
+                        // 如果没有allRecords，从records计算
+                        currentData.allRecords = cloudData.records;
+                    }
+                    
                     if (cloudData?.lastUpdate) {
                         currentData.lastUpdate = cloudData.lastUpdate;
                         updateLastUpdateTime(cloudData.lastUpdate);
                     }
                     
+                    // 重新计算统计数据（确保一致性）
+                    calculateStatsFromRecords();
+                    
                     renderStats();
-                    renderRecords();
                     renderDailyStats();
                     updateCharts();
                     
@@ -1051,6 +1369,51 @@
                 }
                 if (showLoadingOverlay) hideLoading();
             }
+        }
+
+        function calculateStatsFromRecords() {
+            const records = currentData.allRecords || [];
+            const stats = {
+                totalStaked: 0,
+                totalStaked1d: 0,
+                totalStaked15d: 0,
+                totalStaked30d: 0,
+                count1d: 0,
+                count15d: 0,
+                count30d: 0,
+                unlock2d: 0,
+                unlock7d: 0,
+                unlock15d: 0,
+                lpWithdrawable: currentData.stats?.lpWithdrawable || 0
+            };
+            
+            const nowSec = Math.floor(Date.now() / 1000);
+            
+            records.forEach(record => {
+                if (record.isRedeemed) return; // 只计算未赎回的
+                
+                stats.totalStaked += record.amount;
+                
+                if (record.stakeIndex === 0) {
+                    stats.totalStaked1d += record.amount;
+                    stats.count1d++;
+                } else if (record.stakeIndex === 1) {
+                    stats.totalStaked15d += record.amount;
+                    stats.count15d++;
+                } else if (record.stakeIndex === 2) {
+                    stats.totalStaked30d += record.amount;
+                    stats.count30d++;
+                }
+                
+                const unlockTime = record.stakeTime + (record.stakeIndex === 0 ? 86400 : record.stakeIndex === 1 ? 1296000 : 2592000);
+                const remain = unlockTime - nowSec;
+                
+                if (remain <= 172800) stats.unlock2d += record.amount;
+                else if (remain <= 604800) stats.unlock7d += record.amount;
+                else if (remain <= 1296000) stats.unlock15d += record.amount;
+            });
+            
+            currentData.stats = stats;
         }
 
         function updateLastUpdateTime(timestamp) {
@@ -1074,38 +1437,6 @@
             document.getElementById('count1d').innerText = stats.count1d || 0;
             document.getElementById('count15d').innerText = stats.count15d || 0;
             document.getElementById('count30d').innerText = stats.count30d || 0;
-            
-            const recordCount = (stats.count1d || 0) + (stats.count15d || 0) + (stats.count30d || 0);
-            document.getElementById('resultCount').innerText = recordCount;
-        }
-
-        function renderRecords() {
-            const tbody = document.getElementById('resultTableBody');
-            const records = currentData.records || [];
-            
-            if (records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">📭 暂无质押记录</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = records.map((r, i) => {
-                const stake = formatStakeTime(r.stakeTime);
-                const unlock = formatStakeTime(r.unlockTime);
-                const status = r.timeRemaining <= 0 ? '可赎回' : '锁仓';
-                const statusClass = r.timeRemaining <= 0 ? 'status-unlocked' : 'status-locked';
-                const timeText = r.timeRemaining <= 0 ? '已解锁' : formatTimeRemaining(r.timeRemaining);
-                
-                return `<tr>
-                    <td>${i+1}</td>
-                    <td class="address-cell" title="${r.address}" onclick="copyAddress('${r.address}')">${shortenAddress(r.address)}</td>
-                    <td class="amount-cell">${r.amount.toFixed(2)}</td>
-                    <td><span class="badge-duration ${STAKE_DURATION_CLASS[r.stakeIndex]}">${STAKE_DURATION_LABELS[r.stakeIndex]}</span></td>
-                    <td><div class="time-two-lines"><span class="time-date">${stake.date}</span><span class="time-clock">${stake.time}</span></div></td>
-                    <td><div class="time-two-lines"><span class="time-date">${unlock.date}</span><span class="time-clock">${unlock.time}</span></div></td>
-                    <td class="${statusClass}">${timeText}</td>
-                    <td class="${statusClass}">${status}</td>
-                </tr>`;
-            }).join('');
         }
 
         function renderDailyStats() {
@@ -1123,7 +1454,11 @@
                 const dateStr = getDateStrFromTimestamp(record.stakeTime);
                 
                 if (!dailyMap.has(dateStr)) {
-                    dailyMap.set(dateStr, { newStake:0, byPool:{0:0,1:0,2:0}, count:{0:0,1:0,2:0} });
+                    dailyMap.set(dateStr, {
+                        newStake: 0,
+                        byPool: {0: 0, 1: 0, 2: 0},
+                        count: {0: 0, 1: 0, 2: 0}
+                    });
                 }
                 
                 const dayData = dailyMap.get(dateStr);
@@ -1132,7 +1467,9 @@
                 dayData.count[record.stakeIndex]++;
                 
                 if (!record.isRedeemed) {
-                    if (!activeMap.has(dateStr)) activeMap.set(dateStr, 0);
+                    if (!activeMap.has(dateStr)) {
+                        activeMap.set(dateStr, 0);
+                    }
                     activeMap.set(dateStr, activeMap.get(dateStr) + record.amount);
                 }
             });
@@ -1167,7 +1504,6 @@
         // ================= 图表相关函数 =================
         function setTrendRange(days) {
             trendRange = days;
-            // 更新按钮状态
             document.querySelectorAll('.range-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.textContent.includes(days + '天')) {
@@ -1190,15 +1526,26 @@
                 return;
             }
 
-            const dailyMap = new Map();
+            const dailyMap = new Map();      // 新增质押
+            const activeMap = new Map();     // 仍在质押
+            
             allRecords.forEach(record => {
                 const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                
+                // 新增质押（所有记录都算）
                 dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + record.amount);
+                
+                // 仍在质押（只算未赎回的）
+                if (!record.isRedeemed) {
+                    activeMap.set(dateStr, (activeMap.get(dateStr) || 0) + record.amount);
+                }
             });
 
             const allDates = Array.from(dailyMap.keys()).sort((a,b) => a.localeCompare(b));
             const recentDates = allDates.slice(-trendRange);
-            const trendData = recentDates.map(d => dailyMap.get(d) || 0);
+            
+            const newData = recentDates.map(d => dailyMap.get(d) || 0);
+            const activeData = recentDates.map(d => activeMap.get(d) || 0);
 
             const ctx = document.getElementById('trendChart')?.getContext('2d');
             if (!ctx) return;
@@ -1209,29 +1556,57 @@
                 type: 'line',
                 data: {
                     labels: recentDates,
-                    datasets: [{
-                        label: '新增质押 (USDT)',
-                        data: trendData,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59,130,246,0.1)',
-                        tension: 0.2,
-                        fill: true
-                    }]
+                    datasets: [
+                        {
+                            label: '新增质押',
+                            data: newData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.1)',
+                            tension: 0.2,
+                            fill: true
+                        },
+                        {
+                            label: '仍在质押',
+                            data: activeData,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74,222,128,0.1)',
+                            tension: 0.2,
+                            fill: true
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: { 
-                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                        x: { ticks: { color: '#94a3b8', maxRotation: 45 } } 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#334155' }, 
+                            ticks: { color: '#94a3b8' } 
+                        },
+                        x: { 
+                            ticks: { color: '#94a3b8', maxRotation: 45 } 
+                        } 
                     },
-                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                    plugins: { 
+                        legend: { 
+                            labels: { color: '#e2e8f0' } 
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    return `${context.dataset.label}: ${context.raw.toFixed(2)} USDT`;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
 
         function updatePieAndUnlockCharts() {
-            const records = currentData.records || [];
+            const records = currentData.allRecords?.filter(r => !r.isRedeemed) || [];
+            
             if (records.length === 0) {
                 if (pieChart) pieChart.destroy();
                 if (unlockChart) unlockChart.destroy();
@@ -1255,16 +1630,28 @@
 
             // 更新图例（带百分比）
             document.getElementById('pieLegend').innerHTML = `
-                <div class="legend-item"><span class="legend-color" style="background:#3b82f6;"></span>1天: ${sum1d.toFixed(2)} (${p1d}%)</div>
-                <div class="legend-item"><span class="legend-color" style="background:#8b5cf6;"></span>15天: ${sum15d.toFixed(2)} (${p15d}%)</div>
-                <div class="legend-item"><span class="legend-color" style="background:#ec4899;"></span>30天: ${sum30d.toFixed(2)} (${p30d}%)</div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background:#3b82f6;"></span>
+                    1天: ${sum1d.toFixed(2)} (${p1d}%)
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background:#8b5cf6;"></span>
+                    15天: ${sum15d.toFixed(2)} (${p15d}%)
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background:#ec4899;"></span>
+                    30天: ${sum30d.toFixed(2)} (${p30d}%)
+                </div>
             `;
 
             // 计算解锁分布
-            let u0_2=0, u2_7=0, u7_15=0, u15_25=0, u25p=0;
+            let u0_2 = 0, u2_7 = 0, u7_15 = 0, u15_25 = 0, u25p = 0;
             const nowSec = Math.floor(Date.now() / 1000);
+            
             records.forEach(r => {
-                const remain = r.unlockTime - nowSec;
+                const unlockTime = r.stakeTime + (r.stakeIndex === 0 ? 86400 : r.stakeIndex === 1 ? 1296000 : 2592000);
+                const remain = unlockTime - nowSec;
+                
                 if (remain <= 172800) u0_2 += r.amount;
                 else if (remain <= 604800) u2_7 += r.amount;
                 else if (remain <= 1296000) u7_15 += r.amount;
@@ -1291,7 +1678,7 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: { 
-                            legend: { display: false }, // 隐藏默认图例，使用自定义图例
+                            legend: { display: false },
                             tooltip: {
                                 callbacks: {
                                     label: (context) => {
@@ -1325,84 +1712,32 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: { 
-                            y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                            x: { ticks: { color: '#94a3b8' } } 
+                            y: { 
+                                beginAtZero: true, 
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            x: { 
+                                ticks: { color: '#94a3b8' } 
+                            } 
                         },
-                        plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                        plugins: { 
+                            legend: { 
+                                labels: { color: '#e2e8f0' } 
+                            } 
+                        }
                     }
                 });
             }
         }
 
         // ================= 工具函数 =================
-        function formatTimeRemaining(seconds) {
-            if (seconds <= 0) return "已解锁";
-            const days = Math.floor(seconds / 86400);
-            const hours = Math.floor((seconds % 86400) / 3600);
-            if (days > 0) return `${days}d${hours}h`;
-            return `${hours}h${Math.floor((seconds % 3600) / 60)}m`;
-        }
-
-        function formatStakeTime(timestamp) {
-            try {
-                const d = new Date(timestamp * 1000);
-                return {
-                    date: `${d.getMonth()+1}/${d.getDate()}`,
-                    time: d.toLocaleTimeString('zh-CN', {hour12: false}).slice(0,5)
-                };
-            } catch {
-                return {date: '-', time: '-'};
-            }
-        }
-
         function getDateStrFromTimestamp(timestamp) {
             const date = new Date(timestamp * 1000);
             const year = date.getUTCFullYear();
             const month = String(date.getUTCMonth() + 1).padStart(2, '0');
             const day = String(date.getUTCDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
-        }
-
-        function shortenAddress(addr) {
-            return addr ? addr.slice(0, 6) + '…' + addr.slice(-4) : '';
-        }
-
-        function copyAddress(address) {
-            navigator.clipboard.writeText(address);
-            showSuccessToast('地址已复制');
-        }
-
-        function switchDataTab(tab) {
-            document.querySelectorAll('.data-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.data-panel').forEach(p => p.classList.remove('active'));
-            
-            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-            document.getElementById(`panel-${tab}`).classList.add('active');
-
-            if (tab === 'charts') {
-                setTimeout(() => updateCharts(), 50); // 延迟一点点让DOM准备好
-            }
-        }
-
-        function exportCSV() {
-            const records = currentData.records || [];
-            if (records.length === 0) return alert("没有数据");
-
-            const headers = ['序号', '地址', '金额', '周期', '质押时间', '解锁时间', '剩余时间', '状态'];
-            const rows = records.map((r, i) => {
-                const stakeTime = new Date(r.stakeTime * 1000).toLocaleString();
-                const unlockTime = new Date(r.unlockTime * 1000).toLocaleString();
-                const status = r.timeRemaining <= 0 ? '可赎回' : '锁仓';
-                const remaining = r.timeRemaining <= 0 ? '已解锁' : formatTimeRemaining(r.timeRemaining);
-                return [i+1, r.address, r.amount.toFixed(2), STAKE_DURATION_LABELS[r.stakeIndex], stakeTime, unlockTime, remaining, status];
-            });
-
-            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `质押数据_${new Date().toLocaleDateString()}.csv`;
-            link.click();
         }
 
         function exportDailyStats() {
@@ -1431,7 +1766,14 @@
 
             const headers = ['日期', '新增质押', '仍在质押', '1天新增', '15天新增', '30天新增'];
             const rows = Array.from(dailyMap.entries())
-                .map(([date, data]) => [date, data.newStake.toFixed(2), (activeMap.get(date) || 0).toFixed(2), data.new1d.toFixed(2), data.new15d.toFixed(2), data.new30d.toFixed(2)])
+                .map(([date, data]) => [
+                    date,
+                    data.newStake.toFixed(2),
+                    (activeMap.get(date) || 0).toFixed(2),
+                    data.new1d.toFixed(2),
+                    data.new15d.toFixed(2),
+                    data.new30d.toFixed(2)
+                ])
                 .sort((a, b) => b[0].localeCompare(a[0]));
 
             const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -1452,11 +1794,23 @@
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
+        function switchDataTab(tab) {
+            document.querySelectorAll('.data-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.data-panel').forEach(p => p.classList.remove('active'));
+            
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById(`panel-${tab}`).classList.add('active');
+
+            if (tab === 'charts') {
+                setTimeout(() => updateCharts(), 50);
+            }
+        }
+
         // ================= 初始化 =================
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
             
-            // 检查授权并加载数据（只加载一次）
+            // 检查授权并加载数据
             checkAuthAndLoad();
             
             // 选项卡点击事件委托
@@ -1473,9 +1827,7 @@
         window.handleManualRefresh = handleManualRefresh;
         window.refreshLPPool = refreshLPPool;
         window.setTrendRange = setTrendRange;
-        window.exportCSV = exportCSV;
         window.exportDailyStats = exportDailyStats;
-        window.copyAddress = copyAddress;
         window.switchDataTab = switchDataTab;
     </script>
 </body>
