@@ -283,13 +283,13 @@
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 30px;
-            padding: 12px 16px;
+            padding: 10px 16px;
             margin: 20px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
         }
         
         .last-update { color: #94a3b8; font-size: 0.8rem; }
@@ -298,15 +298,20 @@
         .btn-refresh {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border: none;
-            padding: 10px 16px;
+            padding: 8px 16px;
             border-radius: 30px;
             color: white;
             font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             touch-action: manipulation;
-            min-height: 44px;
+            min-height: 40px;
             min-width: 100px;
+            transition: all 0.2s;
+        }
+        
+        .btn-refresh:active {
+            transform: scale(0.96);
         }
         
         .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -587,9 +592,12 @@
             <div class="last-update">
                 📅 云端数据: <span id="lastUpdateTime">加载中...</span>
             </div>
-            <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
-                <button class="btn-refresh" onclick="handleManualRefresh()" id="refreshBtn">
-                    🔄 刷新
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn-lp-small" onclick="refreshLPPool()" id="refreshLPBtn" style="padding: 8px 12px; font-size: 0.75rem; min-width: 90px;">
+            💰 刷新LP池
+        </button>
+        <button class="btn-refresh" onclick="handleManualRefresh()" id="refreshBtn" style="padding: 8px 16px; font-size: 0.8rem; min-width: 100px;">
+            🔄 刷新
                 </button>
             </div>
         </div>
