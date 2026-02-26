@@ -771,8 +771,8 @@
 
         <!-- 数据选项卡 -->
         <div class="data-tabs">
-            <span class="data-tab active" onclick="switchDataTab('records')" id="tab-records">📋 质押</span>
-            <span class="data-tab" onclick="switchDataTab('daily')" id="tab-daily">📅 每日</span>
+            <span class="data-tab active" onclick="switchDataTab('records')" id="tab-records">📋 质押记录</span>
+            <span class="data-tab" onclick="switchDataTab('daily')" id="tab-daily">📅 每日统计</span>
             <span class="data-tab" onclick="switchDataTab('charts')" id="tab-charts">📊 图表</span>
         </div>
 
@@ -818,7 +818,7 @@
                 <div class="stats-info">
                     <h5>📅 每日质押统计</h5>
                     <button class="btn-export" onclick="exportDailyStats()">
-                        📥 导出每日
+                        📥 导出每日统计
                     </button>
                 </div>
                 
@@ -1967,7 +1967,7 @@
                 const now = new Date();
                 const diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
                 
-                let date = diff === 0 ? '今天' : diff === 1 ? '昨天' : `${d.getMonth()+1}/${d.getDate()}`;
+                let date = `${d.getMonth()+1}/${d.getDate()}`;
                 let time = d.toLocaleTimeString('zh-CN', {hour12: false}).slice(0,5);
                 
                 return {date, time};
