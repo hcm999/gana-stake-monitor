@@ -6,7 +6,15 @@
       "use": "@vercel/node"
     },
     {
-      "src": "public/**/*",
+      "src": "public/**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "public/**/*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "public/**/*.js",
       "use": "@vercel/static"
     }
   ],
@@ -20,8 +28,12 @@
       "dest": "/public/admin.html"
     },
     {
-      "src": "/(.*)",
+      "src": "/",
       "dest": "/public/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
   ],
   "headers": [
