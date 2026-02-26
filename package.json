@@ -1,0 +1,15 @@
+{
+  "name": "gana-staking-monitor",
+  "version": "2.0.0",
+  "description": "GANA Staking Data Monitor - Admin + Viewer",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "dependencies": {
+    "ethers": "^6.7.0"
+  }
+}
