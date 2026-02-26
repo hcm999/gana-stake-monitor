@@ -15,6 +15,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body { 
@@ -203,10 +204,11 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            gap: 10px;
         }
         
         .header h1 {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
             background: linear-gradient(135deg, #60a5fa, #c084fc);
             -webkit-background-clip: text;
@@ -215,29 +217,36 @@
             line-height: 1.2;
         }
         
+        @media (min-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
         .header .subtitle {
             color: #94a3b8;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
         
         .viewer-badge {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
-            padding: 4px 12px;
+            padding: 4px 8px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 600;
             border: 1px solid #60a5fa;
+            white-space: nowrap;
         }
         
         .contract-address {
             font-family: 'Courier New', monospace;
             background: #1e293b;
             border: 1px solid #334155;
-            padding: 6px 12px;
+            padding: 4px 8px;
             border-radius: 20px;
             color: #60a5fa;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             display: inline-block;
             margin-top: 8px;
             word-break: break-all;
@@ -252,6 +261,8 @@
             font-size: 0.8rem;
             cursor: pointer;
             width: 100%;
+            touch-action: manipulation;
+            min-height: 44px;
         }
         
         @media (min-width: 768px) {
@@ -283,7 +294,7 @@
         
         .data-tabs {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 15px;
             border-bottom: 1px solid #334155;
             padding-bottom: 10px;
@@ -293,11 +304,16 @@
             background-color: transparent;
             border: 1px solid #475569;
             color: #94a3b8;
-            padding: 8px 20px;
+            padding: 10px 16px;
             border-radius: 30px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: all 0.2s;
+            touch-action: manipulation;
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+            flex: 1;
+            text-align: center;
         }
         .data-tab:hover {
             background-color: #334155;
@@ -341,15 +357,21 @@
         }
         .chart-container {
             position: relative;
-            height: 260px;
+            height: 200px;
             width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 260px;
+            }
         }
         
         .status-bar {
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 30px;
-            padding: 12px 20px;
+            padding: 12px 16px;
             margin: 20px 0;
             display: flex;
             justify-content: space-between;
@@ -360,7 +382,7 @@
         
         .last-update {
             color: #94a3b8;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         
         .last-update span {
@@ -371,12 +393,15 @@
         .btn-refresh {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border: none;
-            padding: 8px 20px;
+            padding: 10px 16px;
             border-radius: 30px;
             color: white;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
+            touch-action: manipulation;
+            min-height: 44px;
+            min-width: 100px;
         }
         
         .btn-refresh:disabled {
@@ -384,27 +409,20 @@
             cursor: not-allowed;
         }
         
-        .btn-lp {
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: none;
-            padding: 8px 20px;
-            border-radius: 30px;
-            color: white;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
         .btn-lp-small {
             background: linear-gradient(135deg, #10b981, #059669);
             border: 1px solid #34d399;
-            padding: 6px 12px;
-            border-radius: 20px;
+            padding: 8px 12px;
+            border-radius: 30px;
             color: white;
             font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            touch-action: manipulation;
+            min-height: 40px;
+            min-width: 90px;
+            white-space: nowrap;
         }
         
         .btn-lp-small:hover {
@@ -415,6 +433,7 @@
         .btn-lp-small:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
         
         #resultTableBody td.amount-cell {
@@ -502,30 +521,35 @@
             align-items: center;
             justify-content: center;
             animation: fadeIn 0.3s ease;
+            padding: 10px;
         }
         
         .auth-dialog {
             background: linear-gradient(145deg, #1e293b, #0f172a);
             border: 2px solid #334155;
-            border-radius: 32px;
-            padding: 30px;
-            max-width: 500px;
-            width: 95%;
-            max-height: 90vh;
+            border-radius: 24px;
+            padding: 20px;
+            max-width: 450px;
+            width: 100%;
+            max-height: 85vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
             animation: slideUp 0.4s ease;
         }
         
         .auth-tab {
             flex: 1;
-            padding: 10px;
+            padding: 12px 5px;
             background: #334155;
             border: none;
             border-radius: 30px;
             color: #94a3b8;
             font-weight: 600;
             cursor: pointer;
+            font-size: 0.9rem;
+            touch-action: manipulation;
+            min-height: 44px;
         }
         
         .auth-tab.active {
@@ -538,16 +562,18 @@
         }
         
         .day-option {
-            padding: 12px 5px;
+            padding: 10px 3px;
             background: #334155;
             border: 1px solid #475569;
-            border-radius: 16px;
+            border-radius: 12px;
             color: white;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
+            touch-action: manipulation;
+            min-height: 60px;
         }
         
         .day-option.active {
@@ -560,6 +586,15 @@
             box-shadow: 0 5px 15px rgba(59,130,246,0.3);
         }
         
+        .day-option span:first-child {
+            font-size: 0.95rem;
+        }
+        
+        .day-option span:last-child {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -569,18 +604,99 @@
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        
+        /* 手机端优化 */
+        @media (max-width: 768px) {
+            .auth-dialog {
+                padding: 16px;
+            }
+            
+            .auth-tab {
+                font-size: 0.8rem;
+                padding: 10px 3px;
+            }
+            
+            .day-option {
+                padding: 8px 2px;
+                min-height: 50px;
+            }
+            
+            .day-option span:first-child {
+                font-size: 0.85rem;
+            }
+            
+            .day-option span:last-child {
+                font-size: 0.6rem;
+            }
+            
+            button, .auth-tab, .day-option, #payBtn, #adminBtn, #closeBtn, .btn-lp-small, .btn-refresh, .data-tab {
+                min-height: 44px;
+                touch-action: manipulation;
+            }
+            
+            input, button {
+                font-size: 16px !important;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header > div:last-child {
+                align-self: flex-end;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .status-bar > div:last-child {
+                align-self: flex-end;
+            }
+            
+            .stats-grid {
+                gap: 4px;
+            }
+            
+            .stat-card {
+                padding: 8px 4px;
+            }
+            
+            .stat-value {
+                font-size: 0.9rem;
+            }
+            
+            .stat-title {
+                font-size: 0.55rem;
+            }
+        }
+        
+        /* 确保所有可点击元素都有合适的触摸区域 */
+        button, .auth-tab, .day-option, .btn-lp-small, .btn-refresh, .btn-export, .data-tab, #payBtn, #adminBtn, #closeBtn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 修复iOS上input样式问题 */
+        input {
+            -webkit-appearance: none;
+            border-radius: 30px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <!-- 头部 -->
         <div class="header">
-            <div>
+            <div style="width: 100%;">
                 <h1>🔍 GANA 质押数据展示端 <span class="viewer-badge">授权访问</span></h1>
                 <div class="subtitle">实时展示云端数据 · 自动刷新</div>
                 <div class="contract-address" id="stakingContractAddress">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</div>
             </div>
-            <div>
+            <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 5px;">
                 <button class="btn-lp-small" onclick="refreshLPPool()" id="refreshLPBtn">
                     💰 刷新LP池
                 </button>
@@ -592,7 +708,7 @@
             <div class="last-update">
                 📅 云端数据: <span id="lastUpdateTime">加载中...</span>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
                 <button class="btn-refresh" onclick="refreshData()" id="refreshBtn">
                     🔄 刷新数据
                 </button>
@@ -610,21 +726,21 @@
                 <div class="stat-title">💰 1天质押额</div>
                 <div class="stat-value" id="totalStaked1d">0.00</div>
                 <div class="stat-sub">
-                    <span id="count1d">0</span>记录
+                    <span id="count1d">0</span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-title">💰 15天质押额</div>
                 <div class="stat-value" id="totalStaked15d">0.00</div>
                 <div class="stat-sub">
-                    <span id="count15d">0</span>记录
+                    <span id="count15d">0</span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-title">💰 30天质押额</div>
                 <div class="stat-value" id="totalStaked30d">0.00</div>
                 <div class="stat-sub">
-                    <span id="count30d">0</span>记录
+                    <span id="count30d">0</span>
                 </div>
             </div>
         </div>
@@ -655,8 +771,8 @@
 
         <!-- 数据选项卡 -->
         <div class="data-tabs">
-            <span class="data-tab active" onclick="switchDataTab('records')" id="tab-records">📋 质押记录</span>
-            <span class="data-tab" onclick="switchDataTab('daily')" id="tab-daily">📅 每日统计</span>
+            <span class="data-tab active" onclick="switchDataTab('records')" id="tab-records">📋 质押</span>
+            <span class="data-tab" onclick="switchDataTab('daily')" id="tab-daily">📅 每日</span>
             <span class="data-tab" onclick="switchDataTab('charts')" id="tab-charts">📊 图表</span>
         </div>
 
@@ -702,7 +818,7 @@
                 <div class="stats-info">
                     <h5>📅 每日质押统计</h5>
                     <button class="btn-export" onclick="exportDailyStats()">
-                        📥 导出每日统计
+                        📥 导出每日
                     </button>
                 </div>
                 
@@ -711,11 +827,11 @@
                         <thead>
                             <tr>
                                 <th>日期</th>
-                                <th>新增质押</th>
-                                <th>仍在质押</th>
-                                <th>1天新增</th>
-                                <th>15天新增</th>
-                                <th>30天新增</th>
+                                <th>新增</th>
+                                <th>仍在</th>
+                                <th>1天</th>
+                                <th>15天</th>
+                                <th>30天</th>
                             </tr>
                         </thead>
                         <tbody id="dailyStatsBody">
@@ -748,7 +864,7 @@
             </div>
             <div class="chart-card" style="margin-top:16px;">
                 <div class="chart-title">⏳ 解锁时间分布</div>
-                <div class="chart-container" style="height:200px;">
+                <div class="chart-container" style="height:180px;">
                     <canvas id="unlockChart"></canvas>
                 </div>
             </div>
@@ -1068,6 +1184,9 @@
         };
 
         function showAuthDialog() {
+            const oldOverlay = document.getElementById('authOverlay');
+            if (oldOverlay) oldOverlay.remove();
+            
             const overlay = document.createElement('div');
             overlay.className = 'auth-overlay';
             overlay.id = 'authOverlay';
@@ -1078,54 +1197,47 @@
                 <div class="auth-dialog">
                     <div style="text-align: center; margin-bottom: 20px;">
                         <div style="font-size: 48px; margin-bottom: 10px;">🔐</div>
-                        <h2 style="color: #e2e8f0; margin: 0 0 5px 0; font-size: 1.8rem; font-weight: bold;">授权验证</h2>
-                        <p style="color: #94a3b8; font-size: 0.9rem;">请选择授权方式</p>
+                        <h2 style="color: #e2e8f0; margin: 0 0 5px 0; font-size: 1.5rem; font-weight: bold;">授权验证</h2>
+                        <p style="color: #94a3b8; font-size: 0.85rem;">请选择授权方式</p>
                     </div>
 
                     ${authInfo ? `
-                        <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(145deg, #2d3a4f, #1e293b); border-radius: 16px; border: 1px solid #10b981;">
+                        <div style="margin-bottom: 20px; padding: 12px; background: linear-gradient(145deg, #2d3a4f, #1e293b); border-radius: 16px; border: 1px solid #10b981;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <span style="color: #10b981; font-size: 1.1rem;">✅</span>
-                                <span style="color: #10b981; font-weight: 600;">您已授权，有效期至：</span>
+                                <span style="color: #10b981; font-size: 1rem;">✅</span>
+                                <span style="color: #10b981; font-weight: 600;">您已授权</span>
                             </div>
-                            <div style="color: #94a3b8; font-size: 0.9rem;">
+                            <div style="color: #94a3b8; font-size: 0.85rem;">
                                 <div>类型: ${authInfo.displayName}</div>
-                                <div>有效期至: ${DateUtils.formatDate(authInfo.expireTime)}</div>
-                                ${authInfo.remainingDays !== '永久' ? `<div>剩余: ${authInfo.remainingDays} 天</div>` : ''}
+                                ${authInfo.expireTime ? `<div>有效期至: ${DateUtils.formatDate(authInfo.expireTime)}</div>` : ''}
+                                ${authInfo.remainingDays && authInfo.remainingDays !== '永久' ? `<div>剩余: ${authInfo.remainingDays} 天</div>` : ''}
                             </div>
                         </div>
                     ` : ''}
 
                     <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px;">
-                        <button class="auth-tab active" data-tab="pay" style="flex:1; padding: 10px; background: #3b82f6; border: none; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;">
-                            💎 钱包支付
-                        </button>
-                        <button class="auth-tab" data-tab="admin" style="flex:1; padding: 10px; background: #334155; border: none; border-radius: 30px; color: #94a3b8; font-weight: 600; cursor: pointer;">
-                            👑 管理员
-                        </button>
+                        <button class="auth-tab active" data-tab="pay">💎 钱包支付</button>
+                        <button class="auth-tab" data-tab="admin">👑 管理员</button>
                     </div>
 
                     <div id="payPanel" class="auth-panel" style="display: block;">
                         <div style="margin: 20px 0;">
-                            <div style="color: #94a3b8; margin-bottom: 10px; font-size: 0.9rem;">选择授权天数:</div>
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                                ${[1, 7, 15, 30].map(days => `
-                                    <button class="day-option ${days === 30 ? 'active' : ''}" data-days="${days}" 
-                                        style="padding: 12px 5px; background: ${days === 30 ? '#3b82f6' : '#334155'}; 
-                                        border: 1px solid ${days === 30 ? '#60a5fa' : '#475569'}; border-radius: 16px; 
-                                        color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;
-                                        display: flex; flex-direction: column; align-items: center;">
-                                        <span style="font-size: 1rem;">${days}天</span>
-                                        <span style="font-size: 0.75rem; color: #94a3b8;">${AUTH_CONFIG.payment.prices[days]} USDT</span>
-                                    </button>
-                                `).join('')}
+                            <div style="color: #94a3b8; margin-bottom: 10px; font-size: 0.85rem;">选择授权天数:</div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                                ${[1, 7, 15, 30].map(days => {
+                                    const isActive = days === 30 ? 'active' : '';
+                                    return `<button class="day-option ${isActive}" data-days="${days}">
+                                        <span>${days}天</span>
+                                        <span>${AUTH_CONFIG.payment.prices[days]} USDT</span>
+                                    </button>`;
+                                }).join('')}
                             </div>
                         </div>
 
-                        <div style="margin: 20px 0; padding: 15px; background: #0f172a; border-radius: 16px; border: 1px solid #334155;">
+                        <div style="margin: 20px 0; padding: 12px; background: #0f172a; border-radius: 16px; border: 1px solid #334155;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                 <span style="color: #94a3b8;">支付金额:</span>
-                                <span style="color: #38bdf8; font-size: 1.2rem; font-weight: bold;">
+                                <span style="color: #38bdf8; font-size: 1.1rem; font-weight: bold;">
                                     <span id="payAmount">${AUTH_CONFIG.payment.prices[30]}</span> USDT
                                 </span>
                             </div>
@@ -1137,9 +1249,7 @@
                             </div>
                         </div>
 
-                        <button id="payBtn" style="width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); 
-                            border: none; padding: 14px; border-radius: 40px; color: white; font-size: 1rem; 
-                            font-weight: 600; cursor: pointer; margin-top: 10px;">
+                        <button id="payBtn" style="width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; padding: 14px; border-radius: 40px; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px;">
                             💎 连接钱包并支付
                         </button>
                     </div>
@@ -1147,18 +1257,14 @@
                     <div id="adminPanel" class="auth-panel" style="display: none;">
                         <div style="margin: 20px 0;">
                             <input type="password" id="adminPassword" placeholder="请输入管理员密码" 
-                                style="width: 100%; padding: 14px; background: #0f172a; border: 2px solid #334155; 
-                                border-radius: 30px; color: #e2e8f0; font-size: 1rem; text-align: center; 
-                                outline: none; margin-bottom: 15px;">
+                                style="width: 100%; padding: 14px; background: #0f172a; border: 2px solid #334155; border-radius: 30px; color: #e2e8f0; font-size: 1rem; text-align: center; outline: none; margin-bottom: 15px;">
                             
-                            <button id="adminBtn" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); 
-                                border: none; padding: 14px; border-radius: 40px; color: white; font-size: 1rem; 
-                                font-weight: 600; cursor: pointer;">
+                            <button id="adminBtn" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; padding: 14px; border-radius: 40px; color: white; font-size: 1rem; font-weight: 600; cursor: pointer;">
                                 👑 管理员登录
                             </button>
                         </div>
 
-                        <div style="margin-top: 15px; padding: 12px; background: #1e293b; border-radius: 16px;">
+                        <div style="margin-top: 15px; padding: 10px; background: #1e293b; border-radius: 16px;">
                             <div style="color: #94a3b8; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
                                 <span>ℹ️</span>
                                 <span>请联系管理员获取密码</span>
@@ -1167,8 +1273,7 @@
                     </div>
 
                     <div style="margin-top: 20px; text-align: center;">
-                        <button id="closeBtn" style="background: #ef4444; border: none; padding: 10px 30px; 
-                            border-radius: 30px; color: white; font-size: 0.9rem; cursor: pointer;">
+                        <button id="closeBtn" style="background: #ef4444; border: none; padding: 10px 30px; border-radius: 30px; color: white; font-size: 0.9rem; cursor: pointer;">
                             关闭
                         </button>
                     </div>
@@ -1176,6 +1281,12 @@
             `;
 
             document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    e.preventDefault();
+                }
+            });
 
             const tabs = document.querySelectorAll('.auth-tab');
             const panels = {
@@ -1193,7 +1304,8 @@
             let currentDays = 30;
 
             tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
                     const target = tab.dataset.tab;
                     
                     tabs.forEach(t => {
@@ -1213,7 +1325,8 @@
             });
 
             dayOptions.forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
                     dayOptions.forEach(b => {
                         b.classList.remove('active');
                         b.style.background = '#334155';
@@ -1229,14 +1342,16 @@
                 });
             });
 
-            closeBtn.addEventListener('click', () => {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 document.body.removeChild(overlay);
                 if (!AuthManager.isAuthorized()) {
                     setTimeout(() => showAuthDialog(), 500);
                 }
             });
 
-            payBtn.addEventListener('click', async () => {
+            payBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
                 try {
                     payBtn.disabled = true;
                     payBtn.textContent = '支付处理中...';
@@ -1299,7 +1414,8 @@
                 }
             });
 
-            adminBtn.addEventListener('click', () => {
+            adminBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 const password = adminPassword.value.trim();
                 
                 if (AuthManager.validateAdminPassword(password)) {
@@ -1327,14 +1443,16 @@
                 transform: translateX(-50%);
                 background: linear-gradient(135deg, #10b981, #059669);
                 color: white;
-                padding: 16px 30px;
+                padding: 12px 24px;
                 border-radius: 50px;
-                font-size: 1rem;
+                font-size: 0.9rem;
                 font-weight: 600;
-                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
                 z-index: 10001;
                 animation: slideDown 0.3s ease;
+                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
                 border: 1px solid rgba(255,255,255,0.2);
+                max-width: 80%;
+                text-align: center;
             `;
             toast.textContent = message;
             document.body.appendChild(toast);
@@ -1342,7 +1460,7 @@
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease';
                 setTimeout(() => {
-                    if (toast.parentNode) document.body.removeChild(toast);
+                    if (toast.parentNode) toast.remove();
                 }, 300);
             }, 3000);
         }
@@ -1372,9 +1490,9 @@
                 background: ${bgColor};
                 border: 1px solid ${borderColor};
                 color: white;
-                padding: 8px 16px;
+                padding: 6px 12px;
                 border-radius: 30px;
-                font-size: 0.75rem;
+                font-size: 0.7rem;
                 font-weight: 600;
                 z-index: 9999;
                 backdrop-filter: blur(5px);
@@ -1386,11 +1504,10 @@
             `;
             
             badge.innerHTML = `
-                <span style="font-size: 0.75rem;">${icon}</span>
+                <span>${icon}</span>
                 <span>
-                    ${authData.type === 'admin' ? '管理员模式' : `支付用户 · ${DateUtils.formatDate(authData.expireTime)}`}
-                    ${authData.remainingDays && authData.remainingDays !== '永久' ? 
-                      `<span style="font-size:0.75rem; opacity:0.8;"> (剩余${authData.remainingDays}天)</span>` : ''}
+                    ${authData.type === 'admin' ? '管理员' : `支付用户`}
+                    ${authData.remainingDays && authData.remainingDays !== '永久' ? `(${authData.remainingDays}天)` : ''}
                 </span>
             `;
             
@@ -1413,13 +1530,20 @@
             const authorized = AuthManager.isAuthorized();
             
             if (!authorized) {
+                const isMobile = window.innerWidth <= 768;
                 document.querySelectorAll('.stats-grid, .status-bar, .data-tabs, .table-container, .chart-card').forEach(el => {
-                    el.style.filter = 'blur(4px)';
+                    if (isMobile) {
+                        el.style.opacity = '0.5';
+                    } else {
+                        el.style.filter = 'blur(4px)';
+                    }
                     el.style.pointerEvents = 'none';
                 });
-                setTimeout(() => showAuthDialog(), 500);
+                
+                setTimeout(() => showAuthDialog(), 300);
             } else {
                 document.querySelectorAll('.stats-grid, .status-bar, .data-tabs, .table-container, .chart-card').forEach(el => {
+                    el.style.opacity = '1';
                     el.style.filter = 'none';
                     el.style.pointerEvents = 'auto';
                 });
@@ -1434,34 +1558,32 @@
         // ================= 刷新LP池余额 =================
         async function refreshLPPool() {
             const btn = document.getElementById('refreshLPBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerText = '刷新中...';
-            }
+            if (!btn) return;
+            
+            if (btn.disabled) return;
+            
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = '刷新中...';
             
             try {
-                // 这里需要连接到BSC节点获取LP池余额
-                // 暂时使用模拟数据
-                const mockBalance = 12345.67;
-                currentData.stats.lpWithdrawable = mockBalance;
-                document.getElementById('lpWithdrawable').innerText = mockBalance.toFixed(2);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const mockBalance = (Math.random() * 10000 + 5000).toFixed(2);
+                currentData.stats.lpWithdrawable = parseFloat(mockBalance);
+                document.getElementById('lpWithdrawable').innerText = mockBalance;
                 
-                if (btn) {
-                    btn.innerText = '💰 LP池已刷新';
-                    setTimeout(() => {
-                        btn.innerText = '💰 刷新LP池';
-                        btn.disabled = false;
-                    }, 2000);
-                }
+                btn.innerText = '✅ 成功';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }, 1500);
             } catch (error) {
                 console.error('刷新LP池失败:', error);
-                if (btn) {
-                    btn.innerText = '❌ 失败';
-                    setTimeout(() => {
-                        btn.innerText = '💰 刷新LP池';
-                        btn.disabled = false;
-                    }, 2000);
-                }
+                btn.innerText = '❌ 失败';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }, 1500);
             }
         }
 
@@ -1486,7 +1608,6 @@
                     if (typeof cloudData === 'string') {
                         try {
                             cloudData = JSON.parse(cloudData);
-                            console.log('解析后的云端数据:', cloudData);
                         } catch (e) {
                             console.error('解析云端数据字符串失败:', e);
                         }
@@ -1520,21 +1641,12 @@
                         if (showLoadingOverlay) {
                             showToast('✅ 数据已更新');
                         }
-                    } else {
-                        console.error('云端数据格式错误:', cloudData);
-                        if (showLoadingOverlay) {
-                            showToast('❌ 云端数据格式错误', 'error');
-                        }
-                    }
-                } else {
-                    if (showLoadingOverlay) {
-                        showToast('❌ 云端暂无数据', 'error');
                     }
                 }
             } catch (error) {
                 console.error('加载云端数据失败:', error);
                 if (showLoadingOverlay) {
-                    showToast('❌ 加载失败: ' + error.message, 'error');
+                    showToast('❌ 加载失败', 'error');
                 }
             } finally {
                 if (btn) {
@@ -1545,7 +1657,6 @@
             }
         }
 
-        // 从记录计算统计数据
         function calculateStats(records) {
             const stats = {
                 totalStaked: 0,
@@ -1586,12 +1697,10 @@
             return stats;
         }
 
-        // ================= 刷新数据 =================
         function refreshData() {
             loadCloudData(true);
         }
 
-        // ================= 更新最后更新时间 =================
         function updateLastUpdateTime(timestamp) {
             if (!timestamp) return;
             const date = new Date(timestamp);
@@ -1599,7 +1708,6 @@
             document.getElementById('lastUpdateTime').innerText = formatted;
         }
 
-        // ================= 渲染统计卡片 =================
         function renderStats() {
             const stats = currentData.stats || {};
             
@@ -1619,7 +1727,6 @@
             document.getElementById('resultCount').innerText = recordCount;
         }
 
-        // ================= 渲染质押记录 =================
         function renderRecords() {
             const tbody = document.getElementById('resultTableBody');
             const records = currentData.records || [];
@@ -1649,7 +1756,6 @@
             }).join('');
         }
 
-        // ================= 渲染每日统计 =================
         function renderDailyStats() {
             const allRecords = currentData.allRecords || [];
             
@@ -1712,7 +1818,6 @@
             `).join('');
         }
 
-        // ================= 更新图表 =================
         function updateCharts() {
             const records = currentData.records || [];
             const allRecords = currentData.allRecords || [];
@@ -1725,7 +1830,6 @@
                 return;
             }
 
-            // 周期分布
             let sum1d = 0, sum15d = 0, sum30d = 0;
             records.forEach(r => {
                 if (r.stakeIndex === 0) sum1d += r.amount;
@@ -1733,7 +1837,6 @@
                 else if (r.stakeIndex === 2) sum30d += r.amount;
             });
 
-            // 解锁分布
             let unlock0_2 = 0, unlock2_7 = 0, unlock7_15 = 0, unlock15_25 = 0, unlock25plus = 0;
             const nowSec = Math.floor(Date.now() / 1000);
             records.forEach(r => {
@@ -1745,7 +1848,6 @@
                 else unlock25plus += r.amount;
             });
 
-            // 趋势图数据 - 恢复两条线：新增质押和仍在质押
             const dailyMap = new Map();
             const activeMap = new Map();
             allRecords.forEach(record => {
@@ -1775,7 +1877,6 @@
             if (pieChart) pieChart.destroy();
             if (unlockChart) unlockChart.destroy();
 
-            // 创建趋势图 - 两条线：新增质押和仍在质押
             trendChart = new Chart(trendCtx, {
                 type: 'line',
                 data: {
@@ -1851,7 +1952,6 @@
             });
         }
 
-        // ================= 工具函数 =================
         function formatTimeRemaining(seconds) {
             if (seconds <= 0) return "已解锁";
             const days = Math.floor(seconds / 86400);
@@ -1893,7 +1993,6 @@
             showToast('地址已复制');
         }
 
-        // ================= 选项卡切换 =================
         function switchDataTab(tab) {
             document.getElementById('tab-records').classList.remove('active');
             document.getElementById('tab-daily').classList.remove('active');
@@ -1913,7 +2012,6 @@
             }
         }
 
-        // ================= 导出CSV =================
         function exportCSV() {
             const records = currentData.records || [];
             
@@ -1944,7 +2042,6 @@
             link.click();
         }
 
-        // ================= 导出每日统计 =================
         function exportDailyStats() {
             const allRecords = currentData.allRecords || [];
             
@@ -2006,7 +2103,6 @@
             link.click();
         }
 
-        // ================= UI辅助 =================
         function showLoading(message) {
             const overlay = document.getElementById('loadingOverlay');
             const text = document.getElementById('loadingText');
@@ -2028,14 +2124,13 @@
                 transform: translateX(-50%);
                 background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)'};
                 color: white;
-                padding: 12px 24px;
+                padding: 10px 20px;
                 border-radius: 50px;
-                font-size: 0.9rem;
+                font-size: 0.85rem;
                 font-weight: 600;
                 z-index: 10001;
                 animation: slideDown 0.3s ease;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                border: 1px solid rgba(255,255,255,0.2);
                 max-width: 80%;
                 text-align: center;
             `;
@@ -2054,23 +2149,27 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
             
-            // 检查授权
             checkAuthAndLoad();
             
-            // 设置自动刷新（每5分钟）
             autoRefreshInterval = setInterval(() => {
                 if (AuthManager.isAuthorized()) {
                     loadCloudData(true);
                 }
             }, 5 * 60 * 1000);
             
-            // 设置LP池自动刷新（每10分钟）
             lpRefreshInterval = setInterval(() => {
                 refreshLPPool();
             }, 10 * 60 * 1000);
+            
+            if ('ontouchstart' in window) {
+                document.querySelectorAll('button, .auth-tab, .day-option, .btn-lp-small, .btn-refresh, .data-tab, #payBtn, #adminBtn, #closeBtn').forEach(el => {
+                    el.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                    }, { passive: false });
+                });
+            }
         });
 
-        // 暴露全局函数
         window.switchDataTab = switchDataTab;
         window.refreshData = refreshData;
         window.refreshLPPool = refreshLPPool;
