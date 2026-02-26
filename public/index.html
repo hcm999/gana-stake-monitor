@@ -11,6 +11,7 @@
     <!-- 引入 Ethers.js V6 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
+        /* 样式保持不变，与之前相同 */
         * {
             margin: 0;
             padding: 0;
@@ -432,7 +433,7 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* 授权弹窗样式 - 简化版，只有一个金额选项 */
+        /* 授权弹窗样式 */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -729,14 +730,14 @@
         let isLoading = false;
         let provider = null;
 
-        // ================= 授权配置 - 简化版，只保留30天55 USDT =================
+        // ================= 授权配置 =================
         const AUTH_CONFIG = {
             enabled: true,
             payment: {
                 usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
                 receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
-                days: 30,           // 固定30天
-                amount: 10          // 固定10 USDT
+                days: 30,
+                amount: 10
             },
             admin: {
                 password: "admin9120",
@@ -952,7 +953,7 @@
             }
         };
 
-        // ================= 授权弹窗 - 简化版，只有一个金额选项 =================
+        // ================= 授权弹窗 =================
         function showAuthDialog() {
             const old = document.getElementById('authOverlay');
             if (old) old.remove();
@@ -991,7 +992,6 @@
                     </div>
 
                     <div id="payPanel" class="auth-panel">
-                        <!-- 固定金额显示，没有选择器 -->
                         <div class="fixed-price-box">
                             <div class="price-label">授权费用（一次性）</div>
                             <div class="price-amount">${AUTH_CONFIG.payment.amount} USDT</div>
@@ -1034,7 +1034,6 @@
 
             document.body.appendChild(overlay);
 
-            // 选项卡切换
             overlay.addEventListener('click', (e) => {
                 const target = e.target;
                 
@@ -1061,7 +1060,6 @@
                 }
             });
 
-            // 支付按钮 - 使用固定的金额
             document.getElementById('payBtn').addEventListener('click', async () => {
                 const btn = document.getElementById('payBtn');
                 try {
@@ -1084,7 +1082,7 @@
 
                     const provider = new ethers.BrowserProvider(window.ethereum);
                     
-                    const requiredAmount = AUTH_CONFIG.payment.amount; // 固定金额
+                    const requiredAmount = AUTH_CONFIG.payment.amount;
                     await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
 
                     const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
@@ -1268,7 +1266,6 @@
             btn.innerText = '刷新中...';
             
             try {
-                // 创建临时provider
                 const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
                 const usdtContract = new ethers.Contract(CONFIG.USDT, [
                     "function balanceOf(address account) view returns (uint256)",
@@ -1276,7 +1273,7 @@
                 ], provider);
                 
                 const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
-                const decimals = 18; // USDT在BSC上是18位
+                const decimals = 18;
                 const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
                 
                 currentData.stats.lpWithdrawable = formattedBalance;
@@ -1289,7 +1286,6 @@
                 }, 1500);
             } catch (error) {
                 console.error('刷新LP池失败:', error);
-                // 使用随机值作为fallback
                 const mockBalance = (Math.random() * 10000 + 5000).toFixed(2);
                 currentData.stats.lpWithdrawable = parseFloat(mockBalance);
                 document.getElementById('lpWithdrawable').innerText = mockBalance;
@@ -1407,9 +1403,22 @@
                 const unlockTime = stakeTime + duration;
                 const remain = unlockTime - nowSec;
                 
-                if (remain <= 172800) stats.unlock2d += amount;
-                else if (remain <= 604800) stats.unlock7d += amount;
-                else if (remain <= 1296000) stats.unlock15d += amount;
+                // 修复：确保区间判断正确
+                // 未来2天：<= 2天 (172800秒)
+                // 未来7天：>2天 且 <=7天 (172800-604800秒)
+                // 未来15天：>7天 且 <=15天 (604800-1296000秒)
+                
+                if (remain <= 172800) { // 2天内
+                    stats.unlock2d += amount;
+                } 
+                
+                if (remain <= 604800) { // 7天内（包含2天内的）
+                    stats.unlock7d += amount;
+                }
+                
+                if (remain <= 1296000) { // 15天内（包含7天内的）
+                    stats.unlock15d += amount;
+                }
             });
             
             currentData.stats = stats;
