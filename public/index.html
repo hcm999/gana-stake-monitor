@@ -708,6 +708,7 @@
         ];
 
         // ================= 全局变量 =================
+        let usdtContract = null; // 添加USDT合约实例
         let currentData = {
             stats: { 
                 totalStaked: 0, 
@@ -742,12 +743,7 @@
             admin: {
                 password: "admin9120",
                 addresses: [
-                    "0xEa77e6769A87c394062919FBaEf4F3B71bC991a8",
-                    "0xBfC937728bc5F911c1446470A3627508A29dF808",
-                    "0x9728D428764F846E8DD62C34371db716A9228238",
-                    "0x211402E8cF1c4117Bbe17e61Ee62F875E31f100B",
-                    "0x54Aeb4faF845e90DDA95C1966Ea151d8c431212a",
-                    "0x67f7eb9384f2AF616bF2Ec100E19eA774B48aba8"
+                    "0x9728D428764F846E8DD62C34371db716A9228238"
                 ]
             }
         };
@@ -993,7 +989,7 @@
 
                     <div id="payPanel" class="auth-panel">
                         <div class="fixed-price-box">
-                            <div class="price-label">授权费用（一次性）</div>
+                            <div class="price-label">授权费用</div>
                             <div class="price-amount">${AUTH_CONFIG.payment.amount} USDT</div>
                             <div class="price-days">有效期 ${AUTH_CONFIG.payment.days} 天</div>
                             <div style="color:#94a3b8; font-size:0.75rem; margin-top:10px;">
@@ -1844,6 +1840,22 @@
         // ================= 初始化 =================
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
+                
+    // 初始化USDT合约
+    try {
+        const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+        usdtContract = new ethers.Contract(
+            CONFIG.USDT,
+            [
+                "function balanceOf(address account) view returns (uint256)",
+                "function decimals() view returns (uint8)"
+            ],
+            provider
+        );
+        console.log('USDT合约初始化成功');
+    } catch (error) {
+        console.error('USDT合约初始化失败:', error);
+    }
             
             checkAuthAndLoad();
             
@@ -1856,6 +1868,81 @@
             });
         });
 
+        // ================= 重写刷新LP池函数 =================
+async function refreshLPPool() {
+    const btn = document.getElementById('refreshLPBtn');
+    if (!btn || btn.disabled) return;
+    
+    btn.disabled = true;
+    const originalText = btn.innerText;
+    btn.innerText = '刷新中...';
+    
+    try {
+        // 如果usdtContract不存在，创建新的
+        if (!usdtContract) {
+            const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+            usdtContract = new ethers.Contract(
+                CONFIG.USDT,
+                [
+                    "function balanceOf(address account) view returns (uint256)",
+                    "function decimals() view returns (uint8)"
+                ],
+                provider
+            );
+        }
+        
+        // 获取LP池的USDT余额
+        const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
+        const decimals = await usdtContract.decimals();
+        const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+        
+        // 更新数据
+        currentData.stats.lpWithdrawable = formattedBalance;
+        document.getElementById('lpWithdrawable').innerText = formattedBalance.toFixed(2);
+        
+        btn.innerText = '✅ 成功';
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }, 1500);
+        
+    } catch (error) {
+        console.error('刷新LP池失败:', error);
+        
+        // 备用节点
+        try {
+            const fallbackProvider = new ethers.JsonRpcProvider('https://bsc-dataseed2.binance.org');
+            const fallbackContract = new ethers.Contract(
+                CONFIG.USDT,
+                [
+                    "function balanceOf(address account) view returns (uint256)",
+                    "function decimals() view returns (uint8)"
+                ],
+                fallbackProvider
+            );
+            
+            const balance = await fallbackContract.balanceOf(CONFIG.LP_POOL);
+            const decimals = await fallbackContract.decimals();
+            const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+            
+            currentData.stats.lpWithdrawable = formattedBalance;
+            document.getElementById('lpWithdrawable').innerText = formattedBalance.toFixed(2);
+            
+            btn.innerText = '✅ 成功';
+        } catch (fallbackError) {
+            console.error('所有节点都失败:', fallbackError);
+            
+            // 显示错误提示
+            document.getElementById('lpWithdrawable').innerHTML = '<span style="color:#f87171;">获取失败</span>';
+            btn.innerText = '❌ 重试';
+        }
+        
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }, 1500);
+    }
+}
         window.handleManualRefresh = handleManualRefresh;
         window.refreshLPPool = refreshLPPool;
         window.setTrendRange = setTrendRange;
