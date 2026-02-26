@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- 引入 Chart.js 轻量图表库 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- 引入 Ethers.js V6 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -393,6 +395,28 @@
             cursor: pointer;
         }
         
+        .btn-lp-small {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: 1px solid #34d399;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-lp-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-lp-small:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         #resultTableBody td.amount-cell {
             color: #38bdf8 !important;
         }
@@ -463,6 +487,88 @@
         @keyframes fadeOut {
             to { opacity: 0; }
         }
+        
+        /* 授权弹窗样式 */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .auth-dialog {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 2px solid #334155;
+            border-radius: 32px;
+            padding: 30px;
+            max-width: 500px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+            animation: slideUp 0.4s ease;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            background: #334155;
+            border: none;
+            border-radius: 30px;
+            color: #94a3b8;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .auth-tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .auth-panel {
+            transition: all 0.3s ease;
+        }
+        
+        .day-option {
+            padding: 12px 5px;
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .day-option.active {
+            background: #3b82f6;
+            border-color: #60a5fa;
+        }
+        
+        .day-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59,130,246,0.3);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -470,12 +576,14 @@
         <!-- 头部 -->
         <div class="header">
             <div>
-                <h1>🔍 GANA 质押数据展示端 <span class="viewer-badge">只读</span></h1>
+                <h1>🔍 GANA 质押数据展示端 <span class="viewer-badge">授权访问</span></h1>
                 <div class="subtitle">实时展示云端数据 · 自动刷新</div>
                 <div class="contract-address" id="stakingContractAddress">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</div>
             </div>
             <div>
-                <a href="/admin" target="_blank" style="background: #f59e0b; color: white; padding: 8px 16px; border-radius: 30px; text-decoration: none; font-size: 0.8rem;">⚙️ 前往管理端</a>
+                <button class="btn-lp-small" onclick="refreshLPPool()" id="refreshLPBtn">
+                    💰 刷新LP池
+                </button>
             </div>
         </div>
 
@@ -658,13 +766,21 @@
         const CONFIG = {
             STAKING: "0x72212F35aC448FE7763aA1BFdb360193Fa098E52",
             LP_POOL: "0xa2f464a2462aed49b9b31eb8861bc6b0bbb0483f",
+            USDT: "0x55d398326f99059fF775485246999027B3197955",
             API_BASE: '/api',
-            STORAGE_KEY: 'viewerSettings'
+            STORAGE_KEY: 'viewerSettings',
+            AUTH_STORAGE_KEY: 'HYBRID_AUTH'
         };
         
         const STAKE_DURATIONS = {0: 86400, 1: 1296000, 2: 2592000};
         const STAKE_DURATION_LABELS = {0: "1天", 1: "15天", 2: "30天"};
         const STAKE_DURATION_CLASS = {0: "badge-1d", 1: "badge-15d", 2: "badge-30d"};
+
+        // USDT的ABI
+        const USDT_ABI = [
+            "function balanceOf(address account) view returns (uint256)",
+            "function decimals() view returns (uint8)"
+        ];
 
         // ================= 全局变量 =================
         let currentData = {
@@ -687,145 +803,788 @@
         };
         let trendChart, pieChart, unlockChart;
         let autoRefreshInterval = null;
+        let lpRefreshInterval = null;
+        let isAuthorized = false;
 
-        // ================= 初始化 =================
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
-            
-            // 加载数据
-            loadCloudData();
-            
-            // 设置自动刷新（每5分钟）
-            autoRefreshInterval = setInterval(() => {
-                loadCloudData(true);
-            }, 5 * 60 * 1000);
-        });
+        // ================= 授权系统 =================
+        const AUTH_CONFIG = {
+            enabled: true,
+            payment: {
+                usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
+                receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
+                prices: {
+                    1: 1,
+                    7: 5,
+                    15: 10,
+                    30: 15
+                }
+            },
+            admin: {
+                password: "admin9120",
+                addresses: [
+                    "0xEa77e6769A87c394062919FBaEf4F3B71bC991a8",
+                    "0xBfC937728bc5F911c1446470A3627508A29dF808",
+                    "0x9728D428764F846E8DD62C34371db716A9228238",
+                    "0x211402E8cF1c4117Bbe17e61Ee62F875E31f100B",
+                    "0x54Aeb4faF845e90DDA95C1966Ea151d8c431212a",
+                    "0x67f7eb9384f2AF616bF2Ec100E19eA774B48aba8"
+                ]
+            }
+        };
 
-// ================= 从云端加载数据 =================
-async function loadCloudData(showLoadingOverlay = false) {
-    const btn = document.getElementById('refreshBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerText = '刷新中...';
-    }
-    
-    if (showLoadingOverlay) showLoading('加载云端数据...');
-    
-    try {
-        console.log('正在从云端获取数据...');
-        const response = await fetch(`${CONFIG.API_BASE}/`);
-        const result = await response.json();
-        console.log('云端数据响应:', result);
-        
-        if (result.success && result.data) {
-            // 解析数据（API 返回的 data 可能是字符串）
-            let cloudData = result.data;
-            if (typeof cloudData === 'string') {
+        const DateUtils = {
+            getExpireTimestamp(days) {
+                const now = new Date();
+                now.setDate(now.getDate() + days);
+                return now.getTime();
+            },
+            formatDate(timestamp) {
+                if (!timestamp) return '永久';
+                const date = new Date(timestamp);
+                return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+            },
+            getRemainingDays(timestamp) {
+                if (!timestamp) return '永久';
+                const now = new Date().getTime();
+                const diff = timestamp - now;
+                if (diff <= 0) return 0;
+                return Math.ceil(diff / (1000 * 60 * 60 * 24));
+            },
+            isExpired(timestamp) {
+                if (!timestamp) return false;
+                return new Date().getTime() > timestamp;
+            }
+        };
+
+        const AuthManager = {
+            isAdminAddress(address) {
+                if (!address) return false;
+                return AUTH_CONFIG.admin.addresses.some(
+                    admin => admin.toLowerCase() === address.toLowerCase()
+                );
+            },
+            validateAdminPassword(password) {
+                return password === AUTH_CONFIG.admin.password;
+            },
+            isAuthorized() {
                 try {
-                    cloudData = JSON.parse(cloudData);
-                    console.log('解析后的云端数据:', cloudData);
+                    const auth = localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
+                    if (!auth) return false;
+                    
+                    const data = JSON.parse(auth);
+                    
+                    if (data.type === 'admin') return true;
+                    
+                    if (data.expireTime && DateUtils.isExpired(data.expireTime)) {
+                        this.clearAuth();
+                        return false;
+                    }
+                    
+                    return true;
                 } catch (e) {
-                    console.error('解析云端数据字符串失败:', e);
+                    return false;
                 }
+            },
+            getAuthInfo() {
+                try {
+                    const auth = localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
+                    if (!auth) return null;
+                    
+                    const data = JSON.parse(auth);
+                    
+                    if (data.type === 'admin') {
+                        return {
+                            ...data,
+                            type: 'admin',
+                            remainingDays: '永久',
+                            displayName: '👑 管理员'
+                        };
+                    }
+                    
+                    if (data.type === 'payment') {
+                        if (DateUtils.isExpired(data.expireTime)) {
+                            this.clearAuth();
+                            return null;
+                        }
+                        return {
+                            ...data,
+                            type: 'payment',
+                            remainingDays: DateUtils.getRemainingDays(data.expireTime),
+                            displayName: '💎 支付用户'
+                        };
+                    }
+                    
+                    return null;
+                } catch (e) {
+                    return null;
+                }
+            },
+            saveAuth(type, data) {
+                const authData = {
+                    type,
+                    timestamp: new Date().toISOString(),
+                    ...data
+                };
+                localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(authData));
+                return authData;
+            },
+            saveAdminAuth(address, method) {
+                return this.saveAuth('admin', {
+                    address,
+                    method,
+                    loginTime: new Date().getTime()
+                });
+            },
+            savePaymentAuth(address, days, amount, txHash) {
+                return this.saveAuth('payment', {
+                    address,
+                    days,
+                    amount,
+                    txHash,
+                    payTime: new Date().getTime(),
+                    expireTime: DateUtils.getExpireTimestamp(days)
+                });
+            },
+            clearAuth() {
+                localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY);
+            },
+            async checkWallet() {
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('NO_WALLET');
+                }
+                return true;
+            },
+            async connectWallet() {
+                try {
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
+                    return accounts[0];
+                } catch (error) {
+                    console.error('连接钱包失败:', error);
+                    throw error;
+                }
+            },
+            async checkNetwork() {
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const targetChainId = '0x38';
+                
+                if (chainId !== targetChainId) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: targetChainId }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: targetChainId,
+                                    chainName: 'Binance Smart Chain',
+                                    rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                                    nativeCurrency: {
+                                        name: 'BNB',
+                                        symbol: 'BNB',
+                                        decimals: 18
+                                    }
+                                }],
+                            });
+                        } else {
+                            throw switchError;
+                        }
+                    }
+                }
+            },
+            usdtABI: [
+                "function balanceOf(address account) view returns (uint256)",
+                "function decimals() view returns (uint8)",
+                "function transfer(address to, uint amount) returns (bool)",
+                "function approve(address spender, uint256 amount) returns (bool)",
+                "function allowance(address owner, address spender) view returns (uint256)"
+            ],
+            async checkUSDTBalance(address, provider, requiredAmount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    this.usdtABI,
+                    provider
+                );
+                const balance = await contract.balanceOf(address);
+                const decimals = await contract.decimals();
+                const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                
+                if (formattedBalance < requiredAmount) {
+                    throw new Error(`INSUFFICIENT_BALANCE:${formattedBalance}`);
+                }
+                
+                return true;
+            },
+            async checkAllowance(owner, provider, requiredAmount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    this.usdtABI,
+                    provider
+                );
+                const allowance = await contract.allowance(owner, AUTH_CONFIG.payment.receiveAddress);
+                const decimals = await contract.decimals();
+                const formattedAllowance = parseFloat(ethers.formatUnits(allowance, decimals));
+                
+                return formattedAllowance >= requiredAmount;
+            },
+            async approveUSDT(owner, provider, amount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    this.usdtABI,
+                    provider
+                );
+                const decimals = await contract.decimals();
+                const amountWei = ethers.parseUnits(amount.toString(), decimals);
+                
+                const signer = await provider.getSigner();
+                const contractWithSigner = contract.connect(signer);
+                
+                const tx = await contractWithSigner.approve(AUTH_CONFIG.payment.receiveAddress, amountWei);
+                await tx.wait();
+                
+                return tx.hash;
+            },
+            async sendUSDT(fromAddress, provider, amount) {
+                const contract = new ethers.Contract(
+                    AUTH_CONFIG.payment.usdtAddress,
+                    this.usdtABI,
+                    provider
+                );
+                const decimals = await contract.decimals();
+                const amountWei = ethers.parseUnits(amount.toString(), decimals);
+                
+                const signer = await provider.getSigner();
+                const contractWithSigner = contract.connect(signer);
+                
+                const tx = await contractWithSigner.transfer(AUTH_CONFIG.payment.receiveAddress, amountWei);
+                await tx.wait();
+                
+                return tx.hash;
+            }
+        };
+
+        function showAuthDialog() {
+            const overlay = document.createElement('div');
+            overlay.className = 'auth-overlay';
+            overlay.id = 'authOverlay';
+            
+            const authInfo = AuthManager.getAuthInfo();
+
+            overlay.innerHTML = `
+                <div class="auth-dialog">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">🔐</div>
+                        <h2 style="color: #e2e8f0; margin: 0 0 5px 0; font-size: 1.8rem; font-weight: bold;">授权验证</h2>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">请选择授权方式</p>
+                    </div>
+
+                    ${authInfo ? `
+                        <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(145deg, #2d3a4f, #1e293b); border-radius: 16px; border: 1px solid #10b981;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <span style="color: #10b981; font-size: 1.1rem;">✅</span>
+                                <span style="color: #10b981; font-weight: 600;">您已授权，有效期至：</span>
+                            </div>
+                            <div style="color: #94a3b8; font-size: 0.9rem;">
+                                <div>类型: ${authInfo.displayName}</div>
+                                <div>有效期至: ${DateUtils.formatDate(authInfo.expireTime)}</div>
+                                ${authInfo.remainingDays !== '永久' ? `<div>剩余: ${authInfo.remainingDays} 天</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px;">
+                        <button class="auth-tab active" data-tab="pay" style="flex:1; padding: 10px; background: #3b82f6; border: none; border-radius: 30px; color: white; font-weight: 600; cursor: pointer;">
+                            💎 钱包支付
+                        </button>
+                        <button class="auth-tab" data-tab="admin" style="flex:1; padding: 10px; background: #334155; border: none; border-radius: 30px; color: #94a3b8; font-weight: 600; cursor: pointer;">
+                            👑 管理员
+                        </button>
+                    </div>
+
+                    <div id="payPanel" class="auth-panel" style="display: block;">
+                        <div style="margin: 20px 0;">
+                            <div style="color: #94a3b8; margin-bottom: 10px; font-size: 0.9rem;">选择授权天数:</div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                                ${[1, 7, 15, 30].map(days => `
+                                    <button class="day-option ${days === 30 ? 'active' : ''}" data-days="${days}" 
+                                        style="padding: 12px 5px; background: ${days === 30 ? '#3b82f6' : '#334155'}; 
+                                        border: 1px solid ${days === 30 ? '#60a5fa' : '#475569'}; border-radius: 16px; 
+                                        color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;
+                                        display: flex; flex-direction: column; align-items: center;">
+                                        <span style="font-size: 1rem;">${days}天</span>
+                                        <span style="font-size: 0.75rem; color: #94a3b8;">${AUTH_CONFIG.payment.prices[days]} USDT</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div style="margin: 20px 0; padding: 15px; background: #0f172a; border-radius: 16px; border: 1px solid #334155;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: #94a3b8;">支付金额:</span>
+                                <span style="color: #38bdf8; font-size: 1.2rem; font-weight: bold;">
+                                    <span id="payAmount">${AUTH_CONFIG.payment.prices[30]}</span> USDT
+                                </span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #94a3b8;">有效期至:</span>
+                                <span id="expireDate" style="color: #4ade80; font-weight: 600;">
+                                    ${DateUtils.formatDate(DateUtils.getExpireTimestamp(30))}
+                                </span>
+                            </div>
+                        </div>
+
+                        <button id="payBtn" style="width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); 
+                            border: none; padding: 14px; border-radius: 40px; color: white; font-size: 1rem; 
+                            font-weight: 600; cursor: pointer; margin-top: 10px;">
+                            💎 连接钱包并支付
+                        </button>
+                    </div>
+
+                    <div id="adminPanel" class="auth-panel" style="display: none;">
+                        <div style="margin: 20px 0;">
+                            <input type="password" id="adminPassword" placeholder="请输入管理员密码" 
+                                style="width: 100%; padding: 14px; background: #0f172a; border: 2px solid #334155; 
+                                border-radius: 30px; color: #e2e8f0; font-size: 1rem; text-align: center; 
+                                outline: none; margin-bottom: 15px;">
+                            
+                            <button id="adminBtn" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); 
+                                border: none; padding: 14px; border-radius: 40px; color: white; font-size: 1rem; 
+                                font-weight: 600; cursor: pointer;">
+                                👑 管理员登录
+                            </button>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 12px; background: #1e293b; border-radius: 16px;">
+                            <div style="color: #94a3b8; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                                <span>ℹ️</span>
+                                <span>请联系管理员获取密码</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button id="closeBtn" style="background: #ef4444; border: none; padding: 10px 30px; 
+                            border-radius: 30px; color: white; font-size: 0.9rem; cursor: pointer;">
+                            关闭
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            const tabs = document.querySelectorAll('.auth-tab');
+            const panels = {
+                pay: document.getElementById('payPanel'),
+                admin: document.getElementById('adminPanel')
+            };
+            const closeBtn = document.getElementById('closeBtn');
+            const payBtn = document.getElementById('payBtn');
+            const dayOptions = document.querySelectorAll('.day-option');
+            const payAmountSpan = document.getElementById('payAmount');
+            const expireDateSpan = document.getElementById('expireDate');
+            const adminPassword = document.getElementById('adminPassword');
+            const adminBtn = document.getElementById('adminBtn');
+
+            let currentDays = 30;
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.tab;
+                    
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.style.background = '#334155';
+                        t.style.color = '#94a3b8';
+                    });
+                    
+                    tab.classList.add('active');
+                    tab.style.background = '#3b82f6';
+                    tab.style.color = 'white';
+                    
+                    Object.keys(panels).forEach(key => {
+                        panels[key].style.display = key === target ? 'block' : 'none';
+                    });
+                });
+            });
+
+            dayOptions.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    dayOptions.forEach(b => {
+                        b.classList.remove('active');
+                        b.style.background = '#334155';
+                        b.style.borderColor = '#475569';
+                    });
+                    btn.classList.add('active');
+                    btn.style.background = '#3b82f6';
+                    btn.style.borderColor = '#60a5fa';
+                    
+                    currentDays = parseInt(btn.dataset.days);
+                    payAmountSpan.textContent = AUTH_CONFIG.payment.prices[currentDays];
+                    expireDateSpan.textContent = DateUtils.formatDate(DateUtils.getExpireTimestamp(currentDays));
+                });
+            });
+
+            closeBtn.addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                if (!AuthManager.isAuthorized()) {
+                    setTimeout(() => showAuthDialog(), 500);
+                }
+            });
+
+            payBtn.addEventListener('click', async () => {
+                try {
+                    payBtn.disabled = true;
+                    payBtn.textContent = '支付处理中...';
+
+                    await AuthManager.checkWallet();
+                    await AuthManager.checkNetwork();
+
+                    const address = await AuthManager.connectWallet();
+
+                    if (AuthManager.isAdminAddress(address)) {
+                        const authData = AuthManager.saveAdminAuth(address, 'address');
+                        document.body.removeChild(overlay);
+                        showSuccessToast('👑 管理员地址登录成功');
+                        showAuthBadge(authData);
+                        checkAuthAndLoad();
+                        return;
+                    }
+
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    
+                    const requiredAmount = AUTH_CONFIG.payment.prices[currentDays];
+                    await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
+
+                    const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
+                    
+                    if (!hasAllowance) {
+                        payBtn.textContent = '授权中...';
+                        await AuthManager.approveUSDT(address, provider, requiredAmount);
+                    }
+
+                    payBtn.textContent = '支付中...';
+                    const txHash = await AuthManager.sendUSDT(address, provider, requiredAmount);
+
+                    const authData = AuthManager.savePaymentAuth(address, currentDays, requiredAmount, txHash);
+
+                    document.body.removeChild(overlay);
+                    showSuccessToast(`✅ 授权成功！有效期至：${DateUtils.formatDate(authData.expireTime)}`);
+                    showAuthBadge(authData);
+                    checkAuthAndLoad();
+
+                } catch (error) {
+                    console.error('支付错误:', error);
+                    
+                    let errorMsg = '❌ 授权失败：';
+                    if (error.message === 'NO_WALLET') {
+                        errorMsg += '未安装钱包';
+                        if (confirm('未安装MetaMask，是否前往安装？')) {
+                            window.open('https://metamask.io/download/', '_blank');
+                        }
+                    } else if (error.message.includes('INSUFFICIENT_BALANCE')) {
+                        const balance = error.message.split(':')[1];
+                        errorMsg = `❌ USDT余额不足 (当前: ${balance} USDT)`;
+                    } else {
+                        errorMsg += error.message || '未知错误';
+                    }
+                    
+                    alert(errorMsg);
+                    payBtn.disabled = false;
+                    payBtn.textContent = '💎 连接钱包并支付';
+                }
+            });
+
+            adminBtn.addEventListener('click', () => {
+                const password = adminPassword.value.trim();
+                
+                if (AuthManager.validateAdminPassword(password)) {
+                    const authData = AuthManager.saveAdminAuth('password', 'password');
+                    document.body.removeChild(overlay);
+                    showSuccessToast('👑 管理员登录成功');
+                    showAuthBadge(authData);
+                    checkAuthAndLoad();
+                } else {
+                    alert('❌ 管理员密码错误');
+                }
+            });
+
+            adminPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') adminBtn.click();
+            });
+        }
+
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                padding: 16px 30px;
+                border-radius: 50px;
+                font-size: 1rem;
+                font-weight: 600;
+                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+                z-index: 10001;
+                animation: slideDown 0.3s ease;
+                border: 1px solid rgba(255,255,255,0.2);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    if (toast.parentNode) document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        function showAuthBadge(authData) {
+            const oldBadge = document.getElementById('authBadge');
+            if (oldBadge) oldBadge.remove();
+
+            const badge = document.createElement('div');
+            badge.id = 'authBadge';
+            
+            let bgColor, borderColor, icon;
+            if (authData.type === 'admin') {
+                bgColor = 'linear-gradient(135deg, #f59e0b, #d97706)';
+                borderColor = '#fbbf24';
+                icon = '👑';
+            } else {
+                bgColor = 'linear-gradient(135deg, #10b981, #059669)';
+                borderColor = '#34d399';
+                icon = '💎';
+            }
+
+            badge.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: ${bgColor};
+                border: 1px solid ${borderColor};
+                color: white;
+                padding: 8px 16px;
+                border-radius: 30px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                z-index: 9999;
+                backdrop-filter: blur(5px);
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            `;
+            
+            badge.innerHTML = `
+                <span style="font-size: 0.75rem;">${icon}</span>
+                <span>
+                    ${authData.type === 'admin' ? '管理员模式' : `支付用户 · ${DateUtils.formatDate(authData.expireTime)}`}
+                    ${authData.remainingDays && authData.remainingDays !== '永久' ? 
+                      `<span style="font-size:0.75rem; opacity:0.8;"> (剩余${authData.remainingDays}天)</span>` : ''}
+                </span>
+            `;
+            
+            badge.addEventListener('click', () => {
+                if (confirm('是否清除授权？')) {
+                    AuthManager.clearAuth();
+                    location.reload();
+                }
+            });
+            
+            document.body.appendChild(badge);
+        }
+
+        function checkAuthAndLoad() {
+            if (!AUTH_CONFIG.enabled) {
+                loadCloudData();
+                return;
+            }
+
+            const authorized = AuthManager.isAuthorized();
+            
+            if (!authorized) {
+                document.querySelectorAll('.stats-grid, .status-bar, .data-tabs, .table-container, .chart-card').forEach(el => {
+                    el.style.filter = 'blur(4px)';
+                    el.style.pointerEvents = 'none';
+                });
+                setTimeout(() => showAuthDialog(), 500);
+            } else {
+                document.querySelectorAll('.stats-grid, .status-bar, .data-tabs, .table-container, .chart-card').forEach(el => {
+                    el.style.filter = 'none';
+                    el.style.pointerEvents = 'auto';
+                });
+                const authInfo = AuthManager.getAuthInfo();
+                if (authInfo) {
+                    showAuthBadge(authInfo);
+                }
+                loadCloudData();
+            }
+        }
+
+        // ================= 刷新LP池余额 =================
+        async function refreshLPPool() {
+            const btn = document.getElementById('refreshLPBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '刷新中...';
             }
             
-            // 确保 cloudData 是对象
-            if (typeof cloudData === 'object' && cloudData !== null) {
-                // 更新数据
-                if (cloudData.records) {
-                    currentData.records = cloudData.records;
-                }
+            try {
+                // 这里需要连接到BSC节点获取LP池余额
+                // 暂时使用模拟数据
+                const mockBalance = 12345.67;
+                currentData.stats.lpWithdrawable = mockBalance;
+                document.getElementById('lpWithdrawable').innerText = mockBalance.toFixed(2);
                 
-                if (cloudData.allRecords) {
-                    currentData.allRecords = cloudData.allRecords;
+                if (btn) {
+                    btn.innerText = '💰 LP池已刷新';
+                    setTimeout(() => {
+                        btn.innerText = '💰 刷新LP池';
+                        btn.disabled = false;
+                    }, 2000);
                 }
-                
-                if (cloudData.stats) {
-                    currentData.stats = cloudData.stats;
-                } else {
-                    // 如果没有 stats，从 records 计算
-                    currentData.stats = calculateStats(cloudData.records || []);
-                }
-                
-                if (cloudData.lastUpdate) {
-                    currentData.lastUpdate = cloudData.lastUpdate;
-                    updateLastUpdateTime(cloudData.lastUpdate);
-                }
-                
-                // 渲染界面
-                renderStats();
-                renderRecords();
-                renderDailyStats();
-                updateCharts();
-                
-                if (showLoadingOverlay) {
-                    showToast('✅ 数据已更新');
-                }
-            } else {
-                console.error('云端数据格式错误:', cloudData);
-                if (showLoadingOverlay) {
-                    showToast('❌ 云端数据格式错误', 'error');
+            } catch (error) {
+                console.error('刷新LP池失败:', error);
+                if (btn) {
+                    btn.innerText = '❌ 失败';
+                    setTimeout(() => {
+                        btn.innerText = '💰 刷新LP池';
+                        btn.disabled = false;
+                    }, 2000);
                 }
             }
-        } else {
-            if (showLoadingOverlay) {
-                showToast('❌ 云端暂无数据', 'error');
-            }
         }
-    } catch (error) {
-        console.error('加载云端数据失败:', error);
-        if (showLoadingOverlay) {
-            showToast('❌ 加载失败: ' + error.message, 'error');
-        }
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = '🔄 刷新数据';
-        }
-        if (showLoadingOverlay) hideLoading();
-    }
-}
 
-// 新增：从记录计算统计数据
-function calculateStats(records) {
-    const stats = {
-        totalStaked: 0,
-        totalStaked1d: 0,
-        totalStaked15d: 0,
-        totalStaked30d: 0,
-        count1d: 0,
-        count15d: 0,
-        count30d: 0,
-        unlock2d: 0,
-        unlock7d: 0,
-        unlock15d: 0,
-        lpWithdrawable: 0
-    };
-    
-    const nowSec = Math.floor(Date.now() / 1000);
-    
-    records.forEach(r => {
-        stats.totalStaked += r.amount;
-        
-        if (r.stakeIndex === 0) {
-            stats.totalStaked1d += r.amount;
-            stats.count1d++;
-        } else if (r.stakeIndex === 1) {
-            stats.totalStaked15d += r.amount;
-            stats.count15d++;
-        } else if (r.stakeIndex === 2) {
-            stats.totalStaked30d += r.amount;
-            stats.count30d++;
+        // ================= 从云端加载数据 =================
+        async function loadCloudData(showLoadingOverlay = false) {
+            const btn = document.getElementById('refreshBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '刷新中...';
+            }
+            
+            if (showLoadingOverlay) showLoading('加载云端数据...');
+            
+            try {
+                console.log('正在从云端获取数据...');
+                const response = await fetch(`${CONFIG.API_BASE}/`);
+                const result = await response.json();
+                console.log('云端数据响应:', result);
+                
+                if (result.success && result.data) {
+                    let cloudData = result.data;
+                    if (typeof cloudData === 'string') {
+                        try {
+                            cloudData = JSON.parse(cloudData);
+                            console.log('解析后的云端数据:', cloudData);
+                        } catch (e) {
+                            console.error('解析云端数据字符串失败:', e);
+                        }
+                    }
+                    
+                    if (typeof cloudData === 'object' && cloudData !== null) {
+                        if (cloudData.records) {
+                            currentData.records = cloudData.records;
+                        }
+                        
+                        if (cloudData.allRecords) {
+                            currentData.allRecords = cloudData.allRecords;
+                        }
+                        
+                        if (cloudData.stats) {
+                            currentData.stats = cloudData.stats;
+                        } else {
+                            currentData.stats = calculateStats(cloudData.records || []);
+                        }
+                        
+                        if (cloudData.lastUpdate) {
+                            currentData.lastUpdate = cloudData.lastUpdate;
+                            updateLastUpdateTime(cloudData.lastUpdate);
+                        }
+                        
+                        renderStats();
+                        renderRecords();
+                        renderDailyStats();
+                        updateCharts();
+                        
+                        if (showLoadingOverlay) {
+                            showToast('✅ 数据已更新');
+                        }
+                    } else {
+                        console.error('云端数据格式错误:', cloudData);
+                        if (showLoadingOverlay) {
+                            showToast('❌ 云端数据格式错误', 'error');
+                        }
+                    }
+                } else {
+                    if (showLoadingOverlay) {
+                        showToast('❌ 云端暂无数据', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('加载云端数据失败:', error);
+                if (showLoadingOverlay) {
+                    showToast('❌ 加载失败: ' + error.message, 'error');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '🔄 刷新数据';
+                }
+                if (showLoadingOverlay) hideLoading();
+            }
         }
-        
-        const remain = r.unlockTime - nowSec;
-        if (remain <= 172800) stats.unlock2d += r.amount;
-        else if (remain <= 604800) stats.unlock7d += r.amount;
-        else if (remain <= 1296000) stats.unlock15d += r.amount;
-    });
-    
-    return stats;
-}
+
+        // 从记录计算统计数据
+        function calculateStats(records) {
+            const stats = {
+                totalStaked: 0,
+                totalStaked1d: 0,
+                totalStaked15d: 0,
+                totalStaked30d: 0,
+                count1d: 0,
+                count15d: 0,
+                count30d: 0,
+                unlock2d: 0,
+                unlock7d: 0,
+                unlock15d: 0,
+                lpWithdrawable: 0
+            };
+            
+            const nowSec = Math.floor(Date.now() / 1000);
+            
+            records.forEach(r => {
+                stats.totalStaked += r.amount;
+                
+                if (r.stakeIndex === 0) {
+                    stats.totalStaked1d += r.amount;
+                    stats.count1d++;
+                } else if (r.stakeIndex === 1) {
+                    stats.totalStaked15d += r.amount;
+                    stats.count15d++;
+                } else if (r.stakeIndex === 2) {
+                    stats.totalStaked30d += r.amount;
+                    stats.count30d++;
+                }
+                
+                const remain = r.unlockTime - nowSec;
+                if (remain <= 172800) stats.unlock2d += r.amount;
+                else if (remain <= 604800) stats.unlock7d += r.amount;
+                else if (remain <= 1296000) stats.unlock15d += r.amount;
+            });
+            
+            return stats;
+        }
 
         // ================= 刷新数据 =================
         function refreshData() {
@@ -899,7 +1658,6 @@ function calculateStats(records) {
                 return;
             }
 
-            // 计算每日统计
             const dailyMap = new Map();
             const activeMap = new Map();
             
@@ -960,7 +1718,6 @@ function calculateStats(records) {
             const allRecords = currentData.allRecords || [];
             
             if (records.length === 0 || allRecords.length === 0) {
-                // 清空图表
                 if (trendChart) trendChart.destroy();
                 if (pieChart) pieChart.destroy();
                 if (unlockChart) unlockChart.destroy();
@@ -988,44 +1745,59 @@ function calculateStats(records) {
                 else unlock25plus += r.amount;
             });
 
-            // 趋势图数据
+            // 趋势图数据 - 恢复两条线：新增质押和仍在质押
             const dailyMap = new Map();
+            const activeMap = new Map();
             allRecords.forEach(record => {
                 const dateStr = getDateStrFromTimestamp(record.stakeTime);
                 if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, 0);
                 dailyMap.set(dateStr, dailyMap.get(dateStr) + record.amount);
+                
+                if (!record.isRedeemed) {
+                    if (!activeMap.has(dateStr)) activeMap.set(dateStr, 0);
+                    activeMap.set(dateStr, activeMap.get(dateStr) + record.amount);
+                }
             });
             
             const allDates = Array.from(dailyMap.keys()).sort((a,b)=>a.localeCompare(b));
             const recentDates = allDates.slice(-30);
             const trendLabels = recentDates;
-            const trendData = recentDates.map(d => dailyMap.get(d) || 0);
+            const trendNewData = recentDates.map(d => dailyMap.get(d) || 0);
+            const trendActiveData = recentDates.map(d => activeMap.get(d) || 0);
 
-            // 获取canvas上下文
             const trendCtx = document.getElementById('trendChart')?.getContext('2d');
             const pieCtx = document.getElementById('pieChart')?.getContext('2d');
             const unlockCtx = document.getElementById('unlockChart')?.getContext('2d');
             
             if (!trendCtx || !pieCtx || !unlockCtx) return;
 
-            // 销毁旧图表
             if (trendChart) trendChart.destroy();
             if (pieChart) pieChart.destroy();
             if (unlockChart) unlockChart.destroy();
 
-            // 创建趋势图
+            // 创建趋势图 - 两条线：新增质押和仍在质押
             trendChart = new Chart(trendCtx, {
                 type: 'line',
                 data: {
                     labels: trendLabels,
-                    datasets: [{
-                        label: '新增质押',
-                        data: trendData,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59,130,246,0.1)',
-                        tension: 0.2,
-                        fill: true
-                    }]
+                    datasets: [
+                        {
+                            label: '新增质押',
+                            data: trendNewData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.1)',
+                            tension: 0.2,
+                            fill: true
+                        },
+                        {
+                            label: '仍在质押',
+                            data: trendActiveData,
+                            borderColor: '#4ade80',
+                            backgroundColor: 'rgba(74,222,128,0.1)',
+                            tension: 0.2,
+                            fill: true
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -1038,7 +1810,6 @@ function calculateStats(records) {
                 }
             });
 
-            // 创建饼图
             pieChart = new Chart(pieCtx, {
                 type: 'doughnut',
                 data: {
@@ -1057,7 +1828,6 @@ function calculateStats(records) {
                 }
             });
 
-            // 创建解锁分布图
             unlockChart = new Chart(unlockCtx, {
                 type: 'bar',
                 data: {
@@ -1097,7 +1867,7 @@ function calculateStats(records) {
                 const now = new Date();
                 const diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
                 
-                let date = `${d.getMonth()+1}/${d.getDate()}`;
+                let date = diff === 0 ? '今天' : diff === 1 ? '昨天' : `${d.getMonth()+1}/${d.getDate()}`;
                 let time = d.toLocaleTimeString('zh-CN', {hour12: false}).slice(0,5);
                 
                 return {date, time};
@@ -1135,7 +1905,6 @@ function calculateStats(records) {
             document.getElementById(`tab-${tab}`).classList.add('active');
             document.getElementById(`panel-${tab}`).classList.add('active');
 
-            // 切换到图表选项卡时刷新图表
             if (tab === 'charts') {
                 if (trendChart) trendChart.destroy();
                 if (pieChart) pieChart.destroy();
@@ -1281,9 +2050,30 @@ function calculateStats(records) {
             }, 3000);
         }
 
+        // ================= 初始化 =================
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
+            
+            // 检查授权
+            checkAuthAndLoad();
+            
+            // 设置自动刷新（每5分钟）
+            autoRefreshInterval = setInterval(() => {
+                if (AuthManager.isAuthorized()) {
+                    loadCloudData(true);
+                }
+            }, 5 * 60 * 1000);
+            
+            // 设置LP池自动刷新（每10分钟）
+            lpRefreshInterval = setInterval(() => {
+                refreshLPPool();
+            }, 10 * 60 * 1000);
+        });
+
         // 暴露全局函数
         window.switchDataTab = switchDataTab;
         window.refreshData = refreshData;
+        window.refreshLPPool = refreshLPPool;
         window.exportCSV = exportCSV;
         window.exportDailyStats = exportDailyStats;
         window.copyAddress = copyAddress;
