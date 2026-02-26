@@ -715,48 +715,57 @@ async function loadCloudData(showLoadingOverlay = false) {
         console.log('正在从云端获取数据...');
         const response = await fetch(`${CONFIG.API_BASE}/`);
         const result = await response.json();
-        console.log('云端数据:', result);
+        console.log('云端数据响应:', result);
         
         if (result.success && result.data) {
-            // 解析数据（注意：API 返回的 data 可能是字符串）
+            // 解析数据（API 返回的 data 可能是字符串）
             let cloudData = result.data;
             if (typeof cloudData === 'string') {
                 try {
                     cloudData = JSON.parse(cloudData);
+                    console.log('解析后的云端数据:', cloudData);
                 } catch (e) {
-                    console.error('解析数据失败:', e);
+                    console.error('解析云端数据字符串失败:', e);
                 }
             }
             
-            // 更新数据
-            if (cloudData.records) {
-                currentData.records = cloudData.records;
-            }
-            
-            if (cloudData.allRecords) {
-                currentData.allRecords = cloudData.allRecords;
-            }
-            
-            if (cloudData.stats) {
-                currentData.stats = cloudData.stats;
+            // 确保 cloudData 是对象
+            if (typeof cloudData === 'object' && cloudData !== null) {
+                // 更新数据
+                if (cloudData.records) {
+                    currentData.records = cloudData.records;
+                }
+                
+                if (cloudData.allRecords) {
+                    currentData.allRecords = cloudData.allRecords;
+                }
+                
+                if (cloudData.stats) {
+                    currentData.stats = cloudData.stats;
+                } else {
+                    // 如果没有 stats，从 records 计算
+                    currentData.stats = calculateStats(cloudData.records || []);
+                }
+                
+                if (cloudData.lastUpdate) {
+                    currentData.lastUpdate = cloudData.lastUpdate;
+                    updateLastUpdateTime(cloudData.lastUpdate);
+                }
+                
+                // 渲染界面
+                renderStats();
+                renderRecords();
+                renderDailyStats();
+                updateCharts();
+                
+                if (showLoadingOverlay) {
+                    showToast('✅ 数据已更新');
+                }
             } else {
-                // 如果没有 stats，从 records 计算
-                currentData.stats = calculateStats(cloudData.records || []);
-            }
-            
-            if (cloudData.lastUpdate) {
-                currentData.lastUpdate = cloudData.lastUpdate;
-                updateLastUpdateTime(cloudData.lastUpdate);
-            }
-            
-            // 渲染界面
-            renderStats();
-            renderRecords();
-            renderDailyStats();
-            updateCharts();
-            
-            if (showLoadingOverlay) {
-                showToast('✅ 数据已更新');
+                console.error('云端数据格式错误:', cloudData);
+                if (showLoadingOverlay) {
+                    showToast('❌ 云端数据格式错误', 'error');
+                }
             }
         } else {
             if (showLoadingOverlay) {
