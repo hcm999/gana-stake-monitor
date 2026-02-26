@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>GANA质押数据展示端</title>
+    <!-- 引入 Bootstrap 用于快速布局 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入 Chart.js 轻量图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            background-color: #0f172a; 
+            color: #e2e8f0; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 12px;
+            min-height: 100vh;
+        }
+        
+        .container-fluid {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+            }
+        }
+        
+        .stat-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 10px 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-title {
+            color: #94a3b8;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .stat-value {
+            color: #38bdf8;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.2;
+            margin-bottom: 2px;
+            word-break: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .stat-value {
+                font-size: 1.6rem;
+            }
+        }
+        
+        .stat-sub {
+            color: #4ade80;
+            font-size: 0.6rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .stats-badge {
+            display: inline-block;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.65rem;
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+        
+        .badge-duration { 
+            padding: 3px 8px; 
+            border-radius: 16px; 
+            font-size: 0.7rem;
+            white-space: nowrap;
+            display: inline-block;
+            font-weight: 600;
+        }
+        
+        .badge-1d { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white; 
+        }
+        .badge-15d { 
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        .badge-30d { 
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: white;
+        }
+        
+        .table-container {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid #334155;
+            margin-top: 16px;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -12px;
+            padding: 0 12px;
+            width: calc(100% + 24px);
+        }
+        
+        .table { 
+            color: #e2e8f0; 
+            font-size: 0.8rem; 
+            width: 100%;
+            min-width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table thead th { 
+            border-bottom: 2px solid #334155; 
+            color: #94a3b8; 
+            font-size: 0.7rem; 
+            padding: 12px 4px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .table td { 
+            border-bottom: 1px solid #334155; 
+            padding: 10px 4px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .address-cell {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 0.75rem;
+            color: #60a5fa;
+            cursor: pointer;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .amount-cell {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 0.75rem;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+        
+        .time-two-lines {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.4;
+            font-size: 0.7rem;
+        }
+        .time-date {
+            color: #94a3b8;
+        }
+        .time-clock {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #38bdf8;
+        }
+        
+        .status-unlocked { color: #4ade80; font-weight: 500; }
+        .status-locked { color: #f87171; font-weight: 500; }
+        
+        .header {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+        
+        .header .subtitle {
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+        
+        .viewer-badge {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid #60a5fa;
+        }
+        
+        .contract-address {
+            font-family: 'Courier New', monospace;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: #60a5fa;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+        
+        .btn-export {
+            background-color: #334155;
+            border: 1px solid #475569;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #e2e8f0;
+            font-size: 0.8rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .btn-export {
+                width: auto;
+            }
+        }
+        
+        .stats-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .stats-info h5 {
+            font-size: 1rem;
+            margin: 0;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 12px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .data-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .data-tab {
+            background-color: transparent;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .data-tab:hover {
+            background-color: #334155;
+            color: #e2e8f0;
+        }
+        .data-tab.active {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-color: #60a5fa;
+            color: white;
+        }
+        
+        .data-panel {
+            display: none;
+        }
+        .data-panel.active {
+            display: block;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        @media (min-width: 992px) {
+            .chart-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .chart-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .chart-title {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .chart-container {
+            position: relative;
+            height: 260px;
+            width: 100%;
+        }
+        
+        .status-bar {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 30px;
+            padding: 12px 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .last-update {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        
+        .last-update span {
+            color: #4ade80;
+            font-weight: 600;
+        }
+        
+        .btn-refresh {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-refresh:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-lp {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        #resultTableBody td.amount-cell {
+            color: #38bdf8 !important;
+        }
+
+        #dailyStatsBody tr td:nth-child(2) {
+            color: #38bdf8 !important;
+        }
+
+        #dailyStatsBody tr td:nth-child(3) {
+            color: #4ade80 !important;
+        }
+
+        #dailyStatsBody tr td:nth-child(4) {
+            color: #38bdf8 !important;
+        }
+
+        #dailyStatsBody tr td:nth-child(5) {
+            color: #fbbf24 !important;
+        }
+
+        #dailyStatsBody tr td:nth-child(6) {
+            color: #f87171 !important;
+        }
+
+        #resultTableBody .amount-cell,
+        #dailyStatsBody td {
+            font-size: 0.75rem;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            color: #e2e8f0;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- 头部 -->
+        <div class="header">
+            <div>
+                <h1>🔍 GANA 质押数据展示端 <span class="viewer-badge">只读</span></h1>
+                <div class="subtitle">实时展示云端数据 · 自动刷新</div>
+                <div class="contract-address" id="stakingContractAddress">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</div>
+            </div>
+            <div>
+                <a href="/admin" target="_blank" style="background: #f59e0b; color: white; padding: 8px 16px; border-radius: 30px; text-decoration: none; font-size: 0.8rem;">⚙️ 前往管理端</a>
+            </div>
+        </div>
+
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="last-update">
+                📅 云端数据: <span id="lastUpdateTime">加载中...</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-refresh" onclick="refreshData()" id="refreshBtn">
+                    🔄 刷新数据
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计卡片 - 第一行 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">💰 总质押额</div>
+                <div class="stat-value" id="totalStaked">0.00</div>
+                <div class="stat-sub">USDT</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">💰 1天质押额</div>
+                <div class="stat-value" id="totalStaked1d">0.00</div>
+                <div class="stat-sub">
+                    <span id="count1d">0</span>记录
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">💰 15天质押额</div>
+                <div class="stat-value" id="totalStaked15d">0.00</div>
+                <div class="stat-sub">
+                    <span id="count15d">0</span>记录
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">💰 30天质押额</div>
+                <div class="stat-value" id="totalStaked30d">0.00</div>
+                <div class="stat-sub">
+                    <span id="count30d">0</span>记录
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计卡片 - 第二行 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">💰 未来2天可赎回</div>
+                <div class="stat-value" id="unlock2d">0.00</div>
+                <div class="stat-sub">USDT</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">💰 未来7天可赎回</div>
+                <div class="stat-value" id="unlock7d">0.00</div>
+                <div class="stat-sub">USDT</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">💰 未来15天可赎回</div>
+                <div class="stat-value" id="unlock15d">0.00</div>
+                <div class="stat-sub">USDT</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">💰 LP池余额</div>
+                <div class="stat-value" id="lpWithdrawable">0.00</div>
+                <div class="stat-sub">USDT</div>
+            </div>
+        </div>
+
+        <!-- 数据选项卡 -->
+        <div class="data-tabs">
+            <span class="data-tab active" onclick="switchDataTab('records')" id="tab-records">📋 质押记录</span>
+            <span class="data-tab" onclick="switchDataTab('daily')" id="tab-daily">📅 每日统计</span>
+            <span class="data-tab" onclick="switchDataTab('charts')" id="tab-charts">📊 图表</span>
+        </div>
+
+        <!-- 质押记录面板 -->
+        <div id="panel-records" class="data-panel active">
+            <div class="table-container">
+                <div class="stats-info">
+                    <h5>📊 质押记录 <span class="stats-badge" id="resultCount">0</span></h5>
+                    <button class="btn-export" onclick="exportCSV()">
+                        📥 导出CSV
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>地址</th>
+                                <th>金额</th>
+                                <th>周期</th>
+                                <th>质押时间</th>
+                                <th>解锁时间</th>
+                                <th>剩余</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultTableBody">
+                            <tr>
+                                <td colspan="8" class="empty-state">
+                                    <div>⏳ 加载云端数据中...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 每日统计面板 -->
+        <div id="panel-daily" class="data-panel">
+            <div class="table-container">
+                <div class="stats-info">
+                    <h5>📅 每日质押统计</h5>
+                    <button class="btn-export" onclick="exportDailyStats()">
+                        📥 导出每日统计
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>新增质押</th>
+                                <th>仍在质押</th>
+                                <th>1天新增</th>
+                                <th>15天新增</th>
+                                <th>30天新增</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyStatsBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <div>⏳ 加载云端数据中...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表面板 -->
+        <div id="panel-charts" class="data-panel">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-title">📈 每日新增质押趋势</div>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">🥧 各周期质押分布</div>
+                    <div class="chart-container">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-card" style="margin-top:16px;">
+                <div class="chart-title">⏳ 解锁时间分布</div>
+                <div class="chart-container" style="height:200px;">
+                    <canvas id="unlockChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载遮罩 -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">加载中...</div>
+    </div>
+
+    <script>
+        // ================= 配置 =================
+        const CONFIG = {
+            STAKING: "0x72212F35aC448FE7763aA1BFdb360193Fa098E52",
+            LP_POOL: "0xa2f464a2462aed49b9b31eb8861bc6b0bbb0483f",
+            API_BASE: '/api',
+            STORAGE_KEY: 'viewerSettings'
+        };
+        
+        const STAKE_DURATIONS = {0: 86400, 1: 1296000, 2: 2592000};
+        const STAKE_DURATION_LABELS = {0: "1天", 1: "15天", 2: "30天"};
+        const STAKE_DURATION_CLASS = {0: "badge-1d", 1: "badge-15d", 2: "badge-30d"};
+
+        // ================= 全局变量 =================
+        let currentData = {
+            stats: {
+                totalStaked: 0,
+                totalStaked1d: 0,
+                totalStaked15d: 0,
+                totalStaked30d: 0,
+                count1d: 0,
+                count15d: 0,
+                count30d: 0,
+                unlock2d: 0,
+                unlock7d: 0,
+                unlock15d: 0,
+                lpWithdrawable: 0
+            },
+            records: [],
+            allRecords: [],
+            lastUpdate: null
+        };
+        let trendChart, pieChart, unlockChart;
+        let autoRefreshInterval = null;
+
+        // ================= 初始化 =================
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
+            
+            // 加载数据
+            loadCloudData();
+            
+            // 设置自动刷新（每5分钟）
+            autoRefreshInterval = setInterval(() => {
+                loadCloudData(true);
+            }, 5 * 60 * 1000);
+        });
+
+        // ================= 从云端加载数据 =================
+        async function loadCloudData(showLoadingOverlay = false) {
+            const btn = document.getElementById('refreshBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = '刷新中...';
+            }
+            
+            if (showLoadingOverlay) showLoading('加载云端数据...');
+            
+            try {
+                const response = await fetch(`${CONFIG.API_BASE}/`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const cloudData = result.data;
+                    
+                    // 更新数据
+                    if (cloudData.records) {
+                        currentData.records = cloudData.records;
+                    }
+                    
+                    if (cloudData.allRecords) {
+                        currentData.allRecords = cloudData.allRecords;
+                    }
+                    
+                    if (cloudData.stats) {
+                        currentData.stats = cloudData.stats;
+                    }
+                    
+                    if (cloudData.lastUpdate) {
+                        currentData.lastUpdate = cloudData.lastUpdate;
+                        updateLastUpdateTime(cloudData.lastUpdate);
+                    }
+                    
+                    // 渲染界面
+                    renderStats();
+                    renderRecords();
+                    renderDailyStats();
+                    updateCharts();
+                    
+                    if (showLoadingOverlay) {
+                        showToast('✅ 数据已更新');
+                    }
+                } else {
+                    if (showLoadingOverlay) {
+                        showToast('❌ 云端暂无数据', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('加载云端数据失败:', error);
+                if (showLoadingOverlay) {
+                    showToast('❌ 加载失败: ' + error.message, 'error');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = '🔄 刷新数据';
+                }
+                if (showLoadingOverlay) hideLoading();
+            }
+        }
+
+        // ================= 刷新数据 =================
+        function refreshData() {
+            loadCloudData(true);
+        }
+
+        // ================= 更新最后更新时间 =================
+        function updateLastUpdateTime(timestamp) {
+            if (!timestamp) return;
+            const date = new Date(timestamp);
+            const formatted = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+            document.getElementById('lastUpdateTime').innerText = formatted;
+        }
+
+        // ================= 渲染统计卡片 =================
+        function renderStats() {
+            const stats = currentData.stats || {};
+            
+            document.getElementById('totalStaked').innerText = (stats.totalStaked || 0).toFixed(2);
+            document.getElementById('totalStaked1d').innerText = (stats.totalStaked1d || 0).toFixed(2);
+            document.getElementById('totalStaked15d').innerText = (stats.totalStaked15d || 0).toFixed(2);
+            document.getElementById('totalStaked30d').innerText = (stats.totalStaked30d || 0).toFixed(2);
+            document.getElementById('unlock2d').innerText = (stats.unlock2d || 0).toFixed(2);
+            document.getElementById('unlock7d').innerText = (stats.unlock7d || 0).toFixed(2);
+            document.getElementById('unlock15d').innerText = (stats.unlock15d || 0).toFixed(2);
+            document.getElementById('lpWithdrawable').innerText = (stats.lpWithdrawable || 0).toFixed(2);
+            document.getElementById('count1d').innerText = stats.count1d || 0;
+            document.getElementById('count15d').innerText = stats.count15d || 0;
+            document.getElementById('count30d').innerText = stats.count30d || 0;
+            
+            const recordCount = (stats.count1d || 0) + (stats.count15d || 0) + (stats.count30d || 0);
+            document.getElementById('resultCount').innerText = recordCount;
+        }
+
+        // ================= 渲染质押记录 =================
+        function renderRecords() {
+            const tbody = document.getElementById('resultTableBody');
+            const records = currentData.records || [];
+            
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">📭 暂无质押记录</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = records.map((r, i) => {
+                const stake = formatStakeTime(r.stakeTime);
+                const unlock = formatStakeTime(r.unlockTime);
+                const status = r.timeRemaining <= 0 ? '可赎回' : '锁仓';
+                const statusClass = r.timeRemaining <= 0 ? 'status-unlocked' : 'status-locked';
+                const timeText = r.timeRemaining <= 0 ? '已解锁' : formatTimeRemaining(r.timeRemaining);
+                
+                return `<tr>
+                    <td>${i+1}</td>
+                    <td class="address-cell" title="${r.address}" onclick="copyAddress('${r.address}')">${shortenAddress(r.address)}</td>
+                    <td class="amount-cell">${r.amount.toFixed(2)}</td>
+                    <td><span class="badge-duration ${STAKE_DURATION_CLASS[r.stakeIndex]}">${STAKE_DURATION_LABELS[r.stakeIndex]}</span></td>
+                    <td><div class="time-two-lines"><span class="time-date">${stake.date}</span><span class="time-clock">${stake.time}</span></div></td>
+                    <td><div class="time-two-lines"><span class="time-date">${unlock.date}</span><span class="time-clock">${unlock.time}</span></div></td>
+                    <td class="${statusClass}">${timeText}</td>
+                    <td class="${statusClass}">${status}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ================= 渲染每日统计 =================
+        function renderDailyStats() {
+            const allRecords = currentData.allRecords || [];
+            
+            if (allRecords.length === 0) {
+                document.getElementById('dailyStatsBody').innerHTML = '<tr><td colspan="6" class="empty-state">📊 暂无数据</td></tr>';
+                return;
+            }
+
+            // 计算每日统计
+            const dailyMap = new Map();
+            const activeMap = new Map();
+            
+            allRecords.forEach(record => {
+                const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                
+                if (!dailyMap.has(dateStr)) {
+                    dailyMap.set(dateStr, {
+                        newStake: 0,
+                        byPool: {0: 0, 1: 0, 2: 0},
+                        count: {0: 0, 1: 0, 2: 0}
+                    });
+                }
+                
+                const dayData = dailyMap.get(dateStr);
+                dayData.newStake += record.amount;
+                dayData.byPool[record.stakeIndex] += record.amount;
+                dayData.count[record.stakeIndex]++;
+                
+                if (!record.isRedeemed) {
+                    if (!activeMap.has(dateStr)) {
+                        activeMap.set(dateStr, 0);
+                    }
+                    activeMap.set(dateStr, activeMap.get(dateStr) + record.amount);
+                }
+            });
+
+            const sortedDates = Array.from(dailyMap.entries())
+                .map(([date, data]) => ({
+                    date,
+                    newStake: data.newStake,
+                    activeStake: activeMap.get(date) || 0,
+                    new1d: data.byPool[0],
+                    new15d: data.byPool[1],
+                    new30d: data.byPool[2],
+                    count1d: data.count[0],
+                    count15d: data.count[1],
+                    count30d: data.count[2]
+                }))
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            const tbody = document.getElementById('dailyStatsBody');
+            tbody.innerHTML = sortedDates.map(day => `
+                <tr>
+                    <td>${day.date}</td>
+                    <td class="amount-cell">${day.newStake.toFixed(2)}</td>
+                    <td class="amount-cell">${day.activeStake.toFixed(2)}</td>
+                    <td>${day.new1d.toFixed(2)} <span class="stats-badge">${day.count1d}</span></td>
+                    <td>${day.new15d.toFixed(2)} <span class="stats-badge">${day.count15d}</span></td>
+                    <td>${day.new30d.toFixed(2)} <span class="stats-badge">${day.count30d}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // ================= 更新图表 =================
+        function updateCharts() {
+            const records = currentData.records || [];
+            const allRecords = currentData.allRecords || [];
+            
+            if (records.length === 0 || allRecords.length === 0) {
+                // 清空图表
+                if (trendChart) trendChart.destroy();
+                if (pieChart) pieChart.destroy();
+                if (unlockChart) unlockChart.destroy();
+                trendChart = pieChart = unlockChart = null;
+                return;
+            }
+
+            // 周期分布
+            let sum1d = 0, sum15d = 0, sum30d = 0;
+            records.forEach(r => {
+                if (r.stakeIndex === 0) sum1d += r.amount;
+                else if (r.stakeIndex === 1) sum15d += r.amount;
+                else if (r.stakeIndex === 2) sum30d += r.amount;
+            });
+
+            // 解锁分布
+            let unlock0_2 = 0, unlock2_7 = 0, unlock7_15 = 0, unlock15_25 = 0, unlock25plus = 0;
+            const nowSec = Math.floor(Date.now() / 1000);
+            records.forEach(r => {
+                const remain = r.unlockTime - nowSec;
+                if (remain <= 172800) unlock0_2 += r.amount;
+                else if (remain <= 604800) unlock2_7 += r.amount;
+                else if (remain <= 1296000) unlock7_15 += r.amount;
+                else if (remain <= 2160000) unlock15_25 += r.amount;
+                else unlock25plus += r.amount;
+            });
+
+            // 趋势图数据
+            const dailyMap = new Map();
+            allRecords.forEach(record => {
+                const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                if (!dailyMap.has(dateStr)) dailyMap.set(dateStr, 0);
+                dailyMap.set(dateStr, dailyMap.get(dateStr) + record.amount);
+            });
+            
+            const allDates = Array.from(dailyMap.keys()).sort((a,b)=>a.localeCompare(b));
+            const recentDates = allDates.slice(-30);
+            const trendLabels = recentDates;
+            const trendData = recentDates.map(d => dailyMap.get(d) || 0);
+
+            // 获取canvas上下文
+            const trendCtx = document.getElementById('trendChart')?.getContext('2d');
+            const pieCtx = document.getElementById('pieChart')?.getContext('2d');
+            const unlockCtx = document.getElementById('unlockChart')?.getContext('2d');
+            
+            if (!trendCtx || !pieCtx || !unlockCtx) return;
+
+            // 销毁旧图表
+            if (trendChart) trendChart.destroy();
+            if (pieChart) pieChart.destroy();
+            if (unlockChart) unlockChart.destroy();
+
+            // 创建趋势图
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: '新增质押',
+                        data: trendData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { ticks: { color: '#94a3b8', maxRotation: 45 } } 
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+
+            // 创建饼图
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['1天', '15天', '30天'],
+                    datasets: [{
+                        data: [sum1d, sum15d, sum30d],
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899'],
+                        borderColor: '#1e293b',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+
+            // 创建解锁分布图
+            unlockChart = new Chart(unlockCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-2天', '2-7天', '7-15天', '15-25天', '>25天'],
+                    datasets: [{
+                        label: '可赎回金额 (USDT)',
+                        data: [unlock0_2, unlock2_7, unlock7_15, unlock15_25, unlock25plus],
+                        backgroundColor: ['#f87171', '#fbbf24', '#60a5fa', '#a78bfa', '#ec4899'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { ticks: { color: '#94a3b8' } } 
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+        }
+
+        // ================= 工具函数 =================
+        function formatTimeRemaining(seconds) {
+            if (seconds <= 0) return "已解锁";
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            
+            if (days > 0) return `${days}d${hours}h`;
+            return `${hours}h${Math.floor((seconds % 3600) / 60)}m`;
+        }
+
+        function formatStakeTime(timestamp) {
+            try {
+                const d = new Date(timestamp * 1000);
+                const now = new Date();
+                const diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+                
+                let date = diff === 0 ? '今天' : diff === 1 ? '昨天' : `${d.getMonth()+1}/${d.getDate()}`;
+                let time = d.toLocaleTimeString('zh-CN', {hour12: false}).slice(0,5);
+                
+                return {date, time};
+            } catch {
+                return {date: '-', time: '-'};
+            }
+        }
+
+        function getDateStrFromTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function shortenAddress(addr) {
+            return addr ? addr.slice(0, 6) + '…' + addr.slice(-4) : '';
+        }
+
+        function copyAddress(address) {
+            navigator.clipboard.writeText(address);
+            showToast('地址已复制');
+        }
+
+        // ================= 选项卡切换 =================
+        function switchDataTab(tab) {
+            document.getElementById('tab-records').classList.remove('active');
+            document.getElementById('tab-daily').classList.remove('active');
+            document.getElementById('tab-charts').classList.remove('active');
+            document.getElementById('panel-records').classList.remove('active');
+            document.getElementById('panel-daily').classList.remove('active');
+            document.getElementById('panel-charts').classList.remove('active');
+            
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.getElementById(`panel-${tab}`).classList.add('active');
+
+            // 切换到图表选项卡时刷新图表
+            if (tab === 'charts') {
+                if (trendChart) trendChart.destroy();
+                if (pieChart) pieChart.destroy();
+                if (unlockChart) unlockChart.destroy();
+                updateCharts();
+            }
+        }
+
+        // ================= 导出CSV =================
+        function exportCSV() {
+            const records = currentData.records || [];
+            
+            if (records.length === 0) {
+                alert("没有数据");
+                return;
+            }
+
+            const headers = ['序号', '地址', '金额', '周期', '质押时间', '解锁时间', '剩余时间', '状态'];
+            const rows = records.map((r, i) => {
+                const stakeTime = new Date(r.stakeTime * 1000).toLocaleString();
+                const unlockTime = new Date(r.unlockTime * 1000).toLocaleString();
+                const status = r.timeRemaining <= 0 ? '可赎回' : '锁仓';
+                const remaining = r.timeRemaining <= 0 ? '已解锁' : formatTimeRemaining(r.timeRemaining);
+                
+                return [
+                    i+1, r.address, r.amount.toFixed(2),
+                    STAKE_DURATION_LABELS[r.stakeIndex],
+                    stakeTime, unlockTime, remaining, status
+                ];
+            });
+
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `质押数据_${new Date().toLocaleDateString()}.csv`;
+            link.click();
+        }
+
+        // ================= 导出每日统计 =================
+        function exportDailyStats() {
+            const allRecords = currentData.allRecords || [];
+            
+            if (allRecords.length === 0) {
+                alert("没有数据");
+                return;
+            }
+
+            const dailyMap = new Map();
+            const activeMap = new Map();
+            
+            allRecords.forEach(record => {
+                const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                
+                if (!dailyMap.has(dateStr)) {
+                    dailyMap.set(dateStr, {
+                        newStake: 0,
+                        new1d: 0,
+                        new15d: 0,
+                        new30d: 0
+                    });
+                }
+                
+                const dayData = dailyMap.get(dateStr);
+                dayData.newStake += record.amount;
+                
+                if (record.stakeIndex === 0) dayData.new1d += record.amount;
+                else if (record.stakeIndex === 1) dayData.new15d += record.amount;
+                else if (record.stakeIndex === 2) dayData.new30d += record.amount;
+
+                if (!record.isRedeemed) {
+                    if (!activeMap.has(dateStr)) {
+                        activeMap.set(dateStr, 0);
+                    }
+                    activeMap.set(dateStr, activeMap.get(dateStr) + record.amount);
+                }
+            });
+
+            const headers = ['日期', '新增质押', '仍在质押', '1天新增', '15天新增', '30天新增'];
+            const rows = Array.from(dailyMap.entries())
+                .map(([date, data]) => {
+                    const active = activeMap.get(date) || 0;
+                    return [
+                        date,
+                        data.newStake.toFixed(2),
+                        active.toFixed(2),
+                        data.new1d.toFixed(2),
+                        data.new15d.toFixed(2),
+                        data.new30d.toFixed(2)
+                    ];
+                })
+                .sort((a, b) => b[0].localeCompare(a[0]));
+
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `每日统计_${new Date().toLocaleDateString()}.csv`;
+            link.click();
+        }
+
+        // ================= UI辅助 =================
+        function showLoading(message) {
+            const overlay = document.getElementById('loadingOverlay');
+            const text = document.getElementById('loadingText');
+            text.textContent = message || '加载中...';
+            overlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'none';
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 50px;
+                font-size: 0.9rem;
+                font-weight: 600;
+                z-index: 10001;
+                animation: slideDown 0.3s ease;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                border: 1px solid rgba(255,255,255,0.2);
+                max-width: 80%;
+                text-align: center;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // 暴露全局函数
+        window.switchDataTab = switchDataTab;
+        window.refreshData = refreshData;
+        window.exportCSV = exportCSV;
+        window.exportDailyStats = exportDailyStats;
+        window.copyAddress = copyAddress;
+    </script>
+</body>
+</html>
