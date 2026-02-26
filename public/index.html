@@ -1846,10 +1846,7 @@
         const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
         usdtContract = new ethers.Contract(
             CONFIG.USDT,
-            [
-                "function balanceOf(address account) view returns (uint256)",
-                "function decimals() view returns (uint8)"
-            ],
+            ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"],
             provider
         );
         console.log('USDT合约初始化成功');
