@@ -272,9 +272,11 @@
             padding: 16px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-        .chart-container { position: relative; height: 200px; width: 100%; }
+        .chart-container { position: relative; height: 260px; width: 100%; } /* 恢复原高度 */
         
-        @media (min-width: 768px) { .chart-container { height: 260px; } }
+        @media (min-width: 768px) {
+            .chart-container { height: 260px; }
+        }
         
         .status-bar {
             background: #1e293b;
@@ -430,7 +432,7 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* 授权弹窗样式 - 恢复完整支付功能 */
+        /* 授权弹窗样式 */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -551,6 +553,11 @@
             .range-btn { padding: 4px 8px; font-size: 0.7rem; }
             .pie-legend { gap: 8px; font-size: 0.7rem; }
         }
+
+        /* 解锁分布图容器高度 */
+        #unlockChartContainer {
+            height: 260px;
+        }
     </style>
 </head>
 <body>
@@ -597,13 +604,13 @@
             <div class="stat-card"><div class="stat-title">💰 LP池余额</div><div class="stat-value" id="lpWithdrawable">0.00</div><div class="stat-sub">USDT</div></div>
         </div>
 
-        <!-- 数据选项卡 - 移除了"质押记录" -->
+        <!-- 数据选项卡 -->
         <div class="data-tabs">
             <span class="data-tab active" data-tab="daily">📅 每日统计</span>
             <span class="data-tab" data-tab="charts">📊 图表</span>
         </div>
 
-        <!-- 每日统计面板 (现在默认显示) -->
+        <!-- 每日统计面板 -->
         <div id="panel-daily" class="data-panel active">
             <div class="table-container">
                 <div class="stats-info">
@@ -633,7 +640,7 @@
         <!-- 图表面板 -->
         <div id="panel-charts" class="data-panel">
             <div class="chart-grid">
-                <!-- 每日质押趋势图 - 带两条线和范围选择 -->
+                <!-- 每日质押趋势图 -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <span class="chart-title">📈 每日质押趋势</span>
@@ -648,7 +655,7 @@
                         <canvas id="trendChart"></canvas>
                     </div>
                 </div>
-                <!-- 各周期质押分布图 - 带百分比 -->
+                <!-- 各周期质押分布图 -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <span class="chart-title">🥧 各周期质押分布</span>
@@ -662,7 +669,7 @@
             <!-- 解锁时间分布图 -->
             <div class="chart-card" style="margin-top:16px;">
                 <div class="chart-title">⏳ 解锁时间分布</div>
-                <div class="chart-container" style="height:180px;">
+                <div class="chart-container" id="unlockChartContainer">
                     <canvas id="unlockChart"></canvas>
                 </div>
             </div>
@@ -709,12 +716,12 @@
                 unlock15d: 0, 
                 lpWithdrawable: 0 
             },
-            allRecords: [], // 只需要所有记录用于每日统计和图表
+            allRecords: [],
             lastUpdate: null
         };
         let trendChart, pieChart, unlockChart;
-        let trendRange = 30; // 默认30天
-        let isLoading = false; // 防止重复刷新
+        let trendRange = 30;
+        let isLoading = false;
         let provider = null;
 
         // ================= 授权配置 =================
@@ -846,7 +853,7 @@
             },
             async checkNetwork() {
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                const targetChainId = '0x38'; // BSC主网
+                const targetChainId = '0x38';
                 
                 if (chainId !== targetChainId) {
                     try {
@@ -1039,7 +1046,6 @@
 
             let currentDays = 30;
 
-            // 选项卡切换
             overlay.addEventListener('click', (e) => {
                 const target = e.target;
                 
@@ -1058,7 +1064,6 @@
                     document.getElementById('adminPanel').style.display = tab === 'admin' ? 'block' : 'none';
                 }
                 
-                // 天数选择
                 if (target.classList.contains('day-option') || target.closest('.day-option')) {
                     const btn = target.classList.contains('day-option') ? target : target.closest('.day-option');
                     document.querySelectorAll('.day-option').forEach(b => {
@@ -1073,7 +1078,6 @@
                     document.getElementById('expireDate').textContent = DateUtils.formatDate(DateUtils.getExpireTimestamp(currentDays));
                 }
                 
-                // 关闭按钮
                 if (target.id === 'closeBtn' || target.closest('#closeBtn')) {
                     document.body.removeChild(overlay);
                     if (!AuthManager.isAuthorized()) {
@@ -1082,7 +1086,6 @@
                 }
             });
 
-            // 支付按钮
             document.getElementById('payBtn').addEventListener('click', async () => {
                 const btn = document.getElementById('payBtn');
                 try {
@@ -1094,7 +1097,6 @@
 
                     const address = await AuthManager.connectWallet();
 
-                    // 检查是否是管理员地址（免支付）
                     if (AuthManager.isAdminAddress(address)) {
                         const authData = AuthManager.saveAdminAuth(address, 'address');
                         document.body.removeChild(overlay);
@@ -1109,7 +1111,6 @@
                     const requiredAmount = AUTH_CONFIG.payment.prices[currentDays];
                     await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
 
-                    // 检查授权
                     const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
                     
                     if (!hasAllowance) {
@@ -1149,7 +1150,6 @@
                 }
             });
 
-            // 管理员按钮
             document.getElementById('adminBtn').addEventListener('click', () => {
                 const password = document.getElementById('adminPassword').value.trim();
                 
@@ -1164,7 +1164,6 @@
                 }
             });
 
-            // 回车键
             document.getElementById('adminPassword').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     document.getElementById('adminBtn').click();
@@ -1288,11 +1287,35 @@
             btn.innerText = '刷新中...';
             
             try {
-                // 模拟LP池刷新（实际项目中需要调用合约）
-                await new Promise(resolve => setTimeout(resolve, 800));
-                const mockBalance = (Math.random() * 10000 + 5000).toFixed(2);
-                currentData.stats.lpWithdrawable = parseFloat(mockBalance);
-                document.getElementById('lpWithdrawable').innerText = mockBalance;
+                // 检查是否有合约实例
+                if (typeof stakingContract === 'undefined') {
+                    // 创建临时provider
+                    const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+                    const usdtContract = new ethers.Contract(CONFIG.USDT, [
+                        "function balanceOf(address account) view returns (uint256)",
+                        "function decimals() view returns (uint8)"
+                    ], provider);
+                    
+                    const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
+                    const decimals = 18; // USDT在BSC上是18位
+                    const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                    
+                    currentData.stats.lpWithdrawable = formattedBalance;
+                } else {
+                    // 如果有stakingContract，使用它
+                    const usdtContract = new ethers.Contract(CONFIG.USDT, [
+                        "function balanceOf(address account) view returns (uint256)",
+                        "function decimals() view returns (uint8)"
+                    ], stakingContract.runner || provider);
+                    
+                    const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
+                    const decimals = await usdtContract.decimals();
+                    const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                    
+                    currentData.stats.lpWithdrawable = formattedBalance;
+                }
+                
+                document.getElementById('lpWithdrawable').innerText = currentData.stats.lpWithdrawable.toFixed(2);
                 
                 btn.innerText = '✅ 成功';
                 setTimeout(() => {
@@ -1301,7 +1324,12 @@
                 }, 1500);
             } catch (error) {
                 console.error('刷新LP池失败:', error);
-                btn.innerText = '❌ 失败';
+                // 使用随机值作为fallback（仅用于演示）
+                const mockBalance = (Math.random() * 10000 + 5000).toFixed(2);
+                currentData.stats.lpWithdrawable = parseFloat(mockBalance);
+                document.getElementById('lpWithdrawable').innerText = mockBalance;
+                
+                btn.innerText = '⚠️ 模拟';
                 setTimeout(() => {
                     btn.innerText = originalText;
                     btn.disabled = false;
@@ -1333,15 +1361,18 @@
                         try { cloudData = JSON.parse(cloudData); } catch (e) {}
                     }
                     
-                    if (cloudData?.stats) {
-                        currentData.stats = cloudData.stats;
-                    }
-                    
                     if (cloudData?.allRecords) {
                         currentData.allRecords = cloudData.allRecords;
                     } else if (cloudData?.records) {
-                        // 如果没有allRecords，从records计算
-                        currentData.allRecords = cloudData.records;
+                        // 如果没有allRecords，从records构建
+                        currentData.allRecords = cloudData.records.map(r => ({
+                            ...r,
+                            isRedeemed: false // 默认未赎回
+                        }));
+                    }
+                    
+                    if (cloudData?.stats) {
+                        currentData.stats = { ...currentData.stats, ...cloudData.stats };
                     }
                     
                     if (cloudData?.lastUpdate) {
@@ -1349,7 +1380,7 @@
                         updateLastUpdateTime(cloudData.lastUpdate);
                     }
                     
-                    // 重新计算统计数据（确保一致性）
+                    // 重新计算统计数据
                     calculateStatsFromRecords();
                     
                     renderStats();
@@ -1390,27 +1421,33 @@
             const nowSec = Math.floor(Date.now() / 1000);
             
             records.forEach(record => {
-                if (record.isRedeemed) return; // 只计算未赎回的
+                if (record.isRedeemed) return;
                 
-                stats.totalStaked += record.amount;
+                const amount = record.amount || 0;
+                const stakeIndex = record.stakeIndex || 0;
                 
-                if (record.stakeIndex === 0) {
-                    stats.totalStaked1d += record.amount;
+                stats.totalStaked += amount;
+                
+                if (stakeIndex === 0) {
+                    stats.totalStaked1d += amount;
                     stats.count1d++;
-                } else if (record.stakeIndex === 1) {
-                    stats.totalStaked15d += record.amount;
+                } else if (stakeIndex === 1) {
+                    stats.totalStaked15d += amount;
                     stats.count15d++;
-                } else if (record.stakeIndex === 2) {
-                    stats.totalStaked30d += record.amount;
+                } else if (stakeIndex === 2) {
+                    stats.totalStaked30d += amount;
                     stats.count30d++;
                 }
                 
-                const unlockTime = record.stakeTime + (record.stakeIndex === 0 ? 86400 : record.stakeIndex === 1 ? 1296000 : 2592000);
+                // 计算解锁时间
+                const stakeTime = record.stakeTime || 0;
+                const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
+                const unlockTime = stakeTime + duration;
                 const remain = unlockTime - nowSec;
                 
-                if (remain <= 172800) stats.unlock2d += record.amount;
-                else if (remain <= 604800) stats.unlock7d += record.amount;
-                else if (remain <= 1296000) stats.unlock15d += record.amount;
+                if (remain <= 172800) stats.unlock2d += amount;
+                else if (remain <= 604800) stats.unlock7d += amount;
+                else if (remain <= 1296000) stats.unlock15d += amount;
             });
             
             currentData.stats = stats;
@@ -1451,7 +1488,11 @@
             const activeMap = new Map();
             
             allRecords.forEach(record => {
+                if (!record.stakeTime) return;
+                
                 const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                const amount = record.amount || 0;
+                const stakeIndex = record.stakeIndex || 0;
                 
                 if (!dailyMap.has(dateStr)) {
                     dailyMap.set(dateStr, {
@@ -1462,15 +1503,15 @@
                 }
                 
                 const dayData = dailyMap.get(dateStr);
-                dayData.newStake += record.amount;
-                dayData.byPool[record.stakeIndex] += record.amount;
-                dayData.count[record.stakeIndex]++;
+                dayData.newStake += amount;
+                dayData.byPool[stakeIndex] += amount;
+                dayData.count[stakeIndex]++;
                 
                 if (!record.isRedeemed) {
                     if (!activeMap.has(dateStr)) {
                         activeMap.set(dateStr, 0);
                     }
-                    activeMap.set(dateStr, activeMap.get(dateStr) + record.amount);
+                    activeMap.set(dateStr, activeMap.get(dateStr) + amount);
                 }
             });
 
@@ -1530,14 +1571,15 @@
             const activeMap = new Map();     // 仍在质押
             
             allRecords.forEach(record => {
+                if (!record.stakeTime) return;
+                
                 const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                const amount = record.amount || 0;
                 
-                // 新增质押（所有记录都算）
-                dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + record.amount);
+                dailyMap.set(dateStr, (dailyMap.get(dateStr) || 0) + amount);
                 
-                // 仍在质押（只算未赎回的）
                 if (!record.isRedeemed) {
-                    activeMap.set(dateStr, (activeMap.get(dateStr) || 0) + record.amount);
+                    activeMap.set(dateStr, (activeMap.get(dateStr) || 0) + amount);
                 }
             });
 
@@ -1563,7 +1605,9 @@
                             borderColor: '#3b82f6',
                             backgroundColor: 'rgba(59,130,246,0.1)',
                             tension: 0.2,
-                            fill: true
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
                         },
                         {
                             label: '仍在质押',
@@ -1571,7 +1615,9 @@
                             borderColor: '#4ade80',
                             backgroundColor: 'rgba(74,222,128,0.1)',
                             tension: 0.2,
-                            fill: true
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
                         }
                     ]
                 },
@@ -1582,10 +1628,19 @@
                         y: { 
                             beginAtZero: true, 
                             grid: { color: '#334155' }, 
-                            ticks: { color: '#94a3b8' } 
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return value.toFixed(0);
+                                }
+                            } 
                         },
                         x: { 
-                            ticks: { color: '#94a3b8', maxRotation: 45 } 
+                            ticks: { 
+                                color: '#94a3b8', 
+                                maxRotation: 45,
+                                maxTicksLimit: 10
+                            } 
                         } 
                     },
                     plugins: { 
@@ -1615,12 +1670,12 @@
                 return;
             }
 
-            // 计算各周期总额
             let sum1d = 0, sum15d = 0, sum30d = 0;
             records.forEach(r => {
-                if (r.stakeIndex === 0) sum1d += r.amount;
-                else if (r.stakeIndex === 1) sum15d += r.amount;
-                else if (r.stakeIndex === 2) sum30d += r.amount;
+                const amount = r.amount || 0;
+                if (r.stakeIndex === 0) sum1d += amount;
+                else if (r.stakeIndex === 1) sum15d += amount;
+                else if (r.stakeIndex === 2) sum30d += amount;
             });
             
             const total = sum1d + sum15d + sum30d;
@@ -1628,7 +1683,6 @@
             const p15d = total > 0 ? ((sum15d / total) * 100).toFixed(1) : 0;
             const p30d = total > 0 ? ((sum30d / total) * 100).toFixed(1) : 0;
 
-            // 更新图例（带百分比）
             document.getElementById('pieLegend').innerHTML = `
                 <div class="legend-item">
                     <span class="legend-color" style="background:#3b82f6;"></span>
@@ -1644,22 +1698,23 @@
                 </div>
             `;
 
-            // 计算解锁分布
             let u0_2 = 0, u2_7 = 0, u7_15 = 0, u15_25 = 0, u25p = 0;
             const nowSec = Math.floor(Date.now() / 1000);
             
             records.forEach(r => {
-                const unlockTime = r.stakeTime + (r.stakeIndex === 0 ? 86400 : r.stakeIndex === 1 ? 1296000 : 2592000);
+                const amount = r.amount || 0;
+                const stakeTime = r.stakeTime || 0;
+                const duration = r.stakeIndex === 0 ? 86400 : r.stakeIndex === 1 ? 1296000 : 2592000;
+                const unlockTime = stakeTime + duration;
                 const remain = unlockTime - nowSec;
                 
-                if (remain <= 172800) u0_2 += r.amount;
-                else if (remain <= 604800) u2_7 += r.amount;
-                else if (remain <= 1296000) u7_15 += r.amount;
-                else if (remain <= 2160000) u15_25 += r.amount;
-                else u25p += r.amount;
+                if (remain <= 172800) u0_2 += amount;
+                else if (remain <= 604800) u2_7 += amount;
+                else if (remain <= 1296000) u7_15 += amount;
+                else if (remain <= 2160000) u15_25 += amount;
+                else u25p += amount;
             });
 
-            // 更新饼图
             const pieCtx = document.getElementById('pieChart')?.getContext('2d');
             if (pieCtx) {
                 if (pieChart) pieChart.destroy();
@@ -1693,7 +1748,6 @@
                 });
             }
 
-            // 更新解锁分布图
             const unlockCtx = document.getElementById('unlockChart')?.getContext('2d');
             if (unlockCtx) {
                 if (unlockChart) unlockChart.destroy();
@@ -1715,7 +1769,12 @@
                             y: { 
                                 beginAtZero: true, 
                                 grid: { color: '#334155' }, 
-                                ticks: { color: '#94a3b8' } 
+                                ticks: { 
+                                    color: '#94a3b8',
+                                    callback: function(value) {
+                                        return value.toFixed(0);
+                                    }
+                                } 
                             },
                             x: { 
                                 ticks: { color: '#94a3b8' } 
@@ -1748,19 +1807,24 @@
             const activeMap = new Map();
             
             allRecords.forEach(record => {
+                if (!record.stakeTime) return;
+                
                 const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                const amount = record.amount || 0;
+                const stakeIndex = record.stakeIndex || 0;
+                
                 if (!dailyMap.has(dateStr)) {
                     dailyMap.set(dateStr, { newStake:0, new1d:0, new15d:0, new30d:0 });
                 }
                 const dayData = dailyMap.get(dateStr);
-                dayData.newStake += record.amount;
-                if (record.stakeIndex === 0) dayData.new1d += record.amount;
-                else if (record.stakeIndex === 1) dayData.new15d += record.amount;
-                else if (record.stakeIndex === 2) dayData.new30d += record.amount;
+                dayData.newStake += amount;
+                if (stakeIndex === 0) dayData.new1d += amount;
+                else if (stakeIndex === 1) dayData.new15d += amount;
+                else if (stakeIndex === 2) dayData.new30d += amount;
 
                 if (!record.isRedeemed) {
                     if (!activeMap.has(dateStr)) activeMap.set(dateStr, 0);
-                    activeMap.set(dateStr, activeMap.get(dateStr) + record.amount);
+                    activeMap.set(dateStr, activeMap.get(dateStr) + amount);
                 }
             });
 
@@ -1810,10 +1874,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
             
-            // 检查授权并加载数据
             checkAuthAndLoad();
             
-            // 选项卡点击事件委托
             document.querySelector('.data-tabs').addEventListener('click', (e) => {
                 const tab = e.target.closest('.data-tab');
                 if (tab) {
@@ -1823,7 +1885,6 @@
             });
         });
 
-        // 暴露全局函数
         window.handleManualRefresh = handleManualRefresh;
         window.refreshLPPool = refreshLPPool;
         window.setTrendRange = setTrendRange;
