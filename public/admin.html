@@ -1225,6 +1225,9 @@ body.modal-open {
 
         // ================= 管理员登录 =================
         function showAdminLogin() {
+            // 添加防止背景滚动的类
+            document.body.classList.add('modal-open');
+            
             const overlay = document.createElement('div');
             overlay.className = 'admin-login-overlay';
             overlay.id = 'adminLoginOverlay';
@@ -1239,6 +1242,11 @@ body.modal-open {
             `;
             
             document.body.appendChild(overlay);
+
+    // 自动聚焦输入框
+    setTimeout(() => {
+        document.getElementById('adminPasswordInput').focus();
+    }, 100);
             
             document.getElementById('adminPasswordInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') verifyAdmin();
@@ -1247,7 +1255,11 @@ body.modal-open {
         
         function closeAdminLogin() {
             const overlay = document.getElementById('adminLoginOverlay');
-            if (overlay) overlay.remove();
+            if (overlay) {
+                document.body.removeChild(overlay);
+                // 移除防止背景滚动的类
+                document.body.classList.remove('modal-open');
+            }
         }
         
         function verifyAdmin() {
@@ -1260,6 +1272,9 @@ body.modal-open {
                 alert('✅ 管理员登录成功');
             } else {
                 alert('❌ 密码错误');
+                // 清空输入框并重新聚焦
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminPasswordInput').focus();
             }
         }
 
