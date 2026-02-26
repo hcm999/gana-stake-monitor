@@ -701,68 +701,122 @@
             }, 5 * 60 * 1000);
         });
 
-        // ================= 从云端加载数据 =================
-        async function loadCloudData(showLoadingOverlay = false) {
-            const btn = document.getElementById('refreshBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerText = '刷新中...';
+// ================= 从云端加载数据 =================
+async function loadCloudData(showLoadingOverlay = false) {
+    const btn = document.getElementById('refreshBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = '刷新中...';
+    }
+    
+    if (showLoadingOverlay) showLoading('加载云端数据...');
+    
+    try {
+        console.log('正在从云端获取数据...');
+        const response = await fetch(`${CONFIG.API_BASE}/`);
+        const result = await response.json();
+        console.log('云端数据:', result);
+        
+        if (result.success && result.data) {
+            // 解析数据（注意：API 返回的 data 可能是字符串）
+            let cloudData = result.data;
+            if (typeof cloudData === 'string') {
+                try {
+                    cloudData = JSON.parse(cloudData);
+                } catch (e) {
+                    console.error('解析数据失败:', e);
+                }
             }
             
-            if (showLoadingOverlay) showLoading('加载云端数据...');
+            // 更新数据
+            if (cloudData.records) {
+                currentData.records = cloudData.records;
+            }
             
-            try {
-                const response = await fetch(`${CONFIG.API_BASE}/`);
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    const cloudData = result.data;
-                    
-                    // 更新数据
-                    if (cloudData.records) {
-                        currentData.records = cloudData.records;
-                    }
-                    
-                    if (cloudData.allRecords) {
-                        currentData.allRecords = cloudData.allRecords;
-                    }
-                    
-                    if (cloudData.stats) {
-                        currentData.stats = cloudData.stats;
-                    }
-                    
-                    if (cloudData.lastUpdate) {
-                        currentData.lastUpdate = cloudData.lastUpdate;
-                        updateLastUpdateTime(cloudData.lastUpdate);
-                    }
-                    
-                    // 渲染界面
-                    renderStats();
-                    renderRecords();
-                    renderDailyStats();
-                    updateCharts();
-                    
-                    if (showLoadingOverlay) {
-                        showToast('✅ 数据已更新');
-                    }
-                } else {
-                    if (showLoadingOverlay) {
-                        showToast('❌ 云端暂无数据', 'error');
-                    }
-                }
-            } catch (error) {
-                console.error('加载云端数据失败:', error);
-                if (showLoadingOverlay) {
-                    showToast('❌ 加载失败: ' + error.message, 'error');
-                }
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = '🔄 刷新数据';
-                }
-                if (showLoadingOverlay) hideLoading();
+            if (cloudData.allRecords) {
+                currentData.allRecords = cloudData.allRecords;
+            }
+            
+            if (cloudData.stats) {
+                currentData.stats = cloudData.stats;
+            } else {
+                // 如果没有 stats，从 records 计算
+                currentData.stats = calculateStats(cloudData.records || []);
+            }
+            
+            if (cloudData.lastUpdate) {
+                currentData.lastUpdate = cloudData.lastUpdate;
+                updateLastUpdateTime(cloudData.lastUpdate);
+            }
+            
+            // 渲染界面
+            renderStats();
+            renderRecords();
+            renderDailyStats();
+            updateCharts();
+            
+            if (showLoadingOverlay) {
+                showToast('✅ 数据已更新');
+            }
+        } else {
+            if (showLoadingOverlay) {
+                showToast('❌ 云端暂无数据', 'error');
             }
         }
+    } catch (error) {
+        console.error('加载云端数据失败:', error);
+        if (showLoadingOverlay) {
+            showToast('❌ 加载失败: ' + error.message, 'error');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = '🔄 刷新数据';
+        }
+        if (showLoadingOverlay) hideLoading();
+    }
+}
+
+// 新增：从记录计算统计数据
+function calculateStats(records) {
+    const stats = {
+        totalStaked: 0,
+        totalStaked1d: 0,
+        totalStaked15d: 0,
+        totalStaked30d: 0,
+        count1d: 0,
+        count15d: 0,
+        count30d: 0,
+        unlock2d: 0,
+        unlock7d: 0,
+        unlock15d: 0,
+        lpWithdrawable: 0
+    };
+    
+    const nowSec = Math.floor(Date.now() / 1000);
+    
+    records.forEach(r => {
+        stats.totalStaked += r.amount;
+        
+        if (r.stakeIndex === 0) {
+            stats.totalStaked1d += r.amount;
+            stats.count1d++;
+        } else if (r.stakeIndex === 1) {
+            stats.totalStaked15d += r.amount;
+            stats.count15d++;
+        } else if (r.stakeIndex === 2) {
+            stats.totalStaked30d += r.amount;
+            stats.count30d++;
+        }
+        
+        const remain = r.unlockTime - nowSec;
+        if (remain <= 172800) stats.unlock2d += r.amount;
+        else if (remain <= 604800) stats.unlock7d += r.amount;
+        else if (remain <= 1296000) stats.unlock15d += r.amount;
+    });
+    
+    return stats;
+}
 
         // ================= 刷新数据 =================
         function refreshData() {
