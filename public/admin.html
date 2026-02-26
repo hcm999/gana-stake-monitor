@@ -13,7 +13,7 @@
     <!-- 引入 SheetJS (XLSX) 用于解析 Excel 文件 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* 样式保持不变，新增图表容器样式及tab */
+        /* 样式保持不变，和原来一样 */
         * {
             margin: 0;
             padding: 0;
@@ -1032,7 +1032,7 @@
             RETRY_LIMIT: 3,
             RETRY_DELAY: 1000,
             STORAGE_KEY: 'stakeData',
-            API_BASE: '/api'  // 新增：API地址
+            API_BASE: '/api'
         };
 
         // USDT的ABI
@@ -2095,8 +2095,7 @@
                                     count: {0: 0, 1: 0, 2: 0}
                                 });
                             }
-                            
-                            const dayData = dailyStats.get(dateStr);
+                                            const dayData = dailyStats.get(dateStr);
                             dayData.newStake += record.amount;
                             dayData.byPool[record.stakeIndex] += record.amount;
                             dayData.count[record.stakeIndex]++;
@@ -2494,44 +2493,129 @@
             }
         }
 
-        // ================= 新增：从云端加载数据 =================
+        // ================= 从云端加载数据 =================
         async function loadCloudData() {
             const btn = document.getElementById('refreshBtn');
             btn.disabled = true;
             btn.innerText = '加载中...';
             
             try {
+                console.log('正在从云端获取数据...');
                 const response = await fetch(`${CONFIG.API_BASE}/`);
                 const result = await response.json();
+                console.log('云端数据响应:', result);
                 
-                if (result.success && result.data && result.data.records) {
-                    const cloudData = result.data;
+                if (result.success && result.data) {
+                    // 解析数据（API 返回的 data 可能是字符串）
+                    let cloudData = result.data;
+                    if (typeof cloudData === 'string') {
+                        try {
+                            cloudData = JSON.parse(cloudData);
+                            console.log('解析后的云端数据:', cloudData);
+                        } catch (e) {
+                            console.error('解析云端数据字符串失败:', e);
+                        }
+                    }
                     
-                    if (cloudData.records.length > 0) {
-                        if (confirm(`云端有 ${cloudData.records.length} 条活跃记录，是否加载？`)) {
-                            queryResults = cloudData.records || [];
-                            allStakeRecords = cloudData.allRecords || [];
-                            stats = cloudData.stats || {
-                                totalStaked: 0, totalStaked1d: 0, totalStaked15d: 0, totalStaked30d: 0,
-                                count1d: 0, count15d: 0, count30d: 0,
-                                unlock2d: 0, unlock7d: 0, unlock15d: 0,
-                                lpWithdrawable: 0
-                            };
-                            
-                            renderResults();
-                            regenerateDailyStatsTable();
-                            updateStats();
-                            updateAllCharts();
-                            
-                            alert(`✅ 已加载云端数据`);
+                    // 确保 cloudData 是对象
+                    if (typeof cloudData === 'object' && cloudData !== null) {
+                        // 检查是否有 records 字段
+                        if (cloudData.records && Array.isArray(cloudData.records) && cloudData.records.length > 0) {
+                            if (confirm(`云端有 ${cloudData.records.length} 条活跃记录，是否加载？`)) {
+                                // 更新数据
+                                queryResults = cloudData.records || [];
+                                allStakeRecords = cloudData.allRecords || [];
+                                
+                                // 如果有 stats 就用，没有就从 records 计算
+                                if (cloudData.stats) {
+                                    stats = cloudData.stats;
+                                } else {
+                                    // 重新计算 stats
+                                    stats = {
+                                        totalStaked: 0, totalStaked1d: 0, totalStaked15d: 0, totalStaked30d: 0,
+                                        count1d: 0, count15d: 0, count30d: 0,
+                                        unlock2d: 0, unlock7d: 0, unlock15d: 0,
+                                        lpWithdrawable: 0
+                                    };
+                                    
+                                    const nowSec = Math.floor(Date.now() / 1000);
+                                    queryResults.forEach(r => {
+                                        stats.totalStaked += r.amount;
+                                        if (r.stakeIndex === 0) {
+                                            stats.totalStaked1d += r.amount;
+                                            stats.count1d++;
+                                        } else if (r.stakeIndex === 1) {
+                                            stats.totalStaked15d += r.amount;
+                                            stats.count15d++;
+                                        } else if (r.stakeIndex === 2) {
+                                            stats.totalStaked30d += r.amount;
+                                            stats.count30d++;
+                                        }
+                                        
+                                        const remain = r.unlockTime - nowSec;
+                                        if (remain <= 172800) stats.unlock2d += r.amount;
+                                        else if (remain <= 604800) stats.unlock7d += r.amount;
+                                        else if (remain <= 1296000) stats.unlock15d += r.amount;
+                                    });
+                                }
+                                
+                                // 更新缓存
+                                queryResults.forEach(record => {
+                                    const key = `${record.address}_${record.stakeTime}`;
+                                    recordCache.set(key, record);
+                                });
+                                
+                                // 重新计算每日统计
+                                const dailyStats = new Map();
+                                const activeDaily = new Map();
+                                allStakeRecords.forEach(record => {
+                                    const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                                    
+                                    if (!dailyStats.has(dateStr)) {
+                                        dailyStats.set(dateStr, {
+                                            newStake: 0,
+                                            byPool: {0: 0, 1: 0, 2: 0},
+                                            count: {0: 0, 1: 0, 2: 0}
+                                        });
+                                    }
+                                    
+                                    const dayData = dailyStats.get(dateStr);
+                                    dayData.newStake += record.amount;
+                                    dayData.byPool[record.stakeIndex] += record.amount;
+                                    dayData.count[record.stakeIndex]++;
+                                    
+                                    if (!record.isRedeemed) {
+                                        if (!activeDaily.has(dateStr)) {
+                                            activeDaily.set(dateStr, 0);
+                                        }
+                                        activeDaily.set(dateStr, activeDaily.get(dateStr) + record.amount);
+                                    }
+                                });
+                                
+                                // 渲染界面
+                                renderResults();
+                                renderDailyStats(dailyStats, activeDaily);
+                                updateStats();
+                                updateAllCharts();
+                                
+                                // 保存到本地存储
+                                saveToStorage();
+                                
+                                alert(`✅ 已加载云端数据`);
+                            }
+                        } else {
+                            alert('ℹ️ 云端暂无活跃记录');
+                        }
+                        
+                        if (cloudData.lastUpdate) {
+                            updateLastUpdateTime(cloudData.lastUpdate);
                         }
                     } else {
-                        alert('ℹ️ 云端暂无数据');
+                        console.error('云端数据格式错误:', cloudData);
+                        alert('❌ 云端数据格式错误');
                     }
-                    
-                    if (cloudData.lastUpdate) {
-                        updateLastUpdateTime(cloudData.lastUpdate);
-                    }
+                } else {
+                    alert('❌ 获取云端数据失败');
                 }
             } catch (error) {
                 console.error('加载云端数据失败:', error);
@@ -2542,7 +2626,7 @@
             }
         }
 
-        // ================= 新增：上传到云端 =================
+        // ================= 上传到云端 =================
         async function uploadToCloud() {
             if (allStakeRecords.length === 0 && queryResults.length === 0) {
                 alert('没有数据可上传');
@@ -2567,6 +2651,8 @@
                     timestamp: Date.now()
                 };
                 
+                console.log('上传数据:', uploadData);
+                
                 const response = await fetch(`${CONFIG.API_BASE}/upload`, {
                     method: 'POST',
                     headers: {
@@ -2576,10 +2662,13 @@
                 });
                 
                 const result = await response.json();
+                console.log('上传结果:', result);
                 
                 if (result.success) {
-                    alert(`✅ 上传成功！${result.recordCount}条记录已保存到云端`);
-                    updateLastUpdateTime(result.timestamp);
+                    alert(`✅ 上传成功！${result.recordCount || queryResults.length}条记录已保存到云端`);
+                    if (result.timestamp) {
+                        updateLastUpdateTime(result.timestamp);
+                    }
                 } else {
                     alert(`❌ 上传失败: ${result.error || '未知错误'}`);
                 }
