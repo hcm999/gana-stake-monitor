@@ -13,7 +13,7 @@
     <!-- 引入 SheetJS (XLSX) 用于解析 Excel 文件 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* 样式保持不变，和原来一样 */
+        /* 样式保持不变 */
         * {
             margin: 0;
             padding: 0;
@@ -1778,17 +1778,25 @@
 
         // ================= 全量查询 =================
         async function fullQuery() {
+            console.log('全量查询开始');
             if (!stakingContract) {
                 alert("❌ 合约未初始化");
                 return;
             }
             
-            if (isQuerying) return;
+            if (isQuerying) {
+                console.log('正在查询中，请等待');
+                return;
+            }
 
             const text = document.getElementById('addressList').value;
+            console.log('地址列表:', text);
+            
             const addresses = text.split('\n')
                 .map(l => l.trim())
                 .filter(l => l.startsWith('0x') && l.length === 42);
+            
+            console.log('解析到地址:', addresses.length, '个');
             
             if (addresses.length === 0) {
                 alert("❌ 没有有效地址");
@@ -1924,17 +1932,25 @@
 
         // ================= 增量查询 =================
         async function incrementalQuery() {
+            console.log('增量查询开始');
             if (!stakingContract) {
                 alert("❌ 合约未初始化");
                 return;
             }
             
-            if (isQuerying) return;
+            if (isQuerying) {
+                console.log('正在查询中，请等待');
+                return;
+            }
 
             const text = document.getElementById('addressList').value;
+            console.log('地址列表:', text);
+            
             const addresses = text.split('\n')
                 .map(l => l.trim())
                 .filter(l => l.startsWith('0x') && l.length === 42);
+            
+            console.log('解析到地址:', addresses.length, '个');
             
             if (addresses.length === 0) {
                 alert("❌ 没有有效地址");
