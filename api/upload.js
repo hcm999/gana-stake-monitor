@@ -1,21 +1,15 @@
-import multer from 'multer';
 import { CONFIG } from './config.js';
-import { queryAddresses } from './query.js';
 
 export const config = {
     api: {
-        bodyParser: false,
-        maxDuration: 30,  // 限制30秒
+        bodyParser: {
+            sizeLimit: '10mb'
+        },
+        maxDuration: 30
     },
 };
 
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 1024 * 1024 }, // 限制1MB
-});
-
 export default async function handler(req, res) {
-    // 设置CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Content-Type', 'application/json');
@@ -29,47 +23,95 @@ export default async function handler(req, res) {
     }
     
     try {
-        upload.single('file')(req, res, async (err) => {
-            if (err) {
-                console.error('上传错误:', err);
-                return res.status(400).json({ success: false, error: err.message });
-            }
-            
-            if (!req.file) {
-                return res.status(400).json({ success: false, error: 'No file uploaded' });
-            }
-            
-            console.log('收到文件:', req.file.originalname);
-            
-            // 简化地址提取
-            const content = req.file.buffer.toString('utf-8');
-            const lines = content.split(/\r?\n/);
-            const addresses = [];
-            
-            for (const line of lines) {
-                const addr = line.trim().split(',')[0].replace(/^["']|["']$/g, '');
-                if (addr && addr.startsWith('0x') && addr.length === 42) {
-                    addresses.push(addr);
-                    break; // 只取第一个地址测试
-                }
-            }
-            
-            if (addresses.length === 0) {
-                return res.status(400).json({ success: false, error: 'No valid address' });
-            }
-            
-            console.log('测试地址:', addresses[0]);
-            
-            // 直接返回成功，不查询
-            return res.status(200).json({
-                success: true,
-                addresses: [addresses[0]],
-                count: 1,
-                message: '上传成功，正在后台查询...'
+        const { stats, records, allRecords, addresses } = req.body;
+        
+        if (!records || !allRecords) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid data format' 
             });
+        }
+        
+        console.log(`收到数据: ${records.length}条活跃记录, ${allRecords.length}条总记录`);
+        
+        // 保存到KV
+        const saved = await saveToKV({
+            stats,
+            records,
+            allRecords,
+            addresses,
+            lastUpdate: Date.now()
         });
+        
+        // 保存地址列表
+        if (addresses && addresses.length > 0) {
+            await saveAddressesToKV(addresses);
+        }
+        
+        res.status(200).json({
+            success: true,
+            saved: saved,
+            recordCount: records.length,
+            timestamp: Date.now()
+        });
+        
     } catch (error) {
         console.error('上传错误:', error);
         res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+async function saveToKV(data) {
+    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+        console.log('未配置KV存储，跳过保存');
+        return false;
+    }
+    
+    try {
+        const url = `${process.env.KV_REST_API_URL}/set/${CONFIG.KV.DATA_KEY}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.KV_REST_API_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(JSON.stringify(data))
+        });
+        
+        if (!response.ok) {
+            console.error('KV保存失败:', await response.text());
+            return false;
+        }
+        
+        console.log(`✅ 数据已保存到KV`);
+        return true;
+    } catch (error) {
+        console.error('KV保存错误:', error);
+        return false;
+    }
+}
+
+async function saveAddressesToKV(addresses) {
+    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return;
+    
+    try {
+        const url = `${process.env.KV_REST_API_URL}/set/address_list`;
+        
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.KV_REST_API_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(JSON.stringify({
+                addresses,
+                uploadTime: Date.now()
+            }))
+        });
+        
+        console.log(`✅ 已保存 ${addresses.length} 个地址到KV`);
+    } catch (error) {
+        console.error('保存地址错误:', error);
     }
 }
