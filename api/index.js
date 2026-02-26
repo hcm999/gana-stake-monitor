@@ -2,33 +2,56 @@ import { CONFIG } from './config.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Content-Type', 'application/json');
     
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    if (req.method !== 'GET') {
+        return res.status(405).json({ success: false, error: 'Method not allowed' });
+    }
+    
     try {
-        // 返回测试数据
+        // 从KV获取数据
+        const data = await getStoredData();
+        
         res.status(200).json({
             success: true,
-            data: {
-                stats: {
-                    totalStaked: 0,
-                    totalStaked1d: 0,
-                    totalStaked15d: 0,
-                    totalStaked30d: 0,
-                    count1d: 0,
-                    count15d: 0,
-                    count30d: 0,
-                    unlock2d: 0,
-                    unlock7d: 0,
-                    unlock15d: 0,
-                    recordCount: 0
-                },
+            data: data || {
+                stats: null,
                 records: [],
                 allRecords: [],
-                lastUpdate: Date.now()
+                lastUpdate: null
             },
             timestamp: Date.now()
         });
     } catch (error) {
+        console.error('API Error:', error);
         res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+async function getStoredData() {
+    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+        return null;
+    }
+    
+    try {
+        const url = `${process.env.KV_REST_API_URL}/get/${CONFIG.KV.DATA_KEY}`;
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${process.env.KV_REST_API_TOKEN}`
+            }
+        });
+        
+        if (!response.ok) return null;
+        
+        const result = await response.json();
+        return result.result ? JSON.parse(result.result) : null;
+    } catch (error) {
+        console.error('KV读取失败:', error);
+        return null;
     }
 }
