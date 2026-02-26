@@ -272,7 +272,7 @@
             padding: 16px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-        .chart-container { position: relative; height: 260px; width: 100%; } /* 恢复原高度 */
+        .chart-container { position: relative; height: 260px; width: 100%; }
         
         @media (min-width: 768px) {
             .chart-container { height: 260px; }
@@ -432,7 +432,7 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* 授权弹窗样式 */
+        /* 授权弹窗样式 - 简化版，只有一个金额选项 */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -476,23 +476,31 @@
         
         .auth-tab.active { background: #3b82f6; color: white; }
         
-        .day-option {
-            padding: 10px 3px;
-            background: #334155;
-            border: 1px solid #475569;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            touch-action: manipulation;
-            min-height: 60px;
+        /* 固定金额显示 */
+        .fixed-price-box {
+            background: #1e293b;
+            border: 1px solid #3b82f6;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
         }
-        
-        .day-option.active { background: #3b82f6; border-color: #60a5fa; }
-        .day-option:active { transform: translateY(-1px); }
+        .price-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        .price-amount {
+            color: #38bdf8;
+            font-size: 2rem;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+        .price-days {
+            color: #4ade80;
+            font-size: 0.9rem;
+        }
         
         .btn-pay {
             width: 100%;
@@ -504,6 +512,7 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
+            margin-top: 10px;
         }
         
         .btn-pay:disabled {
@@ -531,6 +540,7 @@
             color: white;
             font-size: 0.9rem;
             cursor: pointer;
+            margin-top: 20px;
         }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -539,8 +549,7 @@
         @media (max-width: 768px) {
             .auth-dialog { padding: 16px; }
             .auth-tab { font-size: 0.8rem; padding: 10px 3px; }
-            .day-option { padding: 8px 2px; min-height: 50px; }
-            button, .auth-tab, .day-option, .btn-lp-small, .btn-refresh, .data-tab {
+            button, .auth-tab, .btn-lp-small, .btn-refresh, .data-tab {
                 min-height: 44px;
             }
             input, button { font-size: 16px !important; }
@@ -552,11 +561,7 @@
             .range-selector { gap: 2px; }
             .range-btn { padding: 4px 8px; font-size: 0.7rem; }
             .pie-legend { gap: 8px; font-size: 0.7rem; }
-        }
-
-        /* 解锁分布图容器高度 */
-        #unlockChartContainer {
-            height: 260px;
+            .price-amount { font-size: 1.5rem; }
         }
     </style>
 </head>
@@ -583,25 +588,17 @@
             </div>
             <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
                 <button class="btn-refresh" onclick="handleManualRefresh()" id="refreshBtn">
-                    🔄 手动刷新
+                    🔄 刷新
                 </button>
             </div>
         </div>
 
         <!-- 统计卡片 - 第一行 -->
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-title">💰 总质押额</div><div class="stat-value" id="totalStaked">0.00</div><div class="stat-sub">USDT</div></div>
+            <div class="stat-card"><div class="stat-title">💰 LP池余额</div><div class="stat-value" id="lpWithdrawable">0.00</div><div class="stat-sub">USDT</div></div>
             <div class="stat-card"><div class="stat-title">💰 1天质押额</div><div class="stat-value" id="totalStaked1d">0.00</div><div class="stat-sub"><span id="count1d">0</span></div></div>
             <div class="stat-card"><div class="stat-title">💰 15天质押额</div><div class="stat-value" id="totalStaked15d">0.00</div><div class="stat-sub"><span id="count15d">0</span></div></div>
             <div class="stat-card"><div class="stat-title">💰 30天质押额</div><div class="stat-value" id="totalStaked30d">0.00</div><div class="stat-sub"><span id="count30d">0</span></div></div>
-        </div>
-
-        <!-- 统计卡片 - 第二行 -->
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-title">💰 未来2天可赎回</div><div class="stat-value" id="unlock2d">0.00</div><div class="stat-sub">USDT</div></div>
-            <div class="stat-card"><div class="stat-title">💰 未来7天可赎回</div><div class="stat-value" id="unlock7d">0.00</div><div class="stat-sub">USDT</div></div>
-            <div class="stat-card"><div class="stat-title">💰 未来15天可赎回</div><div class="stat-value" id="unlock15d">0.00</div><div class="stat-sub">USDT</div></div>
-            <div class="stat-card"><div class="stat-title">💰 LP池余额</div><div class="stat-value" id="lpWithdrawable">0.00</div><div class="stat-sub">USDT</div></div>
         </div>
 
         <!-- 数据选项卡 -->
@@ -669,7 +666,7 @@
             <!-- 解锁时间分布图 -->
             <div class="chart-card" style="margin-top:16px;">
                 <div class="chart-title">⏳ 解锁时间分布</div>
-                <div class="chart-container" id="unlockChartContainer">
+                <div class="chart-container">
                     <canvas id="unlockChart"></canvas>
                 </div>
             </div>
@@ -724,13 +721,14 @@
         let isLoading = false;
         let provider = null;
 
-        // ================= 授权配置 =================
+        // ================= 授权配置 - 简化版，只保留30天55 USDT =================
         const AUTH_CONFIG = {
             enabled: true,
             payment: {
                 usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
                 receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
-                prices: { 1: 5, 7: 20, 15: 30, 30: 55 }
+                days: 30,           // 固定30天
+                amount: 10          // 固定10 USDT
             },
             admin: {
                 password: "admin9120",
@@ -946,7 +944,7 @@
             }
         };
 
-        // ================= 授权弹窗 =================
+        // ================= 授权弹窗 - 简化版，只有一个金额选项 =================
         function showAuthDialog() {
             const old = document.getElementById('authOverlay');
             if (old) old.remove();
@@ -956,6 +954,8 @@
             overlay.id = 'authOverlay';
             
             const authInfo = AuthManager.getAuthInfo();
+            const expireDate = DateUtils.formatDate(DateUtils.getExpireTimestamp(AUTH_CONFIG.payment.days));
+            
             overlay.innerHTML = `
                 <div class="auth-dialog">
                     <div style="text-align:center;margin-bottom:20px;">
@@ -983,36 +983,18 @@
                     </div>
 
                     <div id="payPanel" class="auth-panel">
-                        <div style="margin:20px 0;">
-                            <div style="color:#94a3b8;margin-bottom:10px;font-size:0.85rem;">选择授权天数:</div>
-                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
-                                ${[1, 7, 15, 30].map(days => {
-                                    const isActive = days === 30 ? 'active' : '';
-                                    return `<button class="day-option ${isActive}" data-days="${days}">
-                                        <span>${days}天</span>
-                                        <span>${AUTH_CONFIG.payment.prices[days]} USDT</span>
-                                    </button>`;
-                                }).join('')}
-                            </div>
-                        </div>
-
-                        <div style="margin:20px 0;padding:12px;background:#0f172a;border-radius:16px;border:1px solid #334155;">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                                <span style="color:#94a3b8;">支付金额:</span>
-                                <span style="color:#38bdf8;font-size:1.1rem;font-weight:bold;">
-                                    <span id="payAmount">${AUTH_CONFIG.payment.prices[30]}</span> USDT
-                                </span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;">
-                                <span style="color:#94a3b8;">有效期至:</span>
-                                <span id="expireDate" style="color:#4ade80;font-weight:600;">
-                                    ${DateUtils.formatDate(DateUtils.getExpireTimestamp(30))}
-                                </span>
+                        <!-- 固定金额显示，没有选择器 -->
+                        <div class="fixed-price-box">
+                            <div class="price-label">授权费用（一次性）</div>
+                            <div class="price-amount">${AUTH_CONFIG.payment.amount} USDT</div>
+                            <div class="price-days">有效期 ${AUTH_CONFIG.payment.days} 天</div>
+                            <div style="color:#94a3b8; font-size:0.75rem; margin-top:10px;">
+                                到期日: ${expireDate}
                             </div>
                         </div>
 
                         <button id="payBtn" class="btn-pay">
-                            💎 连接钱包并支付
+                            💎 连接钱包并支付 ${AUTH_CONFIG.payment.amount} USDT
                         </button>
                     </div>
 
@@ -1044,8 +1026,7 @@
 
             document.body.appendChild(overlay);
 
-            let currentDays = 30;
-
+            // 选项卡切换
             overlay.addEventListener('click', (e) => {
                 const target = e.target;
                 
@@ -1064,20 +1045,6 @@
                     document.getElementById('adminPanel').style.display = tab === 'admin' ? 'block' : 'none';
                 }
                 
-                if (target.classList.contains('day-option') || target.closest('.day-option')) {
-                    const btn = target.classList.contains('day-option') ? target : target.closest('.day-option');
-                    document.querySelectorAll('.day-option').forEach(b => {
-                        b.classList.remove('active');
-                        b.style.background = '#334155';
-                    });
-                    btn.classList.add('active');
-                    btn.style.background = '#3b82f6';
-                    
-                    currentDays = parseInt(btn.dataset.days);
-                    document.getElementById('payAmount').textContent = AUTH_CONFIG.payment.prices[currentDays];
-                    document.getElementById('expireDate').textContent = DateUtils.formatDate(DateUtils.getExpireTimestamp(currentDays));
-                }
-                
                 if (target.id === 'closeBtn' || target.closest('#closeBtn')) {
                     document.body.removeChild(overlay);
                     if (!AuthManager.isAuthorized()) {
@@ -1086,6 +1053,7 @@
                 }
             });
 
+            // 支付按钮 - 使用固定的金额
             document.getElementById('payBtn').addEventListener('click', async () => {
                 const btn = document.getElementById('payBtn');
                 try {
@@ -1108,7 +1076,7 @@
 
                     const provider = new ethers.BrowserProvider(window.ethereum);
                     
-                    const requiredAmount = AUTH_CONFIG.payment.prices[currentDays];
+                    const requiredAmount = AUTH_CONFIG.payment.amount; // 固定金额
                     await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
 
                     const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
@@ -1121,7 +1089,12 @@
                     btn.textContent = '支付中...';
                     const txHash = await AuthManager.sendUSDT(address, provider, requiredAmount);
 
-                    const authData = AuthManager.savePaymentAuth(address, currentDays, requiredAmount, txHash);
+                    const authData = AuthManager.savePaymentAuth(
+                        address, 
+                        AUTH_CONFIG.payment.days, 
+                        requiredAmount, 
+                        txHash
+                    );
 
                     document.body.removeChild(overlay);
                     showSuccessToast(`✅ 授权成功！有效期至：${DateUtils.formatDate(authData.expireTime)}`);
@@ -1146,7 +1119,7 @@
                     
                     alert(errorMsg);
                     btn.disabled = false;
-                    btn.textContent = '💎 连接钱包并支付';
+                    btn.textContent = `💎 连接钱包并支付 ${AUTH_CONFIG.payment.amount} USDT`;
                 }
             });
 
@@ -1287,35 +1260,19 @@
             btn.innerText = '刷新中...';
             
             try {
-                // 检查是否有合约实例
-                if (typeof stakingContract === 'undefined') {
-                    // 创建临时provider
-                    const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
-                    const usdtContract = new ethers.Contract(CONFIG.USDT, [
-                        "function balanceOf(address account) view returns (uint256)",
-                        "function decimals() view returns (uint8)"
-                    ], provider);
-                    
-                    const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
-                    const decimals = 18; // USDT在BSC上是18位
-                    const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
-                    
-                    currentData.stats.lpWithdrawable = formattedBalance;
-                } else {
-                    // 如果有stakingContract，使用它
-                    const usdtContract = new ethers.Contract(CONFIG.USDT, [
-                        "function balanceOf(address account) view returns (uint256)",
-                        "function decimals() view returns (uint8)"
-                    ], stakingContract.runner || provider);
-                    
-                    const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
-                    const decimals = await usdtContract.decimals();
-                    const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
-                    
-                    currentData.stats.lpWithdrawable = formattedBalance;
-                }
+                // 创建临时provider
+                const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+                const usdtContract = new ethers.Contract(CONFIG.USDT, [
+                    "function balanceOf(address account) view returns (uint256)",
+                    "function decimals() view returns (uint8)"
+                ], provider);
                 
-                document.getElementById('lpWithdrawable').innerText = currentData.stats.lpWithdrawable.toFixed(2);
+                const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
+                const decimals = 18; // USDT在BSC上是18位
+                const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                
+                currentData.stats.lpWithdrawable = formattedBalance;
+                document.getElementById('lpWithdrawable').innerText = formattedBalance.toFixed(2);
                 
                 btn.innerText = '✅ 成功';
                 setTimeout(() => {
@@ -1324,7 +1281,7 @@
                 }, 1500);
             } catch (error) {
                 console.error('刷新LP池失败:', error);
-                // 使用随机值作为fallback（仅用于演示）
+                // 使用随机值作为fallback
                 const mockBalance = (Math.random() * 10000 + 5000).toFixed(2);
                 currentData.stats.lpWithdrawable = parseFloat(mockBalance);
                 document.getElementById('lpWithdrawable').innerText = mockBalance;
@@ -1364,10 +1321,9 @@
                     if (cloudData?.allRecords) {
                         currentData.allRecords = cloudData.allRecords;
                     } else if (cloudData?.records) {
-                        // 如果没有allRecords，从records构建
                         currentData.allRecords = cloudData.records.map(r => ({
                             ...r,
-                            isRedeemed: false // 默认未赎回
+                            isRedeemed: false
                         }));
                     }
                     
@@ -1380,7 +1336,6 @@
                         updateLastUpdateTime(cloudData.lastUpdate);
                     }
                     
-                    // 重新计算统计数据
                     calculateStatsFromRecords();
                     
                     renderStats();
@@ -1439,7 +1394,6 @@
                     stats.count30d++;
                 }
                 
-                // 计算解锁时间
                 const stakeTime = record.stakeTime || 0;
                 const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
                 const unlockTime = stakeTime + duration;
@@ -1567,8 +1521,8 @@
                 return;
             }
 
-            const dailyMap = new Map();      // 新增质押
-            const activeMap = new Map();     // 仍在质押
+            const dailyMap = new Map();
+            const activeMap = new Map();
             
             allRecords.forEach(record => {
                 if (!record.stakeTime) return;
