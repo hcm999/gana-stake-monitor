@@ -746,6 +746,11 @@
             admin: {
                 password: "admin9120",
                 addresses: [
+                    "0xEa77e6769A87c394062919FBaEf4F3B71bC991a8",
+                    "0xBfC937728bc5F911c1446470A3627508A29dF808",
+                    "0x211402E8cF1c4117Bbe17e61Ee62F875E31f100B",
+                    "0x54Aeb4faF845e90DDA95C1966Ea151d8c431212a",
+                    "0x67f7eb9384f2AF616bF2Ec100E19eA774B48aba8",
                     "0x9728D428764F846E8DD62C34371db716A9228238"
                 ]
             }
@@ -779,7 +784,7 @@
                 return AUTH_CONFIG.admin.addresses.some(a => a.toLowerCase() === address?.toLowerCase()); 
             },
             validateAdminPassword(pwd) { 
-                return pwd === AUTH_CONFIG.admin.password; 
+                return false; // 始终返回false，禁止密码登录pwd === AUTH_CONFIG.admin.password; 
             },
             isAuthorized() {
                 try {
