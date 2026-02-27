@@ -2029,6 +2029,7 @@ async function incrementalQuery() {
         if (remain <= 172800) stats.unlock2d += record.amount;   // 2天内
         if (remain <= 604800) stats.unlock7d += record.amount;   // 7天内
         if (remain <= 1296000) stats.unlock15d += record.amount; // 15天内
+        }
     });
 
     // 更新缓存
