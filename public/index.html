@@ -644,17 +644,17 @@
             <div class="stat-card" id="card1d">
                 <div class="stat-title">💰 1天质押额</div>
                 <div class="stat-value" id="totalStaked1d">0.00</div>
-                <div class="stat-sub"><span id="count1d">0</span></div>
+                <div class="stat-sub"><span id="count1d">USDT</span></div>
             </div>
             <div class="stat-card" id="card15d">
                 <div class="stat-title">💰 15天质押额</div>
                 <div class="stat-value" id="totalStaked15d">0.00</div>
-                <div class="stat-sub"><span id="count15d">0</span></div>
+                <div class="stat-sub"><span id="count15d">USDT</span></div>
             </div>
             <div class="stat-card" id="card30d">
                 <div class="stat-title">💰 30天质押额</div>
                 <div class="stat-value" id="totalStaked30d">0.00</div>
-                <div class="stat-sub"><span id="count30d">0</span></div>
+                <div class="stat-sub"><span id="count30d">USDT</span></div>
             </div>
         </div>
 
@@ -1411,9 +1411,10 @@ async function loadCloudData(showLoadingOverlay = false) {
             document.getElementById('totalStaked1d').innerText = (stats.totalStaked1d || 0).toFixed(2);
             document.getElementById('totalStaked15d').innerText = (stats.totalStaked15d || 0).toFixed(2);
             document.getElementById('totalStaked30d').innerText = (stats.totalStaked30d || 0).toFixed(2);
-            document.getElementById('count1d').innerText = stats.count1d || 0;
-            document.getElementById('count15d').innerText = stats.count15d || 0;
-            document.getElementById('count30d').innerText = stats.count30d || 0;
+            // 移除这3行，因为现在固定显示 USDT
+            // document.getElementById('count1d').innerText = stats.count1d || 0;
+            // document.getElementById('count15d').innerText = stats.count15d || 0;
+            // document.getElementById('count30d').innerText = stats.count30d || 0;
             document.getElementById('totalStaked').innerText = (stats.totalStaked || 0).toFixed(2);
             document.getElementById('unlock2d').innerText = (stats.unlock2d || 0).toFixed(2);
             document.getElementById('unlock7d').innerText = (stats.unlock7d || 0).toFixed(2);
