@@ -1035,19 +1035,17 @@
                             <option value="2">30天</option>
                         </select>
                         
-                        <select id="filterStatus" class="filter-select" onchange="applyFilters()">
-                            <option value="all">全部状态</option>
-                            <option value="active">锁仓中</option>
-                            <option value="unlocked">可赎回</option>
-                        </select>
-                        
-                        <input type="text" id="searchAddress" class="search-input" 
-                               placeholder="搜索地址..." oninput="applyFilters()">
-                        
-                        <span class="filter-stats" id="filterStats">显示 0/0 条</span>
-                        
-                        <button class="clear-filter" onclick="clearFilters()">清除筛选</button>
-                    </div>
+    <!-- 将状态筛选改为日期选择器 -->
+    <input type="date" id="filterDate" class="filter-select" style="width: auto;" 
+           onchange="applyFilters()" value="<?php echo date('Y-m-d'); ?>">
+    
+    <input type="text" id="searchAddress" class="search-input" 
+           placeholder="搜索地址..." oninput="applyFilters()">
+    
+    <span class="filter-stats" id="filterStats">显示 0/0 条</span>
+    
+    <button class="clear-filter" onclick="clearFilters()">清除筛选</button>
+</div>
                     
                     <div class="table-responsive" id="tableScrollContainer">
                         <table class="table">
