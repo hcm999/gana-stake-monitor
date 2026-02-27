@@ -2422,56 +2422,83 @@ async function incrementalQuery() {
             }
         }
         
-        async function uploadToCloud() {
-            if (allStakeRecords.length === 0 && queryResults.length === 0) {
-                alert('没有数据可上传');
-                return;
+async function uploadToCloud() {
+    if (allStakeRecords.length === 0 && queryResults.length === 0) {
+        alert('没有数据可上传');
+        return;
+    }
+    
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true;
+    btn.innerText = '上传中...';
+    
+    try {
+        const text = document.getElementById('addressList').value;
+        const addresses = text.split('\n')
+            .map(l => l.trim())
+            .filter(l => l.startsWith('0x') && l.length === 42);
+        
+        // 确保数据格式正确
+        const uploadData = {
+            stats: {
+                totalStaked: stats.totalStaked,
+                totalStaked1d: stats.totalStaked1d,
+                totalStaked15d: stats.totalStaked15d,
+                totalStaked30d: stats.totalStaked30d,
+                count1d: stats.count1d,
+                count15d: stats.count15d,
+                count30d: stats.count30d,
+                unlock2d: stats.unlock2d,
+                unlock7d: stats.unlock7d,
+                unlock15d: stats.unlock15d,
+                lpWithdrawable: stats.lpWithdrawable
+            },
+            records: queryResults.map(r => ({
+                address: r.address,
+                amount: r.amount,
+                stakeTime: r.stakeTime,
+                stakeIndex: r.stakeIndex,
+                unlockTime: r.unlockTime,
+                timeRemaining: r.timeRemaining,
+                isRedeemed: r.isRedeemed
+            })),
+            allRecords: allStakeRecords.map(r => ({
+                address: r.address,
+                amount: r.amount,
+                stakeTime: r.stakeTime,
+                stakeIndex: r.stakeIndex,
+                isRedeemed: r.isRedeemed
+            })),
+            addresses: addresses,
+            timestamp: Date.now()
+        };
+        
+        const response = await fetch(`${CONFIG.API_BASE}/upload`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(uploadData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`✅ 上传成功！${result.recordCount || queryResults.length}条记录已保存到云端`);
+            if (result.timestamp) {
+                updateLastUpdateTime(result.timestamp);
             }
-            
-            const btn = document.getElementById('uploadBtn');
-            btn.disabled = true;
-            btn.innerText = '上传中...';
-            
-            try {
-                const text = document.getElementById('addressList').value;
-                const addresses = text.split('\n')
-                    .map(l => l.trim())
-                    .filter(l => l.startsWith('0x') && l.length === 42);
-                
-                const uploadData = {
-                    stats: stats,
-                    records: queryResults,
-                    allRecords: allStakeRecords,
-                    addresses: addresses,
-                    timestamp: Date.now()
-                };
-                
-                const response = await fetch(`${CONFIG.API_BASE}/upload`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(uploadData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(`✅ 上传成功！${result.recordCount || queryResults.length}条记录已保存到云端`);
-                    if (result.timestamp) {
-                        updateLastUpdateTime(result.timestamp);
-                    }
-                } else {
-                    alert(`❌ 上传失败: ${result.error || '未知错误'}`);
-                }
-            } catch (error) {
-                console.error('上传错误:', error);
-                alert('❌ 上传失败: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = '⬆️ 上传到云端';
-            }
+        } else {
+            alert(`❌ 上传失败: ${result.error || '未知错误'}`);
         }
+    } catch (error) {
+        console.error('上传错误:', error);
+        alert('❌ 上传失败: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = '⬆️ 上传到云端';
+    }
+}
         
         function updateLastUpdateTime(timestamp) {
             const date = new Date(timestamp);
