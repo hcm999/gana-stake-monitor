@@ -1753,6 +1753,7 @@
             return result;
         }
         
+// 增量更新        
 async function incrementalQuery() {
     if (!stakingContract) {
         alert("❌ 合约未初始化");
@@ -1823,6 +1824,7 @@ async function incrementalQuery() {
     const newQueryResults = [];
     const newAllStakeRecords = [];
     const updatedKeys = new Set();
+    const redeemedKeys = new Set(); // 记录已赎回的key
 
     for (let i = 0; i < addresses.length; i += CONFIG.BATCH_SIZE) {
         const batch = addresses.slice(i, i + CONFIG.BATCH_SIZE);
@@ -1868,6 +1870,10 @@ async function incrementalQuery() {
                         };
                         
                         addressAllRecords.push(recordData);
+
+                        // 检查记录状态变化
+                        const existingRecord = existingRecords.get(key);
+                        const existingAllRecord = existingAllRecords.get(key);
                         
                         if (!isRedeemed) {
                             const unlockTime = stakeTime + STAKE_DURATIONS[stakeIndex];
@@ -1948,9 +1954,6 @@ async function incrementalQuery() {
         document.getElementById('progressText').innerHTML = 
             `增量更新: +${newRecords}新, ${updatedRecords}更新, -${redeemedRecords}赎回 (${processed}/${addresses.length})`;
         
-        // 每批处理后更新统计
-        updateStats();
-        
         await new Promise(r => setTimeout(r, 100));
     }
 
@@ -1961,10 +1964,17 @@ async function incrementalQuery() {
 
     // 先添加所有现有的记录
     existingRecords.forEach((value, key) => {
-        mergedQueryMap.set(key, value);
+        // 如果记录没有被赎回，保留
+        if (!redeemedKeys.has(key)) {
+            mergedQueryMap.set(key, value);
+        }
     });
+    
     existingAllRecords.forEach((value, key) => {
-        mergedAllMap.set(key, value);
+        // 如果记录没有被赎回，保留
+        if (!redeemedKeys.has(key)) {
+            mergedAllMap.set(key, value);
+        }
     });
 
     // 添加新的记录（会覆盖旧的）
@@ -1972,6 +1982,7 @@ async function incrementalQuery() {
         const key = `${record.address}_${record.stakeTime}`;
         mergedQueryMap.set(key, record);
     });
+    
     newAllStakeRecords.forEach(record => {
         const key = `${record.address}_${record.stakeTime}`;
         mergedAllMap.set(key, record);
@@ -1996,8 +2007,9 @@ async function incrementalQuery() {
         lpWithdrawable: stats.lpWithdrawable // 保留LP池余额
     };
 
-    // 重新计算统计
+    // 重新计算统计（只计算未赎回的记录）
     queryResults.forEach(record => {
+        if (!record.isRedeemed) {
         stats.totalStaked += record.amount;
         
         if (record.stakeIndex === 0) {
@@ -2014,12 +2026,9 @@ async function incrementalQuery() {
         const remain = record.unlockTime - now;
 
         // 未来可赎回计算 - 使用独立的if语句，每个区间独立累加
-        // 2天内
-        if (remain <= 172800) stats.unlock2d += record.amount;
-        // 7天内
-        if (remain <= 604800) stats.unlock7d += record.amount;
-        // 15天内
-        if (remain <= 1296000) stats.unlock15d += record.amount;
+        if (remain <= 172800) stats.unlock2d += record.amount;   // 2天内
+        if (remain <= 604800) stats.unlock7d += record.amount;   // 7天内
+        if (remain <= 1296000) stats.unlock15d += record.amount; // 15天内
     });
 
     // 更新缓存
