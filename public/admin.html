@@ -1291,22 +1291,35 @@
         function applyFilters() {
             // 获取筛选条件
             periodFilter = document.getElementById('filterPeriod').value;
-            statusFilter = document.getElementById('filterStatus').value;
+            // 获取选择的日期
+            const filterDate = document.getElementById('filterDate').value;
             addressSearch = document.getElementById('searchAddress').value.toLowerCase().trim();
-            
+
+                
+    // 计算日期范围（如果有选择日期）
+    let dateStart = null;
+    let dateEnd = null;
+    
+    if (filterDate) {
+        // 将选择的日期转换为当天的开始和结束时间戳
+        const date = new Date(filterDate + 'T00:00:00'); // 使用UTC避免时区问题
+        dateStart = date.getTime() / 1000;
+        dateEnd = dateStart + 86400; // 加一天
+    }
             // 筛选记录
             filteredResults = queryResults.filter(record => {
                 // 周期筛选
                 if (periodFilter !== 'all' && record.stakeIndex.toString() !== periodFilter) {
                     return false;
                 }
-                
-                // 状态筛选
-                const now = Math.floor(Date.now() / 1000);
-                const isUnlocked = record.unlockTime <= now;
-                
-                if (statusFilter === 'active' && isUnlocked) return false;
-                if (statusFilter === 'unlocked' && !isUnlocked) return false;
+                   
+        // 日期筛选 - 检查质押时间是否在选择的日期内
+        if (dateStart && dateEnd) {
+            const stakeTime = record.stakeTime;
+            if (stakeTime < dateStart || stakeTime >= dateEnd) {
+                return false;
+            }
+        }
                 
                 // 地址搜索
                 if (addressSearch && !record.address.toLowerCase().includes(addressSearch)) {
@@ -1359,7 +1372,12 @@
         
         function clearFilters() {
             document.getElementById('filterPeriod').value = 'all';
-            document.getElementById('filterStatus').value = 'all';
+            // 重置为今天的日期
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('filterDate').value = `${year}-${month}-${day}`;
             document.getElementById('searchAddress').value = '';
             applyFilters();
         }
