@@ -2521,9 +2521,10 @@ async function fullQuery() {
                                         }
                                         
                                         const remain = r.unlockTime - nowSec;
+                                        // 未来可赎回计算 - 使用独立的if语句
                                         if (remain <= 172800) stats.unlock2d += r.amount;
-                                        else if (remain <= 604800) stats.unlock7d += r.amount;
-                                        else if (remain <= 1296000) stats.unlock15d += r.amount;
+                                        if (remain <= 604800) stats.unlock7d += r.amount;
+                                        if (remain <= 1296000) stats.unlock15d += r.amount;
                                     });
                                 }
                                 
