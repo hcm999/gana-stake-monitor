@@ -13,7 +13,7 @@
     <!-- 引入 SheetJS (XLSX) 用于解析 Excel 文件 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
-        /* 样式保持不变 */
+        /* 样式保持不变 - 完全沿用之前的样式 */
         * {
             margin: 0;
             padding: 0;
@@ -121,6 +121,7 @@
             color: white;
         }
         
+        /* 表格容器 */
         .table-container {
             background: linear-gradient(145deg, #1e293b, #0f172a);
             border-radius: 16px;
@@ -135,6 +136,8 @@
             margin: 0 -12px;
             padding: 0 12px;
             width: calc(100% + 24px);
+            max-height: 500px;
+            overflow-y: auto;
         }
         
         .table { 
@@ -146,6 +149,10 @@
         }
         
         .table thead th { 
+            position: sticky;
+            top: 0;
+            background: #1e293b;
+            z-index: 10;
             border-bottom: 2px solid #334155; 
             color: #94a3b8; 
             font-size: 0.7rem; 
@@ -153,6 +160,7 @@
             text-align: center;
             font-weight: 600;
             white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .table td { 
@@ -200,6 +208,76 @@
         }
         .record-new {
             animation: highlightNew 2s ease-out;
+        }
+        
+        /* 筛选工具条样式 */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+        
+        .filter-select {
+            background-color: #334155;
+            border: 1px solid #475569;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            min-width: 100px;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .search-input {
+            background-color: #334155;
+            border: 1px solid #475569;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .search-input::placeholder {
+            color: #94a3b8;
+        }
+        
+        .filter-stats {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+        
+        .clear-filter {
+            background-color: #475569;
+            border: 1px solid #64748b;
+            color: #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .clear-filter:hover {
+            background-color: #5f6b7a;
         }
         
         .address-input-area {
@@ -586,7 +664,7 @@
             width: 100%;
         }
 
-        /* 饼图图例样式 - 新增 */
+        /* 饼图图例样式 */
         .pie-legend {
             display: flex;
             justify-content: center;
@@ -656,7 +734,7 @@
             font-weight: 600;
         }
         
-        /* ---------- 启动锁屏样式 ---------- */
+        /* 启动锁屏样式 */
         .entry-lock-overlay {
             position: fixed;
             top: 0;
@@ -760,6 +838,15 @@
         #resultTableBody .amount-cell,
         #dailyStatsBody td {
             font-size: 0.75rem;
+        }
+        
+        /* 剩余时间样式 */
+        .remaining-time {
+            font-size: 0.7rem;
+            color: #f87171;
+        }
+        .remaining-time.unlocked {
+            color: #4ade80;
         }
     </style>
 </head>
@@ -931,7 +1018,7 @@
                 <span class="data-tab" onclick="switchDataTab('charts')" id="tab-charts">📊 图表</span>
             </div>
 
-            <!-- 质押记录面板 -->
+            <!-- 质押记录面板 - 增加了筛选功能 -->
             <div id="panel-records" class="data-panel active">
                 <div class="table-container">
                     <div class="stats-info">
@@ -939,7 +1026,30 @@
                         <button class="btn-export" onclick="exportCSV()">📥 导出CSV</button>
                     </div>
                     
-                    <div class="table-responsive">
+                    <!-- 筛选工具条 -->
+                    <div class="filter-bar">
+                        <select id="filterPeriod" class="filter-select" onchange="applyFilters()">
+                            <option value="all">全部周期</option>
+                            <option value="0">1天</option>
+                            <option value="1">15天</option>
+                            <option value="2">30天</option>
+                        </select>
+                        
+                        <select id="filterStatus" class="filter-select" onchange="applyFilters()">
+                            <option value="all">全部状态</option>
+                            <option value="active">锁仓中</option>
+                            <option value="unlocked">可赎回</option>
+                        </select>
+                        
+                        <input type="text" id="searchAddress" class="search-input" 
+                               placeholder="搜索地址..." oninput="applyFilters()">
+                        
+                        <span class="filter-stats" id="filterStats">显示 0/0 条</span>
+                        
+                        <button class="clear-filter" onclick="clearFilters()">清除筛选</button>
+                    </div>
+                    
+                    <div class="table-responsive" id="tableScrollContainer">
                         <table class="table">
                             <thead>
                                 <tr>
@@ -1071,6 +1181,12 @@
         let allStakeRecords = [];
         let lastAddressList = '';
         
+        // 筛选相关变量
+        let filteredResults = [];
+        let periodFilter = 'all';
+        let statusFilter = 'all';
+        let addressSearch = '';
+        
         let dailyStartHour = 0;
         let trendRange = 30;
         
@@ -1126,9 +1242,9 @@
                     'https://bsc-dataseed2.ninicoin.io',
                     'https://bsc-dataseed3.ninicoin.io',
                     'https://bsc-dataseed4.ninicoin.io',
-                    'https://rpc.ankr.com/bsc',           // Ankr公共节点
-                    'https://bsc.publicnode.com',          // 公共节点
-                    'https://binance.nodereal.io',          // NodeReal
+                    'https://rpc.ankr.com/bsc',
+                    'https://bsc.publicnode.com',
+                    'https://binance.nodereal.io',
                 ];
 
                 let connected = false;
@@ -1156,6 +1272,9 @@
                     }
                     
                     loadDailyStartSetting();
+                    
+                    // 初始化筛选
+                    applyFilters();
                 } else {
                     alert("无法连接到BSC网络，请刷新重试");
                 }
@@ -1168,6 +1287,83 @@
             document.querySelectorAll('.range-btn').forEach(btn => {
                 if (btn.innerText.includes('30')) btn.classList.add('active');
             });
+        }
+
+        // ================= 筛选函数 =================
+        function applyFilters() {
+            // 获取筛选条件
+            periodFilter = document.getElementById('filterPeriod').value;
+            statusFilter = document.getElementById('filterStatus').value;
+            addressSearch = document.getElementById('searchAddress').value.toLowerCase().trim();
+            
+            // 筛选记录
+            filteredResults = queryResults.filter(record => {
+                // 周期筛选
+                if (periodFilter !== 'all' && record.stakeIndex.toString() !== periodFilter) {
+                    return false;
+                }
+                
+                // 状态筛选
+                const now = Math.floor(Date.now() / 1000);
+                const isUnlocked = record.unlockTime <= now;
+                
+                if (statusFilter === 'active' && isUnlocked) return false;
+                if (statusFilter === 'unlocked' && !isUnlocked) return false;
+                
+                // 地址搜索
+                if (addressSearch && !record.address.toLowerCase().includes(addressSearch)) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // 更新显示
+            renderFilteredResults();
+            updateFilterStats();
+        }
+        
+        function renderFilteredResults() {
+            const tbody = document.getElementById('resultTableBody');
+            
+            if (filteredResults.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">📭 无匹配的质押记录</td></tr>';
+                return;
+            }
+            
+            const now = Math.floor(Date.now() / 1000);
+            
+            tbody.innerHTML = filteredResults.map((r, i) => {
+                const stake = formatStakeTime(r.stakeTime);
+                const unlock = formatStakeTime(r.unlockTime);
+                const status = r.unlockTime <= now ? '可赎回' : '锁仓';
+                const statusClass = r.unlockTime <= now ? 'status-unlocked' : 'status-locked';
+                const timeRemaining = r.unlockTime - now;
+                const timeText = timeRemaining <= 0 ? '已解锁' : formatTimeRemaining(timeRemaining);
+                const newClass = r.isNew ? 'record-new' : '';
+                
+                return `<tr class="${newClass}">
+                    <td>${i+1}</td>
+                    <td class="address-cell" title="${r.address}" onclick="copyAddress('${r.address}')">${shortenAddress(r.address)}</td>
+                    <td class="amount-cell">${r.amount.toFixed(2)}</td>
+                    <td><span class="badge-duration ${STAKE_DURATION_CLASS[r.stakeIndex]}">${STAKE_DURATION_LABELS[r.stakeIndex]}</span></td>
+                    <td><div class="time-two-lines"><span class="time-date">${stake.date}</span><span class="time-clock">${stake.time}</span></div></td>
+                    <td><div class="time-two-lines"><span class="time-date">${unlock.date}</span><span class="time-clock">${unlock.time}</span></div></td>
+                    <td class="${statusClass}">${timeText}</td>
+                    <td class="${statusClass}">${status}</td>
+                </tr>`;
+            }).join('');
+        }
+        
+        function updateFilterStats() {
+            document.getElementById('filterStats').innerText = `显示 ${filteredResults.length}/${queryResults.length} 条`;
+        }
+        
+        function clearFilters() {
+            document.getElementById('filterPeriod').value = 'all';
+            document.getElementById('filterStatus').value = 'all';
+            document.getElementById('searchAddress').value = '';
+            applyFilters();
         }
 
         // ================= 每日统计起始时间 =================
@@ -1243,7 +1439,7 @@
                     document.getElementById('dailyStartTime').value = dailyStartHour;
                     updateTimezoneDisplay();
                 }
-                renderResults();
+                applyFilters();
                 updateStats();
                 regenerateDailyStatsTable();
                 updateAllCharts();
@@ -1299,7 +1495,7 @@
         function loadLastQuery() { 
             if (loadFromStorage()) { 
                 recalcAllDailyStats(); 
-                renderResults(); 
+                applyFilters(); 
                 updateStats(); 
                 document.getElementById('queryMode').innerText='缓存数据'; 
                 document.getElementById('queryMode').className='query-mode mode-cached'; 
@@ -1329,6 +1525,7 @@
                 recordCache.clear(); 
                 queryResults=[]; 
                 allStakeRecords=[]; 
+                filteredResults=[]; 
                 failedAddresses=[]; 
                 stats={ 
                     totalStaked:0,totalStaked1d:0,totalStaked15d:0,totalStaked30d:0, 
@@ -1337,7 +1534,7 @@
                     lpWithdrawable:0 
                 }; 
                 updateStats(); 
-                renderResults(); 
+                applyFilters(); 
                 document.getElementById('dailyStatsBody').innerHTML='<tr><td colspan="6" class="empty-state">📊 暂无数据</td></tr>'; 
                 document.getElementById('progressContainer').style.display='none'; 
                 document.getElementById('queryMode').innerText='已重置'; 
@@ -1462,7 +1659,6 @@
             const p15d = total > 0 ? ((sum15d / total) * 100).toFixed(1) : 0;
             const p30d = total > 0 ? ((sum30d / total) * 100).toFixed(1) : 0;
             
-            // 更新图例带百分比
             document.getElementById('pieLegend').innerHTML = `
                 <div class="legend-item">
                     <span class="legend-color" style="background:#3b82f6;"></span>
@@ -1661,7 +1857,7 @@
                 recordCache.set(key, record);
             });
 
-            renderResults();
+            applyFilters();
             renderDailyStats(dailyStats, activeDaily);
             updateStats();
             saveToStorage();
@@ -1713,8 +1909,6 @@
             document.getElementById('fullQueryBtn').disabled = true;
             document.getElementById('progressContainer').style.display = 'block';
 
-            queryResults = [];
-            
             const now = Math.floor(Date.now() / 1000);
             const limits = {
                 '2d': now + 172800,
@@ -1897,7 +2091,7 @@
             }
 
             queryResults.sort((a, b) => b.stakeTime - a.stakeTime);
-            renderResults(true);
+            applyFilters();
             renderDailyStats(dailyStats, activeDaily);
             updateStats();
             saveToStorage();
@@ -1916,35 +2110,6 @@
             }, 3000);
         }
         
-        function renderResults(highlightNew = false) {
-            const tbody = document.getElementById('resultTableBody');
-            
-            if (queryResults.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">📭 无质押记录</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = queryResults.map((r, i) => {
-                const stake = formatStakeTime(r.stakeTime);
-                const unlock = formatStakeTime(r.unlockTime);
-                const status = r.timeRemaining <= 0 ? '可赎回' : '锁仓';
-                const statusClass = r.timeRemaining <= 0 ? 'status-unlocked' : 'status-locked';
-                const timeText = r.timeRemaining <= 0 ? '已解锁' : formatTimeRemaining(r.timeRemaining);
-                const newClass = highlightNew && r.isNew ? 'record-new' : '';
-                
-                return `<tr class="${newClass}">
-                    <td>${i+1}</td>
-                    <td class="address-cell" title="${r.address}" onclick="copyAddress('${r.address}')">${shortenAddress(r.address)}</td>
-                    <td class="amount-cell">${r.amount.toFixed(2)}</td>
-                    <td><span class="badge-duration ${STAKE_DURATION_CLASS[r.stakeIndex]}">${STAKE_DURATION_LABELS[r.stakeIndex]}</span></td>
-                    <td><div class="time-two-lines"><span class="time-date">${stake.date}</span><span class="time-clock">${stake.time}</span></div></td>
-                    <td><div class="time-two-lines"><span class="time-date">${unlock.date}</span><span class="time-clock">${unlock.time}</span></div></td>
-                    <td class="${statusClass}">${timeText}</td>
-                    <td class="${statusClass}">${status}</td>
-                </tr>`;
-            }).join('');
-        }
-        
         function copyAddress(address) {
             navigator.clipboard.writeText(address);
             alert('地址已复制');
@@ -1960,7 +2125,7 @@
             const rows = queryResults.map((r, i) => {
                 const stakeTime = new Date(r.stakeTime * 1000).toLocaleString();
                 const unlockTime = new Date(r.unlockTime * 1000).toLocaleString();
-                const status = r.timeRemaining <= 0 ? '可赎回' : '锁仓';
+                const status = r.unlockTime <= Math.floor(Date.now() / 1000) ? '可赎回' : '锁仓';
                 const remaining = r.timeRemaining <= 0 ? '已解锁' : formatTimeRemaining(r.timeRemaining);
                 
                 return [
@@ -2082,7 +2247,7 @@
                     document.getElementById('dailyStartTime').value = dailyStartHour;
                     updateTimezoneDisplay();
                     regenerateDailyStatsTable();
-                    renderResults();
+                    applyFilters();
                     updateStats();
                     updateAllCharts();
                     saveToStorage();
@@ -2135,7 +2300,7 @@
                         for (let i = 0; i < rows.length; i++) {
                             const row = rows[i];
                             if (!row || row.length === 0) continue;
-                            
+                
                             for (let j = 0; j < row.length; j++) {
                                 const cell = row[j] ? String(row[j]).trim() : '';
                                 if (cell.startsWith('0x') && cell.length >= 40 && cell.length <= 42) {
@@ -2269,7 +2434,7 @@
                                     }
                                 });
                                 
-                                renderResults();
+                                applyFilters();
                                 renderDailyStats(dailyStats, activeDaily);
                                 updateStats();
                                 updateAllCharts();
@@ -2373,34 +2538,34 @@
         window.updateDailyStartTime = updateDailyStartTime;
         window.loadCloudData = loadCloudData;
         window.uploadToCloud = uploadToCloud;
+        window.applyFilters = applyFilters;
+        window.clearFilters = clearFilters;
+        
         // ================= 打开BscScan下载页面 =================
-function openBscScanDownload() {
-    const CONTRACT_ADDRESS = "0x72212F35aC448FE7763aA1BFdb360193Fa098E52";
-    const downloadUrl = `https://bscscan.com/exportData?type=tokenholders&contract=${CONTRACT_ADDRESS}&decimal=18`;
-    
-    // 在新窗口打开下载页面
-    window.open(downloadUrl, '_blank');
-    
-    // 提示用户下一步操作
-    alert('✅ BscScan下载页面已打开！\n\n请完成以下步骤：\n1. 在页面底部完成验证码\n2. 文件下载到本地\n3. 使用"📊 导入Excel/CSV"功能导入文件');
-    
-    // 高亮显示导入按钮
-    setTimeout(() => {
-        const importLabels = document.querySelectorAll('.file-label');
-        importLabels.forEach(label => {
-            if (label.innerText.includes('导入Excel/CSV')) {
-                label.style.backgroundColor = '#3b82f6';
-                label.style.color = 'white';
-                label.style.transition = 'all 0.3s';
-                
-                setTimeout(() => {
-                    label.style.backgroundColor = '#475569';
-                    label.style.color = '#e2e8f0';
-                }, 3000);
-            }
-        });
-    }, 500);
-}
+        function openBscScanDownload() {
+            const CONTRACT_ADDRESS = "0x72212F35aC448FE7763aA1BFdb360193Fa098E52";
+            const downloadUrl = `https://bscscan.com/exportData?type=tokenholders&contract=${CONTRACT_ADDRESS}&decimal=18`;
+            
+            window.open(downloadUrl, '_blank');
+            
+            alert('✅ BscScan下载页面已打开！\n\n请完成以下步骤：\n1. 在页面底部完成验证码\n2. 文件下载到本地\n3. 使用"📊 导入Excel/CSV"功能导入文件');
+            
+            setTimeout(() => {
+                const importLabels = document.querySelectorAll('.file-label');
+                importLabels.forEach(label => {
+                    if (label.innerText.includes('导入Excel/CSV')) {
+                        label.style.backgroundColor = '#3b82f6';
+                        label.style.color = 'white';
+                        label.style.transition = 'all 0.3s';
+                        
+                        setTimeout(() => {
+                            label.style.backgroundColor = '#475569';
+                            label.style.color = '#e2e8f0';
+                        }, 3000);
+                    }
+                });
+            }, 500);
+        }
     </script>
 </body>
 </html>
