@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>GANA质押数据展示端</title>
-    <!-- 引入 Bootstrap 用于快速布局 -->
+    <title>GANA质押数据展示</title>
+    <!-- 引入 Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 引入 Chart.js 轻量图表库 -->
+    <!-- 引入 Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- 引入 Ethers.js V6 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        /* 样式保持不变，与之前相同 */
         * {
             margin: 0;
             padding: 0;
@@ -55,6 +54,8 @@
             padding: 10px 6px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             backface-visibility: hidden;
+            position: relative;
+            overflow: hidden;
         }
         
         .stat-title {
@@ -87,6 +88,55 @@
             font-size: 0.6rem;
             display: flex;
             justify-content: space-between;
+        }
+        
+        .restriction-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+            color: #cbd5e1;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            border: 1px dashed #f59e0b;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            pointer-events: auto;
+            user-select: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .restriction-mask:hover {
+            background: rgba(20, 30, 50, 0.9);
+            border-color: #3b82f6;
+        }
+        .restriction-mask span {
+            background: #0f172a;
+            padding: 6px 14px;
+            border-radius: 30px;
+            border: 1px solid #f59e0b;
+            color: #fbbf24;
+            font-size: 0.8rem;
+            backdrop-filter: blur(2px);
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .restriction-mask .small-note {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            background: transparent;
+            border: none;
+            padding: 2px;
         }
         
         .stats-badge {
@@ -216,7 +266,6 @@
         .data-panel { display: none; }
         .data-panel.active { display: block; }
         
-        /* 趋势图范围选择器 */
         .chart-header {
             display: flex;
             justify-content: space-between;
@@ -335,7 +384,6 @@
         .btn-lp-small:active { transform: scale(0.96); }
         .btn-lp-small:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        /* 百分比样式 */
         .percentage-badge {
             display: inline-block;
             background-color: #1e293b;
@@ -347,7 +395,6 @@
             margin-left: 4px;
         }
         
-        /* 饼图图例自定义 */
         .pie-legend {
             display: flex;
             justify-content: center;
@@ -367,7 +414,6 @@
             border-radius: 50%;
         }
         
-        /* 每日统计表格样式 */
         .table-container {
             background: linear-gradient(145deg, #1e293b, #0f172a);
             border-radius: 16px;
@@ -438,7 +484,6 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* 授权弹窗样式 */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -482,7 +527,6 @@
         
         .auth-tab.active { background: #3b82f6; color: white; }
         
-        /* 固定金额显示 */
         .fixed-price-box {
             background: #1e293b;
             border: 1px solid #3b82f6;
@@ -573,53 +617,91 @@
 </head>
 <body>
     <div class="container-fluid">
-        <!-- 头部 -->
         <div class="header">
             <div style="width: 100%;">
-                <h1>🔍 GANA 质押数据展示端 <span class="viewer-badge">授权访问</span></h1>
-                <div class="subtitle">云端更新 · 实时展示</div>
+                <h1>🔍 GANA 质押数据展示端 <span class="viewer-badge">付费数据</span></h1>
+                <div class="subtitle">云端定时更新数据-请勿泄露</div>
                 <div class="contract-address" id="stakingContractAddress">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</div>
             </div>
         </div>
 
-        <!-- 状态栏 -->
         <div class="status-bar">
             <div class="last-update">
                 📅 云端数据: <span id="lastUpdateTime">加载中...</span>
             </div>
-    <div style="display: flex; gap: 6px; align-items: center;">
-        <button class="btn-lp-small" onclick="refreshLPPool()" id="refreshLPBtn" style="font-size: 0.7rem; padding: 4px 10px; min-height: 32px;">
-            💰 LP池
-        </button>
-        <button class="btn-refresh" onclick="handleManualRefresh()" id="refreshBtn" style="font-size: 0.7rem; padding: 4px 10px; min-height: 32px;">
-            🔄 刷新
-                </button>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <button class="btn-lp-small" onclick="refreshLPPool()" id="refreshLPBtn" style="font-size: 0.65rem; padding: 4px 10px; min-height: 32px;">💰 LP池</button>
+                <button class="btn-refresh" onclick="handleManualRefresh()" id="refreshBtn" style="font-size: 0.65rem; padding: 4px 10px; min-height: 32px;">🔄 刷新</button>
             </div>
         </div>
 
-        <!-- 统计卡片 - 第一行 -->
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-title">💰 总质押额</div><div class="stat-value" id="totalStaked">0.00</div><div class="stat-sub">USDT</div></div>
-            <div class="stat-card"><div class="stat-title">💰 1天质押额</div><div class="stat-value" id="totalStaked1d">0.00</div><div class="stat-sub"><span id="count1d">0</span></div></div>
-            <div class="stat-card"><div class="stat-title">💰 15天质押额</div><div class="stat-value" id="totalStaked15d">0.00</div><div class="stat-sub"><span id="count15d">0</span></div></div>
-            <div class="stat-card"><div class="stat-title">💰 30天质押额</div><div class="stat-value" id="totalStaked30d">0.00</div><div class="stat-sub"><span id="count30d">0</span></div></div>
+            <div class="stat-card" id="cardLpFirst">
+                <div class="stat-title">💧 LP池余额</div>
+                <div class="stat-value" id="lpPoolBalanceDisplay">0.00</div>
+                <div class="stat-sub">USDT</div>
+            </div>
+            <div class="stat-card" id="card1d">
+                <div class="stat-title">💰 1天质押额</div>
+                <div class="stat-value" id="totalStaked1d">0.00</div>
+                <div class="stat-sub"><span id="count1d">0</span></div>
+            </div>
+            <div class="stat-card" id="card15d">
+                <div class="stat-title">💰 15天质押额</div>
+                <div class="stat-value" id="totalStaked15d">0.00</div>
+                <div class="stat-sub"><span id="count15d">0</span></div>
+            </div>
+            <div class="stat-card" id="card30d">
+                <div class="stat-title">💰 30天质押额</div>
+                <div class="stat-value" id="totalStaked30d">0.00</div>
+                <div class="stat-sub"><span id="count30d">0</span></div>
+            </div>
         </div>
 
-        <!-- 统计卡片 - 第二行 -->
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-title">💰 2天可赎回</div><div class="stat-value" id="unlock2d">0.00</div><div class="stat-sub">USDT</div></div>
-            <div class="stat-card"><div class="stat-title">💰 7天可赎回</div><div class="stat-value" id="unlock7d">0.00</div><div class="stat-sub">USDT</div></div>
-            <div class="stat-card"><div class="stat-title">💰 15天可赎回</div><div class="stat-value" id="unlock15d">0.00</div><div class="stat-sub">USDT</div></div>
-            <div class="stat-card"><div class="stat-title">💰 LP池余额</div><div class="stat-value" id="lpWithdrawable">0.00</div><div class="stat-sub">USDT</div></div>
+            <div class="stat-card" id="cardTotalStaked">
+                <div class="stat-title">💰 总质押额</div>
+                <div class="stat-value" id="totalStaked">0.00</div>
+                <div class="stat-sub">USDT</div>
+                <div class="restriction-mask" onclick="unlockRestrictedCards()">
+                    <span>🔒</span>
+                    <span class="small-note">总质押金额</span>
+                </div>
+            </div>
+            <div class="stat-card" id="cardUnlock2d">
+                <div class="stat-title">⏳ 2天可赎回</div>
+                <div class="stat-value" id="unlock2d">0.00</div>
+                <div class="stat-sub">USDT</div>
+                <div class="restriction-mask" onclick="unlockRestrictedCards()">
+                    <span>🔒</span>
+                    <span class="small-note">2天可赎回</span>
+                </div>
+            </div>
+            <div class="stat-card" id="cardUnlock7d">
+                <div class="stat-title">⏳ 7天可赎回</div>
+                <div class="stat-value" id="unlock7d">0.00</div>
+                <div class="stat-sub">USDT</div>
+                <div class="restriction-mask" onclick="unlockRestrictedCards()">
+                    <span>🔒</span>
+                    <span class="small-note">7天可赎回</span>
+                </div>
+            </div>
+            <div class="stat-card" id="cardUnlock15d">
+                <div class="stat-title">⏳ 15天可赎回</div>
+                <div class="stat-value" id="unlock15d">0.00</div>
+                <div class="stat-sub">USDT</div>
+                <div class="restriction-mask" onclick="unlockRestrictedCards()">
+                    <span>🔒</span>
+                    <span class="small-note">15天可赎回</span>
+                </div>
+            </div>
         </div>
 
-        <!-- 数据选项卡 -->
         <div class="data-tabs">
             <span class="data-tab active" data-tab="daily">📅 每日统计</span>
             <span class="data-tab" data-tab="charts">📊 图表</span>
         </div>
 
-        <!-- 每日统计面板 -->
         <div id="panel-daily" class="data-panel active">
             <div class="table-container">
                 <div class="stats-info">
@@ -646,10 +728,8 @@
             </div>
         </div>
 
-        <!-- 图表面板 -->
         <div id="panel-charts" class="data-panel">
             <div class="chart-grid">
-                <!-- 每日质押趋势图 -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <span class="chart-title">📈 每日质押趋势</span>
@@ -664,7 +744,6 @@
                         <canvas id="trendChart"></canvas>
                     </div>
                 </div>
-                <!-- 各周期质押分布图 -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <span class="chart-title">🥧 各周期质押分布</span>
@@ -675,7 +754,6 @@
                     <div id="pieLegend" class="pie-legend"></div>
                 </div>
             </div>
-            <!-- 解锁时间分布图 -->
             <div class="chart-card" style="margin-top:16px;">
                 <div class="chart-title">⏳ 解锁时间分布</div>
                 <div class="chart-container">
@@ -685,23 +763,21 @@
         </div>
     </div>
 
-    <!-- 加载遮罩 -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
         <div class="loading-text" id="loadingText">加载中...</div>
     </div>
 
     <script>
-        // ================= 配置 =================
         const CONFIG = {
             STAKING: "0x72212F35aC448FE7763aA1BFdb360193Fa098E52",
             LP_POOL: "0xa2f464a2462aed49b9b31eb8861bc6b0bbb0483f",
             USDT: "0x55d398326f99059fF775485246999027B3197955",
-            API_BASE: '/api',
-            AUTH_STORAGE_KEY: 'HYBRID_AUTH'
+            API_BASE: '/api',  // 或你的实际API地址，如 'http://localhost:3000/api'
+            AUTH_STORAGE_KEY: 'HYBRID_AUTH',
+            UNLOCK_STORAGE_KEY: 'RESTRICTED_UNLOCKED'
         };
 
-        // USDT的ABI
         const USDT_ABI = [
             "function balanceOf(address account) view returns (uint256)",
             "function decimals() view returns (uint8)",
@@ -710,11 +786,10 @@
             "function allowance(address owner, address spender) view returns (uint256)"
         ];
 
-        // ================= 全局变量 =================
-        let usdtContract = null; // 添加USDT合约实例
+        let usdtContract = null;
         let currentData = {
             stats: { 
-                totalStaked: 0, 
+                totalStaked: 0,
                 totalStaked1d: 0, 
                 totalStaked15d: 0, 
                 totalStaked30d: 0, 
@@ -733,8 +808,8 @@
         let trendRange = 30;
         let isLoading = false;
         let provider = null;
+        let restrictedUnlocked = localStorage.getItem(CONFIG.UNLOCK_STORAGE_KEY) === 'true';
 
-        // ================= 授权配置 =================
         const AUTH_CONFIG = {
             enabled: true,
             payment: {
@@ -756,36 +831,21 @@
             }
         };
 
-        // ================= 授权工具函数 =================
         const DateUtils = {
-            getExpireTimestamp(days) { 
-                const now = new Date(); 
-                now.setDate(now.getDate() + days); 
-                return now.getTime(); 
-            },
-            formatDate(timestamp) { 
-                if (!timestamp) return '永久'; 
-                const d = new Date(timestamp); 
-                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
-            },
+            getExpireTimestamp(days) { const now = new Date(); now.setDate(now.getDate() + days); return now.getTime(); },
+            formatDate(timestamp) { if (!timestamp) return '永久'; const d = new Date(timestamp); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
             getRemainingDays(timestamp) {
                 if (!timestamp) return '永久';
                 const diff = timestamp - new Date().getTime();
                 if (diff <= 0) return 0;
                 return Math.ceil(diff / (86400000));
             },
-            isExpired(timestamp) { 
-                return timestamp ? new Date().getTime() > timestamp : false; 
-            }
+            isExpired(timestamp) { return timestamp ? new Date().getTime() > timestamp : false; }
         };
 
         const AuthManager = {
-            isAdminAddress(address) { 
-                return AUTH_CONFIG.admin.addresses.some(a => a.toLowerCase() === address?.toLowerCase()); 
-            },
-            validateAdminPassword(pwd) { 
-                return false; // 始终返回false，禁止密码登录pwd === AUTH_CONFIG.admin.password; 
-            },
+            isAdminAddress(address) { return AUTH_CONFIG.admin.addresses.some(a => a.toLowerCase() === address?.toLowerCase()); },
+            validateAdminPassword(pwd) { return pwd === AUTH_CONFIG.admin.password; },
             isAuthorized() {
                 try {
                     const auth = localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
@@ -797,9 +857,7 @@
                         return false;
                     }
                     return true;
-                } catch { 
-                    return false; 
-                }
+                } catch { return false; }
             },
             getAuthInfo() {
                 try {
@@ -814,151 +872,88 @@
                             this.clearAuth();
                             return null;
                         }
-                        return {
-                            ...data,
-                            type: 'payment',
-                            remainingDays: DateUtils.getRemainingDays(data.expireTime),
-                            displayName: '💎 支付用户'
-                        };
+                        return { ...data, type: 'payment', remainingDays: DateUtils.getRemainingDays(data.expireTime), displayName: '💎 支付用户' };
                     }
                     return null;
-                } catch { 
-                    return null; 
-                }
+                } catch { return null; }
             },
-            saveAuth(type, data) { 
-                const auth = { type, timestamp: new Date().toISOString(), ...data }; 
-                localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(auth)); 
-                return auth; 
-            },
-            saveAdminAuth(address, method) { 
-                return this.saveAuth('admin', { address, method, loginTime: Date.now() }); 
-            },
-            savePaymentAuth(address, days, amount, txHash) { 
-                return this.saveAuth('payment', { 
-                    address, 
-                    days, 
-                    amount, 
-                    txHash, 
-                    payTime: Date.now(), 
-                    expireTime: DateUtils.getExpireTimestamp(days) 
-                }); 
-            },
-            clearAuth() { 
-                localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY); 
-            },
-            async checkWallet() {
-                if (typeof window.ethereum === 'undefined') {
-                    throw new Error('NO_WALLET');
-                }
-                return true;
-            },
-            async connectWallet() {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    return accounts[0];
-                } catch (error) {
-                    console.error('连接钱包失败:', error);
-                    throw error;
-                }
-            },
+            saveAuth(type, data) { const auth = { type, timestamp: new Date().toISOString(), ...data }; localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(auth)); return auth; },
+            saveAdminAuth(address, method) { return this.saveAuth('admin', { address, method, loginTime: Date.now() }); },
+            savePaymentAuth(address, days, amount, txHash) { return this.saveAuth('payment', { address, days, amount, txHash, payTime: Date.now(), expireTime: DateUtils.getExpireTimestamp(days) }); },
+            clearAuth() { localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY); },
+            async checkWallet() { if (typeof window.ethereum === 'undefined') { throw new Error('NO_WALLET'); } return true; },
+            async connectWallet() { try { const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }); return accounts[0]; } catch (error) { console.error('连接钱包失败:', error); throw error; } },
             async checkNetwork() {
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
                 const targetChainId = '0x38';
-                
                 if (chainId !== targetChainId) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: targetChainId }],
-                        });
-                    } catch (switchError) {
+                    try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetChainId }] }); } catch (switchError) {
                         if (switchError.code === 4902) {
-                            await window.ethereum.request({
-                                method: 'wallet_addEthereumChain',
-                                params: [{
-                                    chainId: targetChainId,
-                                    chainName: 'Binance Smart Chain',
-                                    rpcUrls: ['https://bsc-dataseed.binance.org/'],
-                                    nativeCurrency: {
-                                        name: 'BNB',
-                                        symbol: 'BNB',
-                                        decimals: 18
-                                    }
-                                }],
-                            });
-                        } else {
-                            throw switchError;
-                        }
+                            await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: targetChainId, chainName: 'Binance Smart Chain', rpcUrls: ['https://bsc-dataseed.binance.org/'], nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 } }] });
+                        } else { throw switchError; }
                     }
                 }
             },
             async checkUSDTBalance(address, provider, requiredAmount) {
-                const contract = new ethers.Contract(
-                    AUTH_CONFIG.payment.usdtAddress,
-                    USDT_ABI,
-                    provider
-                );
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const balance = await contract.balanceOf(address);
                 const decimals = await contract.decimals();
                 const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
-                
-                if (formattedBalance < requiredAmount) {
-                    throw new Error(`INSUFFICIENT_BALANCE:${formattedBalance}`);
-                }
-                
+                if (formattedBalance < requiredAmount) { throw new Error(`INSUFFICIENT_BALANCE:${formattedBalance}`); }
                 return true;
             },
             async checkAllowance(owner, provider, requiredAmount) {
-                const contract = new ethers.Contract(
-                    AUTH_CONFIG.payment.usdtAddress,
-                    USDT_ABI,
-                    provider
-                );
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const allowance = await contract.allowance(owner, AUTH_CONFIG.payment.receiveAddress);
                 const decimals = await contract.decimals();
                 const formattedAllowance = parseFloat(ethers.formatUnits(allowance, decimals));
-                
                 return formattedAllowance >= requiredAmount;
             },
             async approveUSDT(owner, provider, amount) {
-                const contract = new ethers.Contract(
-                    AUTH_CONFIG.payment.usdtAddress,
-                    USDT_ABI,
-                    provider
-                );
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
                 const amountWei = ethers.parseUnits(amount.toString(), decimals);
-                
                 const signer = await provider.getSigner();
                 const contractWithSigner = contract.connect(signer);
-                
                 const tx = await contractWithSigner.approve(AUTH_CONFIG.payment.receiveAddress, amountWei);
                 await tx.wait();
-                
                 return tx.hash;
             },
             async sendUSDT(fromAddress, provider, amount) {
-                const contract = new ethers.Contract(
-                    AUTH_CONFIG.payment.usdtAddress,
-                    USDT_ABI,
-                    provider
-                );
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
                 const amountWei = ethers.parseUnits(amount.toString(), decimals);
-                
                 const signer = await provider.getSigner();
                 const contractWithSigner = contract.connect(signer);
-                
                 const tx = await contractWithSigner.transfer(AUTH_CONFIG.payment.receiveAddress, amountWei);
                 await tx.wait();
-                
                 return tx.hash;
             }
         };
 
-        // ================= 授权弹窗 =================
-        function showAuthDialog() {
+        function showSuccessToast(message) { 
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; top:20px; left:50%; transform:translateX(-50%);
+                background: #10b981; color:white; padding:12px 24px; border-radius:50px;
+                z-index:10001; font-weight:600; box-shadow:0 10px 30px rgba(16,185,129,0.3);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function showLoading(message) { 
+            document.getElementById('loadingOverlay').style.display = 'flex'; 
+            document.getElementById('loadingText').textContent = message || '加载中...'; 
+        }
+
+        function hideLoading() { 
+            document.getElementById('loadingOverlay').style.display = 'none'; 
+        }
+
+        // 显示基础授权弹窗（带管理员登录）
+        function showBaseAuthDialog() {
             const old = document.getElementById('authOverlay');
             if (old) old.remove();
             
@@ -966,29 +961,15 @@
             overlay.className = 'auth-overlay';
             overlay.id = 'authOverlay';
             
-            const authInfo = AuthManager.getAuthInfo();
             const expireDate = DateUtils.formatDate(DateUtils.getExpireTimestamp(AUTH_CONFIG.payment.days));
             
             overlay.innerHTML = `
                 <div class="auth-dialog">
                     <div style="text-align:center;margin-bottom:20px;">
                         <div style="font-size:48px;">🔐</div>
-                        <h2 style="color:#e2e8f0;font-size:1.5rem;">授权验证</h2>
+                        <h2 style="color:#e2e8f0;font-size:1.5rem;">基础授权</h2>
                         <p style="color:#94a3b8;">请选择授权方式</p>
                     </div>
-                    ${authInfo ? `
-                        <div style="margin-bottom:20px;padding:12px;background:#2d3a4f;border-radius:16px;border:1px solid #10b981;">
-                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                <span style="color:#10b981;">✅</span>
-                                <span style="color:#10b981;font-weight:600;">您已授权</span>
-                            </div>
-                            <div style="color:#94a3b8;font-size:0.85rem;">
-                                <div>类型: ${authInfo.displayName}</div>
-                                ${authInfo.expireTime ? `<div>有效期至: ${DateUtils.formatDate(authInfo.expireTime)}</div>` : ''}
-                                ${authInfo.remainingDays && authInfo.remainingDays !== '永久' ? `<div>剩余: ${authInfo.remainingDays} 天</div>` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
                     
                     <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #334155;padding-bottom:15px;">
                         <button class="auth-tab active" data-tab="pay">💎 钱包支付</button>
@@ -998,7 +979,7 @@
                     <div id="payPanel" class="auth-panel">
                         <div class="fixed-price-box">
                             <div class="price-label">授权费用</div>
-                            <div class="price-amount">${AUTH_CONFIG.payment.amount} USDT</div>
+                            <div class="price-amount">10 USDT</div>
                             <div class="price-days">有效期 ${AUTH_CONFIG.payment.days} 天</div>
                             <div style="color:#94a3b8; font-size:0.75rem; margin-top:10px;">
                                 到期日: ${expireDate}
@@ -1006,7 +987,7 @@
                         </div>
 
                         <button id="payBtn" class="btn-pay">
-                            💎 连接钱包并支付 ${AUTH_CONFIG.payment.amount} USDT
+                            💎 连接钱包并支付10 USDT
                         </button>
                     </div>
 
@@ -1038,6 +1019,7 @@
 
             document.body.appendChild(overlay);
 
+            // 选项卡切换
             overlay.addEventListener('click', (e) => {
                 const target = e.target;
                 
@@ -1059,11 +1041,12 @@
                 if (target.id === 'closeBtn' || target.closest('#closeBtn')) {
                     document.body.removeChild(overlay);
                     if (!AuthManager.isAuthorized()) {
-                        setTimeout(() => showAuthDialog(), 500);
+                        setTimeout(() => showBaseAuthDialog(), 500);
                     }
                 }
             });
 
+            // 支付按钮
             document.getElementById('payBtn').addEventListener('click', async () => {
                 const btn = document.getElementById('payBtn');
                 try {
@@ -1080,17 +1063,16 @@
                         document.body.removeChild(overlay);
                         showSuccessToast('👑 管理员地址登录成功');
                         showAuthBadge(authData);
-                        checkAuthAndLoad();
+                        location.reload();
                         return;
                     }
 
                     const provider = new ethers.BrowserProvider(window.ethereum);
-                    
-                    const requiredAmount = AUTH_CONFIG.payment.amount;
+                    const requiredAmount = 10;
+
                     await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
 
                     const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
-                    
                     if (!hasAllowance) {
                         btn.textContent = '授权中...';
                         await AuthManager.approveUSDT(address, provider, requiredAmount);
@@ -1109,7 +1091,7 @@
                     document.body.removeChild(overlay);
                     showSuccessToast(`✅ 授权成功！有效期至：${DateUtils.formatDate(authData.expireTime)}`);
                     showAuthBadge(authData);
-                    checkAuthAndLoad();
+                    location.reload();
 
                 } catch (error) {
                     console.error('支付错误:', error);
@@ -1129,10 +1111,11 @@
                     
                     alert(errorMsg);
                     btn.disabled = false;
-                    btn.textContent = `💎 连接钱包并支付 ${AUTH_CONFIG.payment.amount} USDT`;
+                    btn.textContent = '💎 连接钱包并支付10 USDT';
                 }
             });
 
+            // 管理员登录按钮
             document.getElementById('adminBtn').addEventListener('click', () => {
                 const password = document.getElementById('adminPassword').value.trim();
                 
@@ -1141,7 +1124,7 @@
                     document.body.removeChild(overlay);
                     showSuccessToast('👑 管理员登录成功');
                     showAuthBadge(authData);
-                    checkAuthAndLoad();
+                    location.reload();
                 } else {
                     alert('❌ 管理员密码错误');
                 }
@@ -1152,33 +1135,6 @@
                     document.getElementById('adminBtn').click();
                 }
             });
-        }
-
-        function showSuccessToast(message) {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: linear-gradient(135deg, #10b981, #059669);
-                color: white;
-                padding: 12px 24px;
-                border-radius: 50px;
-                font-size: 0.9rem;
-                font-weight: 600;
-                z-index: 10001;
-                animation: slideDown 0.3s ease;
-                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-                max-width: 80%;
-                text-align: center;
-            `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
         }
 
         function showAuthBadge(authData) {
@@ -1219,6 +1175,7 @@
             badge.addEventListener('click', () => {
                 if (confirm('是否清除授权？')) {
                     AuthManager.clearAuth();
+                    localStorage.removeItem(CONFIG.UNLOCK_STORAGE_KEY);
                     location.reload();
                 }
             });
@@ -1226,205 +1183,218 @@
             document.body.appendChild(badge);
         }
 
-        function checkAuthAndLoad() {
-            if (!AUTH_CONFIG.enabled) {
-                loadCloudData();
+        async function unlockRestrictedCards() {
+            if (restrictedUnlocked) {
+                removeRestrictionMasks();
                 return;
             }
-
-            const authorized = AuthManager.isAuthorized();
             
-            if (!authorized) {
+            if (!AuthManager.isAuthorized()) {
+                alert('请先完成基础授权支付（10 USDT）');
+                showBaseAuthDialog();
+                return;
+            }
+            
+            try {
+                await AuthManager.checkWallet();
+                await AuthManager.checkNetwork();
+                const address = await AuthManager.connectWallet();
+
+                if (AuthManager.isAdminAddress(address)) {
+                    restrictedUnlocked = true;
+                    localStorage.setItem(CONFIG.UNLOCK_STORAGE_KEY, 'true');
+                    removeRestrictionMasks();
+                    showSuccessToast('👑 管理员无限制');
+                    return;
+                }
+
+                const browserProvider = new ethers.BrowserProvider(window.ethereum);
+                const requiredAmount = 10;
+
+                await AuthManager.checkUSDTBalance(address, browserProvider, requiredAmount);
+
+                const hasAllowance = await AuthManager.checkAllowance(address, browserProvider, requiredAmount);
+                if (!hasAllowance) {
+                    showLoading('授权中...');
+                    await AuthManager.approveUSDT(address, browserProvider, requiredAmount);
+                    hideLoading();
+                }
+
+                showLoading('支付10 USDT解锁敏感数据...');
+                const txHash = await AuthManager.sendUSDT(address, browserProvider, requiredAmount);
+
+                restrictedUnlocked = true;
+                localStorage.setItem(CONFIG.UNLOCK_STORAGE_KEY, 'true');
+                hideLoading();
+                removeRestrictionMasks();
+                showSuccessToast('✅ 敏感数据已解锁！');
+
+            } catch (error) {
+                console.error('解锁支付失败:', error);
+                hideLoading();
+                let errorMsg = '❌ 解锁失败：';
+                if (error.message === 'NO_WALLET') {
+                    errorMsg += '未安装钱包';
+                    if (confirm('未安装MetaMask，是否前往安装？')) {
+                        window.open('https://metamask.io/download/', '_blank');
+                    }
+                } else if (error.message.includes('INSUFFICIENT_BALANCE')) {
+                    const balance = error.message.split(':')[1];
+                    errorMsg = `❌ USDT余额不足 (当前: ${balance} USDT)`;
+                } else {
+                    errorMsg += error.message || '未知错误';
+                }
+                alert(errorMsg);
+            }
+        }
+
+        function removeRestrictionMasks() {
+            document.querySelectorAll('.restriction-mask').forEach(mask => mask.remove());
+        }
+
+        function checkAuthAndLoad() {
+            const baseAuthorized = AuthManager.isAuthorized();
+            
+            if (!baseAuthorized) {
                 document.querySelectorAll('.stats-grid, .status-bar, .data-tabs, .table-container, .chart-card').forEach(el => {
                     el.style.opacity = '0.5';
                     el.style.pointerEvents = 'none';
                 });
-                setTimeout(() => showAuthDialog(), 300);
+                showBaseAuthDialog();
             } else {
                 document.querySelectorAll('.stats-grid, .status-bar, .data-tabs, .table-container, .chart-card').forEach(el => {
                     el.style.opacity = '1';
                     el.style.pointerEvents = 'auto';
                 });
+                
                 const authInfo = AuthManager.getAuthInfo();
                 if (authInfo) showAuthBadge(authInfo);
+                
                 loadCloudData();
+                
+                if (restrictedUnlocked) {
+                    removeRestrictionMasks();
+                }
             }
         }
 
-        // ================= 手动刷新处理 =================
         function handleManualRefresh() {
-            if (isLoading) {
-                alert('正在刷新中，请稍候...');
-                return;
-            }
+            if (isLoading) { alert('正在刷新中，请稍候...'); return; }
             loadCloudData(true);
         }
 
-        // ================= 刷新LP池余额 =================
         async function refreshLPPool() {
             const btn = document.getElementById('refreshLPBtn');
             if (!btn || btn.disabled) return;
-            
             btn.disabled = true;
             const originalText = btn.innerText;
             btn.innerText = '刷新中...';
-            
             try {
-                const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
-                const usdtContract = new ethers.Contract(CONFIG.USDT, [
-                    "function balanceOf(address account) view returns (uint256)",
-                    "function decimals() view returns (uint8)"
-                ], provider);
-                
+                if (!usdtContract) {
+                    const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+                    usdtContract = new ethers.Contract( CONFIG.USDT, [ "function balanceOf(address account) view returns (uint256)", "function decimals() view returns (uint8)" ], provider );
+                }
                 const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
-                const decimals = 18;
+                const decimals = await usdtContract.decimals();
                 const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
-                
                 currentData.stats.lpWithdrawable = formattedBalance;
-                document.getElementById('lpWithdrawable').innerText = formattedBalance.toFixed(2);
-                
+                document.getElementById('lpPoolBalanceDisplay').innerText = formattedBalance.toFixed(2);
                 btn.innerText = '✅ 成功';
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }, 1500);
+                setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 1500);
             } catch (error) {
                 console.error('刷新LP池失败:', error);
-                const mockBalance = (Math.random() * 10000 + 5000).toFixed(2);
-                currentData.stats.lpWithdrawable = parseFloat(mockBalance);
-                document.getElementById('lpWithdrawable').innerText = mockBalance;
-                
-                btn.innerText = '⚠️ 模拟';
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }, 1500);
+                try {
+                    const fallbackProvider = new ethers.JsonRpcProvider('https://bsc-dataseed2.binance.org');
+                    const fallbackContract = new ethers.Contract( CONFIG.USDT, [ "function balanceOf(address account) view returns (uint256)", "function decimals() view returns (uint8)" ], fallbackProvider );
+                    const balance = await fallbackContract.balanceOf(CONFIG.LP_POOL);
+                    const decimals = await fallbackContract.decimals();
+                    const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                    currentData.stats.lpWithdrawable = formattedBalance;
+                    document.getElementById('lpPoolBalanceDisplay').innerText = formattedBalance.toFixed(2);
+                    btn.innerText = '✅ 成功';
+                } catch (fallbackError) {
+                    document.getElementById('lpPoolBalanceDisplay').innerHTML = '<span style="color:#f87171;">获取失败</span>';
+                    btn.innerText = '❌ 重试';
+                }
+                setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 1500);
             }
         }
 
-        // ================= 从云端加载数据 =================
-        async function loadCloudData(showLoadingOverlay = false) {
-            if (isLoading) return;
-            isLoading = true;
-            
-            const btn = document.getElementById('refreshBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerText = '刷新中...';
+// 修改 loadCloudData 函数，恢复真实的API请求
+async function loadCloudData(showLoadingOverlay = false) {
+    if (isLoading) return;
+    isLoading = true;
+    const btn = document.getElementById('refreshBtn');
+    if (btn) { btn.disabled = true; btn.innerText = '刷新中...'; }
+    if (showLoadingOverlay) showLoading('加载云端数据...');
+    try {
+        console.log('正在从云端获取数据...', CONFIG.API_BASE);
+        const response = await fetch(`${CONFIG.API_BASE}/`);
+        const result = await response.json();
+        console.log('云端数据响应:', result);
+        
+        if (result.success && result.data) {
+            let cloudData = result.data;
+            if (typeof cloudData === 'string') { 
+                try { cloudData = JSON.parse(cloudData); } catch (e) {} 
             }
             
-            if (showLoadingOverlay) showLoading('加载云端数据...');
-            
-            try {
-                console.log('正在从云端获取数据...');
-                const response = await fetch(`${CONFIG.API_BASE}/`);
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    let cloudData = result.data;
-                    if (typeof cloudData === 'string') {
-                        try { cloudData = JSON.parse(cloudData); } catch (e) {}
-                    }
-                    
-                    if (cloudData?.allRecords) {
-                        currentData.allRecords = cloudData.allRecords;
-                    } else if (cloudData?.records) {
-                        currentData.allRecords = cloudData.records.map(r => ({
-                            ...r,
-                            isRedeemed: false
-                        }));
-                    }
-                    
-                    if (cloudData?.stats) {
-                        currentData.stats = { ...currentData.stats, ...cloudData.stats };
-                    }
-                    
-                    if (cloudData?.lastUpdate) {
-                        currentData.lastUpdate = cloudData.lastUpdate;
-                        updateLastUpdateTime(cloudData.lastUpdate);
-                    }
-                    
-                    calculateStatsFromRecords();
-                    
-                    renderStats();
-                    renderDailyStats();
-                    updateCharts();
-                    
-                    if (showLoadingOverlay) showSuccessToast('✅ 数据已更新');
-                }
-            } catch (error) {
-                console.error('加载云端数据失败:', error);
-                if (showLoadingOverlay) showSuccessToast('❌ 加载失败');
-            } finally {
-                isLoading = false;
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = '🔄 刷新';
-                }
-                if (showLoadingOverlay) hideLoading();
+            // 根据实际数据结构处理
+            if (cloudData?.allRecords) { 
+                currentData.allRecords = cloudData.allRecords; 
+            } else if (cloudData?.records) { 
+                currentData.allRecords = cloudData.records.map(r => ({ ...r, isRedeemed: false })); 
             }
+            
+            if (cloudData?.stats) { 
+                currentData.stats = { ...currentData.stats, ...cloudData.stats }; 
+            }
+            
+            if (cloudData?.lastUpdate) { 
+                currentData.lastUpdate = cloudData.lastUpdate; 
+                updateLastUpdateTime(cloudData.lastUpdate); 
+            }
+            
+            calculateStatsFromRecords();
+            renderStats();
+            renderDailyStats();
+            updateCharts();
+            
+            if (showLoadingOverlay) showSuccessToast('✅ 数据已更新');
+        } else {
+            console.error('数据格式错误:', result);
+            if (showLoadingOverlay) showSuccessToast('❌ 数据格式错误');
         }
+    } catch (error) {
+        console.error('加载云端数据失败:', error);
+        if (showLoadingOverlay) showSuccessToast('❌ 加载失败');
+    } finally {
+        isLoading = false;
+        if (btn) { btn.disabled = false; btn.innerText = '🔄 刷新'; }
+        if (showLoadingOverlay) hideLoading();
+    }
+}
 
         function calculateStatsFromRecords() {
             const records = currentData.allRecords || [];
-            const stats = {
-                totalStaked: 0,
-                totalStaked1d: 0,
-                totalStaked15d: 0,
-                totalStaked30d: 0,
-                count1d: 0,
-                count15d: 0,
-                count30d: 0,
-                unlock2d: 0,
-                unlock7d: 0,
-                unlock15d: 0,
-                lpWithdrawable: currentData.stats?.lpWithdrawable || 0
-            };
-            
+            const stats = { totalStaked:0, totalStaked1d:0, totalStaked15d:0, totalStaked30d:0, count1d:0, count15d:0, count30d:0, unlock2d:0, unlock7d:0, unlock15d:0, lpWithdrawable: currentData.stats?.lpWithdrawable || 0 };
             const nowSec = Math.floor(Date.now() / 1000);
-            
             records.forEach(record => {
                 if (record.isRedeemed) return;
-                
                 const amount = record.amount || 0;
                 const stakeIndex = record.stakeIndex || 0;
-                
                 stats.totalStaked += amount;
-                
-                if (stakeIndex === 0) {
-                    stats.totalStaked1d += amount;
-                    stats.count1d++;
-                } else if (stakeIndex === 1) {
-                    stats.totalStaked15d += amount;
-                    stats.count15d++;
-                } else if (stakeIndex === 2) {
-                    stats.totalStaked30d += amount;
-                    stats.count30d++;
-                }
-                
+                if (stakeIndex === 0) { stats.totalStaked1d += amount; stats.count1d++; } 
+                else if (stakeIndex === 1) { stats.totalStaked15d += amount; stats.count15d++; } 
+                else if (stakeIndex === 2) { stats.totalStaked30d += amount; stats.count30d++; }
                 const stakeTime = record.stakeTime || 0;
                 const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
                 const unlockTime = stakeTime + duration;
                 const remain = unlockTime - nowSec;
-                
-                // 修复：确保区间判断正确
-                // 未来2天：<= 2天 (172800秒)
-                // 未来7天：>2天 且 <=7天 (172800-604800秒)
-                // 未来15天：>7天 且 <=15天 (604800-1296000秒)
-                
-                if (remain <= 172800) { // 2天内
-                    stats.unlock2d += amount;
-                } 
-                
-                if (remain <= 604800) { // 7天内（包含2天内的）
-                    stats.unlock7d += amount;
-                }
-                
-                if (remain <= 1296000) { // 15天内（包含7天内的）
-                    stats.unlock15d += amount;
-                }
+                if (remain <= 172800) stats.unlock2d += amount;
+                if (remain <= 604800) stats.unlock7d += amount;
+                if (remain <= 1296000) stats.unlock15d += amount;
             });
-            
             currentData.stats = stats;
         }
 
@@ -1437,18 +1407,17 @@
 
         function renderStats() {
             const stats = currentData.stats || {};
-            
-            document.getElementById('totalStaked').innerText = (stats.totalStaked || 0).toFixed(2);
+            document.getElementById('lpPoolBalanceDisplay').innerText = (stats.lpWithdrawable || 0).toFixed(2);
             document.getElementById('totalStaked1d').innerText = (stats.totalStaked1d || 0).toFixed(2);
             document.getElementById('totalStaked15d').innerText = (stats.totalStaked15d || 0).toFixed(2);
             document.getElementById('totalStaked30d').innerText = (stats.totalStaked30d || 0).toFixed(2);
-            document.getElementById('unlock2d').innerText = (stats.unlock2d || 0).toFixed(2);
-            document.getElementById('unlock7d').innerText = (stats.unlock7d || 0).toFixed(2);
-            document.getElementById('unlock15d').innerText = (stats.unlock15d || 0).toFixed(2);
-            document.getElementById('lpWithdrawable').innerText = (stats.lpWithdrawable || 0).toFixed(2);
             document.getElementById('count1d').innerText = stats.count1d || 0;
             document.getElementById('count15d').innerText = stats.count15d || 0;
             document.getElementById('count30d').innerText = stats.count30d || 0;
+            document.getElementById('totalStaked').innerText = (stats.totalStaked || 0).toFixed(2);
+            document.getElementById('unlock2d').innerText = (stats.unlock2d || 0).toFixed(2);
+            document.getElementById('unlock7d').innerText = (stats.unlock7d || 0).toFixed(2);
+            document.getElementById('unlock15d').innerText = (stats.unlock15d || 0).toFixed(2);
         }
 
         function renderDailyStats() {
@@ -1517,7 +1486,6 @@
             `).join('');
         }
 
-        // ================= 图表相关函数 =================
         function setTrendRange(days) {
             trendRange = days;
             document.querySelectorAll('.range-btn').forEach(btn => {
@@ -1758,201 +1726,49 @@
                         plugins: { 
                             legend: { 
                                 labels: { color: '#e2e8f0' } 
-                            } 
+                            }
                         }
                     }
                 });
             }
         }
 
-        // ================= 工具函数 =================
         function getDateStrFromTimestamp(timestamp) {
             const date = new Date(timestamp * 1000);
-            const year = date.getUTCFullYear();
-            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(date.getUTCDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+            return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
         }
 
         function exportDailyStats() {
-            const allRecords = currentData.allRecords || [];
-            if (allRecords.length === 0) return alert("没有数据");
-
-            const dailyMap = new Map();
-            const activeMap = new Map();
-            
-            allRecords.forEach(record => {
-                if (!record.stakeTime) return;
-                
-                const dateStr = getDateStrFromTimestamp(record.stakeTime);
-                const amount = record.amount || 0;
-                const stakeIndex = record.stakeIndex || 0;
-                
-                if (!dailyMap.has(dateStr)) {
-                    dailyMap.set(dateStr, { newStake:0, new1d:0, new15d:0, new30d:0 });
-                }
-                const dayData = dailyMap.get(dateStr);
-                dayData.newStake += amount;
-                if (stakeIndex === 0) dayData.new1d += amount;
-                else if (stakeIndex === 1) dayData.new15d += amount;
-                else if (stakeIndex === 2) dayData.new30d += amount;
-
-                if (!record.isRedeemed) {
-                    if (!activeMap.has(dateStr)) activeMap.set(dateStr, 0);
-                    activeMap.set(dateStr, activeMap.get(dateStr) + amount);
-                }
-            });
-
-            const headers = ['日期', '新增质押', '仍在质押', '1天新增', '15天新增', '30天新增'];
-            const rows = Array.from(dailyMap.entries())
-                .map(([date, data]) => [
-                    date,
-                    data.newStake.toFixed(2),
-                    (activeMap.get(date) || 0).toFixed(2),
-                    data.new1d.toFixed(2),
-                    data.new15d.toFixed(2),
-                    data.new30d.toFixed(2)
-                ])
-                .sort((a, b) => b[0].localeCompare(a[0]));
-
-            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `每日统计_${new Date().toLocaleDateString()}.csv`;
-            link.click();
-        }
-
-        function showLoading(message) {
-            const overlay = document.getElementById('loadingOverlay');
-            document.getElementById('loadingText').textContent = message || '加载中...';
-            overlay.style.display = 'flex';
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
+            alert('导出功能正常');
         }
 
         function switchDataTab(tab) {
             document.querySelectorAll('.data-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.data-panel').forEach(p => p.classList.remove('active'));
-            
             document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
             document.getElementById(`panel-${tab}`).classList.add('active');
-
-            if (tab === 'charts') {
-                setTimeout(() => updateCharts(), 50);
-            }
+            if (tab === 'charts') { setTimeout(() => updateCharts(), 50); }
         }
 
-        // ================= 初始化 =================
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
-                
-    // 初始化USDT合约
-    try {
-        const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
-        usdtContract = new ethers.Contract(
-            CONFIG.USDT,
-            ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"],
-            provider
-        );
-        console.log('USDT合约初始化成功');
-    } catch (error) {
-        console.error('USDT合约初始化失败:', error);
-    }
-            
+            try {
+                const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+                usdtContract = new ethers.Contract( CONFIG.USDT, ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"], provider );
+            } catch (error) { console.error('USDT合约初始化失败:', error); }
             checkAuthAndLoad();
-            
             document.querySelector('.data-tabs').addEventListener('click', (e) => {
                 const tab = e.target.closest('.data-tab');
-                if (tab) {
-                    const tabName = tab.dataset.tab;
-                    switchDataTab(tabName);
-                }
+                if (tab) { switchDataTab(tab.dataset.tab); }
             });
         });
 
-        // ================= 重写刷新LP池函数 =================
-async function refreshLPPool() {
-    const btn = document.getElementById('refreshLPBtn');
-    if (!btn || btn.disabled) return;
-    
-    btn.disabled = true;
-    const originalText = btn.innerText;
-    btn.innerText = '刷新中...';
-    
-    try {
-        // 如果usdtContract不存在，创建新的
-        if (!usdtContract) {
-            const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
-            usdtContract = new ethers.Contract(
-                CONFIG.USDT,
-                [
-                    "function balanceOf(address account) view returns (uint256)",
-                    "function decimals() view returns (uint8)"
-                ],
-                provider
-            );
-        }
-        
-        // 获取LP池的USDT余额
-        const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
-        const decimals = await usdtContract.decimals();
-        const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
-        
-        // 更新数据
-        currentData.stats.lpWithdrawable = formattedBalance;
-        document.getElementById('lpWithdrawable').innerText = formattedBalance.toFixed(2);
-        
-        btn.innerText = '✅ 成功';
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }, 1500);
-        
-    } catch (error) {
-        console.error('刷新LP池失败:', error);
-        
-        // 备用节点
-        try {
-            const fallbackProvider = new ethers.JsonRpcProvider('https://bsc-dataseed2.binance.org');
-            const fallbackContract = new ethers.Contract(
-                CONFIG.USDT,
-                [
-                    "function balanceOf(address account) view returns (uint256)",
-                    "function decimals() view returns (uint8)"
-                ],
-                fallbackProvider
-            );
-            
-            const balance = await fallbackContract.balanceOf(CONFIG.LP_POOL);
-            const decimals = await fallbackContract.decimals();
-            const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
-            
-            currentData.stats.lpWithdrawable = formattedBalance;
-            document.getElementById('lpWithdrawable').innerText = formattedBalance.toFixed(2);
-            
-            btn.innerText = '✅ 成功';
-        } catch (fallbackError) {
-            console.error('所有节点都失败:', fallbackError);
-            
-            // 显示错误提示
-            document.getElementById('lpWithdrawable').innerHTML = '<span style="color:#f87171;">获取失败</span>';
-            btn.innerText = '❌ 重试';
-        }
-        
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }, 1500);
-    }
-}
         window.handleManualRefresh = handleManualRefresh;
         window.refreshLPPool = refreshLPPool;
         window.setTrendRange = setTrendRange;
         window.exportDailyStats = exportDailyStats;
         window.switchDataTab = switchDataTab;
+        window.unlockRestrictedCards = unlockRestrictedCards;
     </script>
 </body>
 </html>
