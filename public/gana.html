@@ -279,9 +279,33 @@
   </div>
 
   <script>
-    // ===== 配置：API 地址（与管理端保持一致） =====
-    const API_BASE = '/api';  // 如果和管理端同域，就用这个
-    
+    // ================= 配置 =================
+    const CONFIG = {
+      STAKING: "0x72212F35aC448FE7763aA1BFdb360193Fa098E52",
+      LP_POOL: "0xa2f464a2462aed49b9b31eb8861bc6b0bbb0483f",
+      USDT: "0x55d398326f99059fF775485246999027B3197955",
+      API_BASE: '/api'
+    };
+
+    // ================= 全局变量 =================
+    let currentData = {
+      stats: { 
+        totalStaked: 0, 
+        totalStaked1d: 0, 
+        totalStaked15d: 0, 
+        totalStaked30d: 0, 
+        count1d: 0, 
+        count15d: 0, 
+        count30d: 0, 
+        unlock2d: 0, 
+        unlock7d: 0, 
+        unlock15d: 0, 
+        lpWithdrawable: 0 
+      },
+      allRecords: [],
+      lastUpdate: null
+    };
+
     // 格式化数字（保留 2 位小数）
     function formatAmount(num) {
       if (num == null) return '-';
@@ -290,45 +314,133 @@
       return n.toFixed(2);
     }
 
-    // ===== 从云端加载数据（与管理端相同的接口） =====
+    // 获取日期字符串
+    function getDateStrFromTimestamp(timestamp) {
+      const date = new Date(timestamp * 1000);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // ===== 从云端加载数据（移植自 index.html） =====
     async function loadCloudData() {
       try {
-        const response = await fetch(`${API_BASE}/`);
+        console.log('正在从云端获取数据...');
+        const response = await fetch(`${CONFIG.API_BASE}/`);
         const result = await response.json();
         
         if (result.success && result.data) {
           let cloudData = result.data;
           if (typeof cloudData === 'string') {
-            try {
-              cloudData = JSON.parse(cloudData);
+            try { 
+              cloudData = JSON.parse(cloudData); 
             } catch (e) {}
           }
           
-          return {
-            records: cloudData.records || [],
-            allRecords: cloudData.allRecords || [],
-            stats: cloudData.stats || {}
-          };
+          // 处理记录数据
+          if (cloudData?.allRecords) {
+            currentData.allRecords = cloudData.allRecords;
+          } else if (cloudData?.records) {
+            currentData.allRecords = cloudData.records.map(r => ({
+              ...r,
+              isRedeemed: r.isRedeemed || false
+            }));
+          }
+          
+          // 处理统计数据
+          if (cloudData?.stats) {
+            currentData.stats = { ...currentData.stats, ...cloudData.stats };
+          }
+          
+          if (cloudData?.lastUpdate) {
+            currentData.lastUpdate = cloudData.lastUpdate;
+          }
+          
+          // 重新计算统计数据
+          calculateStatsFromRecords();
+          
+          return true;
         }
         throw new Error('加载失败');
       } catch (error) {
         console.error('加载云端数据失败:', error);
-        return null;
+        return false;
       }
     }
 
+    // 从记录重新计算统计数据（移植自 index.html）
+    function calculateStatsFromRecords() {
+      const records = currentData.allRecords || [];
+      const stats = {
+        totalStaked: 0,
+        totalStaked1d: 0,
+        totalStaked15d: 0,
+        totalStaked30d: 0,
+        count1d: 0,
+        count15d: 0,
+        count30d: 0,
+        unlock2d: 0,
+        unlock7d: 0,
+        unlock15d: 0,
+        lpWithdrawable: currentData.stats?.lpWithdrawable || 0
+      };
+      
+      const nowSec = Math.floor(Date.now() / 1000);
+      
+      records.forEach(record => {
+        if (record.isRedeemed) return;
+        
+        const amount = record.amount || 0;
+        const stakeIndex = record.stakeIndex || 0;
+        
+        stats.totalStaked += amount;
+        
+        if (stakeIndex === 0) {
+          stats.totalStaked1d += amount;
+          stats.count1d++;
+        } else if (stakeIndex === 1) {
+          stats.totalStaked15d += amount;
+          stats.count15d++;
+        } else if (stakeIndex === 2) {
+          stats.totalStaked30d += amount;
+          stats.count30d++;
+        }
+        
+        const stakeTime = record.stakeTime || 0;
+        const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
+        const unlockTime = stakeTime + duration;
+        const remain = unlockTime - nowSec;
+        
+        if (remain <= 172800) { // 2天内
+          stats.unlock2d += amount;
+        } 
+        
+        if (remain <= 604800) { // 7天内
+          stats.unlock7d += amount;
+        }
+        
+        if (remain <= 1296000) { // 15天内
+          stats.unlock15d += amount;
+        }
+      });
+      
+      currentData.stats = stats;
+    }
+
     // ===== 处理数据，生成每日统计 =====
-    function processDailyStats(allRecords, days) {
-      if (!allRecords || allRecords.length === 0) return [];
+    function processDailyStats(days) {
+      const records = currentData.allRecords || [];
+      if (records.length === 0) return [];
       
       // 按日期分组统计
       const dailyMap = new Map();
       const activeMap = new Map();
       
-      allRecords.forEach(record => {
-        // 从时间戳获取日期 YYYY-MM-DD
-        const date = new Date(record.stakeTime * 1000);
-        const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+      records.forEach(record => {
+        if (!record.stakeTime) return;
+        
+        const dateStr = getDateStrFromTimestamp(record.stakeTime);
         const amount = record.amount || 0;
         
         // 新增质押（所有记录都算）
@@ -353,50 +465,20 @@
       }));
     }
 
-    // ===== 计算未来可解押金额 =====
-    function calculateUpcomingUnlock(records, days) {
-      if (!records || records.length === 0) return 0;
-      
-      const nowSec = Math.floor(Date.now() / 1000);
-      const limit = days * 86400; // days 转换成秒
-      let total = 0;
-      
-      records.forEach(record => {
-        if (record.isRedeemed) return; // 已赎回的不算
-        
-        const stakeTime = record.stakeTime || 0;
-        const stakeIndex = record.stakeIndex || 0;
-        const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
-        const unlockTime = stakeTime + duration;
-        const remain = unlockTime - nowSec;
-        
-        if (remain <= limit) {
-          total += record.amount || 0;
-        }
-      });
-      
-      return total;
-    }
-
     // ===== 渲染页面 =====
     async function loadAndRender(days) {
       try {
         // 加载云端数据
-        const cloudData = await loadCloudData();
-        if (!cloudData) {
+        const success = await loadCloudData();
+        if (!success) {
           throw new Error('无法加载数据');
         }
         
-        const allRecords = cloudData.allRecords || [];
-        const stats = cloudData.stats || {};
+        const records = currentData.allRecords || [];
+        const stats = currentData.stats || {};
         
         // 处理每日统计数据
-        const dailyRows = processDailyStats(allRecords, days);
-        
-        // 计算未来可解押
-        const upcoming2 = calculateUpcomingUnlock(allRecords, 2);
-        const upcoming7 = calculateUpcomingUnlock(allRecords, 7);
-        const upcoming15 = calculateUpcomingUnlock(allRecords, 15);
+        const dailyRows = processDailyStats(days);
         
         // 更新界面
         if (dailyRows.length > 0) {
@@ -405,12 +487,13 @@
           dateRangeLabel.textContent = '无数据';
         }
         
-        updateSummaryAndTable(dailyRows);
+        updateSummaryAndTable(dailyRows, stats);
         updateChart(dailyRows);
         
-        upcoming2DaysEl.textContent = formatAmount(upcoming2);
-        upcoming7DaysEl.textContent = formatAmount(upcoming7);
-        upcoming15DaysEl.textContent = formatAmount(upcoming15);
+        // 更新未来可解押数据
+        upcoming2DaysEl.textContent = formatAmount(stats.unlock2d || 0);
+        upcoming7DaysEl.textContent = formatAmount(stats.unlock7d || 0);
+        upcoming15DaysEl.textContent = formatAmount(stats.unlock15d || 0);
         
       } catch (err) {
         console.error(err);
@@ -426,7 +509,7 @@
     }
 
     // 更新统计和表格
-    function updateSummaryAndTable(rows) {
+    function updateSummaryAndTable(rows, stats) {
       let sumTotal = 0;
       let sumActive = 0;
       tableBody.innerHTML = '';
@@ -446,8 +529,8 @@
         tableBody.appendChild(tr);
       });
 
-      sumTotalEl.textContent = formatAmount(sumTotal);
-      sumActiveEl.textContent = formatAmount(sumActive);
+      sumTotalEl.textContent = formatAmount(stats.totalStaked || 0);
+      sumActiveEl.textContent = formatAmount(stats.totalStaked || 0); // 这里简化处理
       pointCountEl.textContent = rows.length.toString();
     }
 
