@@ -2011,9 +2011,14 @@ async function incrementalQuery() {
         }
         
         const remain = record.unlockTime - now;
+
+        // 未来可赎回计算 - 使用独立的if语句，每个区间独立累加
+        // 2天内
         if (remain <= 172800) stats.unlock2d += record.amount;
-        else if (remain <= 604800) stats.unlock7d += record.amount;
-        else if (remain <= 1296000) stats.unlock15d += record.amount;
+        // 7天内
+        if (remain <= 604800) stats.unlock7d += record.amount;
+        // 15天内
+        if (remain <= 1296000) stats.unlock15d += record.amount;
     });
 
     // 更新缓存
