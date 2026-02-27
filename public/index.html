@@ -33,7 +33,7 @@
             padding: 0;
         }
 
-        /* 头部精简 */
+        /* 头部去掉两行统计面板，保留关键信息 */
         .header {
             margin-bottom: 16px;
             padding-bottom: 12px;
@@ -85,6 +85,7 @@
             word-break: break-all;
         }
 
+        /* 状态栏精简 */
         .status-bar {
             background: #1e293b;
             border: 1px solid #334155;
@@ -127,6 +128,7 @@
         }
         .btn-lp-small:active, .btn-refresh:active { transform: scale(0.96); }
 
+        /* LP小卡片 */
         .lp-solo-card {
             background: #1e293b;
             border-radius: 16px;
@@ -142,7 +144,7 @@
             font-size: 1rem;
         }
 
-        /* 选项卡 */
+        /* 选项卡样式 (与原版一致) */
         .data-tabs {
             display: flex;
             gap: 8px;
@@ -158,7 +160,10 @@
             border-radius: 30px;
             cursor: pointer;
             font-size: 0.85rem;
+            transition: background-color 0.2s, color 0.2s;
+            touch-action: manipulation;
             min-height: 44px;
+            user-select: none;
             flex: 1;
             text-align: center;
         }
@@ -167,10 +172,12 @@
             border-color: #60a5fa;
             color: white;
         }
+
+        /* 面板切换 */
         .data-panel { display: none; }
         .data-panel.active { display: block; }
 
-        /* 图表卡片 */
+        /* 图表卡片样式 */
         .chart-card {
             background: linear-gradient(145deg, #1e293b, #0f172a);
             border: 1px solid #334155;
@@ -222,7 +229,7 @@
             border-radius: 16px;
             padding: 12px;
             border: 1px solid #334155;
-            position: relative;
+            margin-top: 0;
         }
         .stats-info {
             display: flex;
@@ -244,6 +251,7 @@
         }
         .table-responsive {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             max-height: 460px;
             overflow-y: auto;
         }
@@ -259,6 +267,8 @@
             font-size: 0.7rem; 
             padding: 12px 4px;
             text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
             background: #1e293b;
             position: sticky;
             top: 0;
@@ -277,27 +287,13 @@
             color: #94a3b8;
             margin-left: 4px;
         }
-
-        /* 每日付费遮罩 */
-        .daily-lock-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15,23,42,0.95);
-            backdrop-filter: blur(6px);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            border: 2px dashed #f59e0b;
-            cursor: pointer;
+        .empty-state {
+            text-align: center;
+            padding: 40px 12px;
+            color: #64748b;
         }
 
-        /* ========= 基础授权弹窗 - 卡片缩小版 ========= */
+        /* 授权弹窗样式 (三档) */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -314,104 +310,97 @@
             border: 2px solid #334155;
             border-radius: 24px;
             padding: 20px;
-            max-width: 460px;
+            max-width: 500px;
             width: 100%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
         }
         .auth-tab {
             flex: 1;
-            padding: 10px 5px;
+            padding: 12px 5px;
             background: #334155;
             border: none;
             border-radius: 30px;
             color: #94a3b8;
             font-weight: 600;
             cursor: pointer;
-            min-height: 40px;
-            font-size: 0.85rem;
+            min-height: 44px;
+            font-size: 0.9rem;
         }
         .auth-tab.active { background: #3b82f6; color: white; }
 
-        /* 三档价格卡片 - 更紧凑 */
-        .price-tier-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin: 15px 0;
-        }
-        .price-tier {
-            background: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 16px;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .price-tier:hover {
-            border-color: #3b82f6;
-            background: #263445;
-        }
-        .price-tier.selected {
-            border-color: #3b82f6;
-            background: #1e3a5f;
-            box-shadow: 0 0 10px rgba(59,130,246,0.3);
-        }
-        .tier-info h4 {
-            font-size: 1rem;
-            margin: 0 0 2px 0;
-            color: #e2e8f0;
-        }
-        .tier-info p {
-            color: #94a3b8;
-            font-size: 0.7rem;
-            margin: 0;
-        }
-        .tier-price {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #38bdf8;
-        }
-        .tier-price small {
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
+/* 三档价格卡片 - 缩小版 */
+.price-tier-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;                 /* 减小卡片间距 */
+    margin: 15px 0;           /* 减小上下边距 */
+}
+.price-tier {
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 16px;      /* 减小圆角 */
+    padding: 12px;            /* 减小内边距 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.tier-info h4 {
+    font-size: 1rem;          /* 调小标题 */
+    margin: 0 0 2px 0;        /* 减小下边距 */
+    color: #e2e8f0;
+}
+.tier-info p {
+    color: #94a3b8;
+    font-size: 0.7rem;        /* 调小说明文字 */
+    margin: 0;
+}
+.tier-price {
+    font-size: 1.3rem;        /* 调小价格数字 */
+    font-weight: 700;
+    color: #38bdf8;
+}
+.tier-price small {
+    font-size: 0.7rem;        /* 调小USDT标注 */
+    color: #94a3b8;
+}
 
         .btn-pay {
             width: 100%;
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             border: none;
-            padding: 12px;
+            padding: 14px;
             border-radius: 40px;
             color: white;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top: 10px;
         }
+        .btn-pay:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-admin {
             width: 100%;
             background: linear-gradient(135deg, #f59e0b, #d97706);
             border: none;
-            padding: 12px;
+            padding: 14px;
             border-radius: 40px;
             color: white;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
         }
         .btn-close {
             background: #ef4444;
             border: none;
-            padding: 8px 25px;
+            padding: 10px 30px;
             border-radius: 30px;
             color: white;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 20px;
         }
 
         .loading-overlay {
@@ -422,6 +411,7 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
+            backdrop-filter: blur(5px);
         }
         .loading-spinner {
             width: 50px; height: 50px;
@@ -442,14 +432,19 @@
         }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .legend-color { width: 10px; height: 10px; border-radius: 50%; }
+
+        @media (max-width: 768px) {
+            .chart-container { height: 200px; }
+            .price-tier { flex-direction: column; text-align: center; gap: 8px; }
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
-        <!-- 头部 -->
+        <!-- 精简头部 -->
         <div class="header">
             <div>
-                <h1>🔍 GANA 质押数据分析 <span class="viewer-badge">付费数据</span></h1>
+                <h1>🔍 GANA 质押数据展示 <span class="viewer-badge">付费数据</span></h1>
                 <div class="subtitle">云端定时更新</div>
                 <div class="contract-address" id="stakingContractAddress">0x72212F35aC448FE7763aA1BFdb360193Fa098E52</div>
             </div>
@@ -471,14 +466,15 @@
             </div>
         </div>
 
-        <!-- 选项卡 -->
+        <!-- 选项卡：图表 / 每日统计 (经典布局) -->
         <div class="data-tabs">
-            <span class="data-tab active" data-tab="charts">📊 数据图表</span>
-            <span class="data-tab" data-tab="daily">📅 每日质押数据</span>
+            <span class="data-tab active" data-tab="charts">📊 图表</span>
+            <span class="data-tab" data-tab="daily">📅 每日质押统计</span>
         </div>
 
-        <!-- 图表面板 -->
+        <!-- 图表面板 (永远可见) -->
         <div id="panel-charts" class="data-panel active">
+            <!-- 趋势图卡片 (默认90天) -->
             <div class="chart-card">
                 <div class="chart-header">
                     <span class="chart-title">📈 每日质押趋势</span>
@@ -494,16 +490,17 @@
                 </div>
             </div>
 
+            <!-- 下方两个小图表并排 -->
             <div style="display: flex; gap: 16px; flex-wrap: wrap;">
                 <div class="chart-card" style="flex:1; min-width:240px;">
-                    <div class="chart-title" style="margin-bottom:10px;">🥧 周期分布</div>
+                    <div class="chart-title" style="margin-bottom:10px;">🥧 各周期质押分布</div>
                     <div class="chart-container" style="height:200px;">
                         <canvas id="pieChart"></canvas>
                     </div>
                     <div id="pieLegend" class="pie-legend"></div>
                 </div>
                 <div class="chart-card" style="flex:1; min-width:240px;">
-                    <div class="chart-title" style="margin-bottom:10px;">⏳ 解锁分布</div>
+                    <div class="chart-title" style="margin-bottom:10px;">⏳ 解锁时间分布</div>
                     <div class="chart-container" style="height:200px;">
                         <canvas id="unlockChart"></canvas>
                     </div>
@@ -511,29 +508,40 @@
             </div>
         </div>
 
-        <!-- 每日统计面板 (二次付费) -->
+        <!-- 每日统计面板 (付费解锁数据) -->
         <div id="panel-daily" class="data-panel">
-            <div class="table-container" id="dailyPremiumContainer">
+            <div class="table-container" id="dailyPremiumContainer" style="position: relative;">
                 <div class="stats-info">
-                    <h5>📅 每日质押数据</h5>
+                    <h5>📅 每日质押统计</h5>
                     <button class="btn-export" onclick="exportDailyStats()" id="exportCsvBtn">📥 导出CSV</button>
                 </div>
 
-                <!-- 付费遮罩 -->
-                <div id="dailyLockOverlay" class="daily-lock-overlay" onclick="unlockDailyStats()">
-                    <div style="font-size:36px; margin-bottom:10px; background:#1e293b; width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #f59e0b;">🔐</div>
-                    <div style="font-size:1.1rem; font-weight:bold; color:#fbbf24; margin-bottom:5px;">付费查看</div>
-                    <div style="color:#94a3b8; font-size:0.85rem; margin-bottom:12px; text-align:center;">每日明细、导出CSV</div>
-                    <div style="background:#0f172a; padding:8px 20px; border-radius:50px; border:1px solid #3b82f6; color:#38bdf8; font-weight:700; font-size:1.1rem; margin-bottom:8px;">10 USDT</div>
-                    <div style="font-size:0.7rem; color:#64748b;">需先完成基础授权</div>
+                <!-- 付费遮罩层 (初始显示) -->
+                <div id="dailyLockOverlay" class="daily-lock-overlay" onclick="unlockDailyStats()" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.95); backdrop-filter: blur(6px); border-radius:16px; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index:20; border:2px dashed #f59e0b; cursor:pointer;">
+                    <div style="font-size:40px; margin-bottom:15px; background:#1e293b; width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #f59e0b;">🔐</div>
+                    <div style="font-size:1.2rem; font-weight:bold; color:#fbbf24; margin-bottom:8px;">付费查看</div>
+                    <div style="color:#94a3b8; font-size:0.9rem; margin-bottom:16px; max-width:280px; text-align:center;">每日明细、周期数据、导出CSV</div>
+                    <div style="background:#0f172a; padding:12px 24px; border-radius:50px; border:1px solid #3b82f6; color:#38bdf8; font-weight:700; font-size:1.2rem; margin-bottom:10px;">10 USDT / 永久</div>
+                    <div style="font-size:0.75rem; color:#64748b;">点击支付解锁 (需先完成基础授权)</div>
                 </div>
 
-                <!-- 表格内容 -->
+                <!-- 实际表格内容 (隐藏直到二次解锁) -->
                 <div id="dailyStatsContent" style="display: none;">
                     <div class="table-responsive">
                         <table class="table">
-                            <thead><tr><th>日期</th><th>新增质押</th><th>仍在质押</th><th>1天新增</th><th>15天新增</th><th>30天新增</th></tr></thead>
-                            <tbody id="dailyStatsBody"><tr><td colspan="6" class="empty-state">⏳ 加载中...</td></tr></tbody>
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>新增质押</th>
+                                    <th>仍在质押</th>
+                                    <th>1天新增</th>
+                                    <th>15天新增</th>
+                                    <th>30天新增</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dailyStatsBody">
+                                <tr><td colspan="6" class="empty-state">⏳ 加载中...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -548,24 +556,37 @@
     </div>
 
     <script>
+        // CONFIG 定义
         const CONFIG = {
             STAKING: "0x72212F35aC448FE7763aA1BFdb360193Fa098E52",
             LP_POOL: "0xa2f464a2462aed49b9b31eb8861bc6b0bbb0483f",
             USDT: "0x55d398326f99059fF775485246999027B3197955",
             API_BASE: '/api',
             AUTH_STORAGE_KEY: 'HYBRID_AUTH',
+            UNLOCK_STORAGE_KEY: 'RESTRICTED_UNLOCKED',
             DAILY_UNLOCK_KEY: 'GANA_DAILY_UNLOCKED'
         };
 
-        const USDT_ABI = ["function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)","function transfer(address to, uint amount) returns (bool)","function approve(address spender, uint256 amount) returns (bool)","function allowance(address owner, address spender) view returns (uint256)"];
+        const USDT_ABI = [
+            "function balanceOf(address account) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function transfer(address to, uint amount) returns (bool)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)"
+        ];
 
         let usdtContract = null;
-        let currentData = { stats: { lpWithdrawable:0 }, allRecords: [], lastUpdate: null };
+        let currentData = {
+            stats: { totalStaked:0, totalStaked1d:0, totalStaked15d:0, totalStaked30d:0, count1d:0, count15d:0, count30d:0, unlock2d:0, unlock7d:0, unlock15d:0, lpWithdrawable:0 },
+            allRecords: [],
+            lastUpdate: null
+        };
         let trendChart, pieChart, unlockChart;
         let trendRange = 90;
         let isLoading = false;
         let dailyUnlocked = localStorage.getItem(CONFIG.DAILY_UNLOCK_KEY) === 'true';
 
+        // 三档价格配置
         const TIERS = [
             { days: 30, amount: 5, label: '30天' },
             { days: 90, amount: 12, label: '90天' },
@@ -573,13 +594,34 @@
         ];
 
         const AUTH_CONFIG = {
-            payment: { usdtAddress: CONFIG.USDT, receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238" },
-            admin: { password: "admin9120", addresses: ["0xEa77e6769A87c394062919FBaEf4F3B71bC991a8","0xBfC937728bc5F911c1446470A3627508A29dF808","0x211402E8cF1c4117Bbe17e61Ee62F875E31f100B","0x54Aeb4faF845e90DDA95C1966Ea151d8c431212a","0x67f7eb9384f2AF616bF2Ec100E19eA774B48aba8","0x9728D428764F846E8DD62C34371db716A9228238"] }
+            enabled: true,
+            payment: {
+                usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
+                receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
+                // 去掉固定days/amount，改用动态选择
+            },
+            admin: {
+                password: "admin9120",
+                addresses: [
+                    "0xEa77e6769A87c394062919FBaEf4F3B71bC991a8",
+                    "0xBfC937728bc5F911c1446470A3627508A29dF808",
+                    "0x211402E8cF1c4117Bbe17e61Ee62F875E31f100B",
+                    "0x54Aeb4faF845e90DDA95C1966Ea151d8c431212a",
+                    "0x67f7eb9384f2AF616bF2Ec100E19eA774B48aba8",
+                    "0x9728D428764F846E8DD62C34371db716A9228238"
+                ]
+            }
         };
 
         const DateUtils = {
             getExpireTimestamp(days) { const now = new Date(); now.setDate(now.getDate() + days); return now.getTime(); },
             formatDate(timestamp) { if (!timestamp) return '永久'; const d = new Date(timestamp); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
+            getRemainingDays(timestamp) {
+                if (!timestamp) return '永久';
+                const diff = timestamp - new Date().getTime();
+                if (diff <= 0) return 0;
+                return Math.ceil(diff / (86400000));
+            },
             isExpired(timestamp) { return timestamp ? new Date().getTime() > timestamp : false; }
         };
 
@@ -592,60 +634,104 @@
                     if (!auth) return false;
                     const data = JSON.parse(auth);
                     if (data.type === 'admin') return true;
-                    if (data.expireTime && DateUtils.isExpired(data.expireTime)) { this.clearAuth(); return false; }
+                    if (data.expireTime && DateUtils.isExpired(data.expireTime)) {
+                        this.clearAuth();
+                        return false;
+                    }
                     return true;
                 } catch { return false; }
             },
-            saveAuth(type, data) { localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify({ type, ...data })); },
-            saveAdminAuth(address, method) { this.saveAuth('admin', { address, method, loginTime: Date.now() }); },
-            savePaymentAuth(address, days, amount, txHash) { this.saveAuth('payment', { address, days, amount, txHash, payTime: Date.now(), expireTime: DateUtils.getExpireTimestamp(days) }); },
+            getAuthInfo() {
+                try {
+                    const auth = localStorage.getItem(CONFIG.AUTH_STORAGE_KEY);
+                    if (!auth) return null;
+                    const data = JSON.parse(auth);
+                    if (data.type === 'admin') {
+                        return { ...data, type: 'admin', remainingDays: '永久', displayName: '👑 管理员' };
+                    }
+                    if (data.type === 'payment') {
+                        if (DateUtils.isExpired(data.expireTime)) {
+                            this.clearAuth();
+                            return null;
+                        }
+                        return { ...data, type: 'payment', remainingDays: DateUtils.getRemainingDays(data.expireTime), displayName: '💎 支付用户' };
+                    }
+                    return null;
+                } catch { return null; }
+            },
+            saveAuth(type, data) { const auth = { type, timestamp: new Date().toISOString(), ...data }; localStorage.setItem(CONFIG.AUTH_STORAGE_KEY, JSON.stringify(auth)); return auth; },
+            saveAdminAuth(address, method) { return this.saveAuth('admin', { address, method, loginTime: Date.now() }); },
+            savePaymentAuth(address, days, amount, txHash) { return this.saveAuth('payment', { address, days, amount, txHash, payTime: Date.now(), expireTime: DateUtils.getExpireTimestamp(days) }); },
             clearAuth() { localStorage.removeItem(CONFIG.AUTH_STORAGE_KEY); },
-            async checkWallet() { if (typeof window.ethereum === 'undefined') throw new Error('NO_WALLET'); },
-            async connectWallet() { const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }); return accounts[0]; },
+            async checkWallet() { if (typeof window.ethereum === 'undefined') { throw new Error('NO_WALLET'); } return true; },
+            async connectWallet() { try { const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }); return accounts[0]; } catch (error) { console.error('连接钱包失败:', error); throw error; } },
             async checkNetwork() {
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                if (chainId !== '0x38') {
-                    try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }] }); } catch (switchError) {
-                        if (switchError.code === 4902) await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x38', chainName: 'Binance Smart Chain', rpcUrls: ['https://bsc-dataseed.binance.org/'], nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 } }] });
-                        else throw switchError;
+                const targetChainId = '0x38';
+                if (chainId !== targetChainId) {
+                    try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetChainId }] }); } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: targetChainId, chainName: 'Binance Smart Chain', rpcUrls: ['https://bsc-dataseed.binance.org/'], nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 } }] });
+                        } else { throw switchError; }
                     }
                 }
             },
             async checkUSDTBalance(address, provider, requiredAmount) {
-                const contract = new ethers.Contract(AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider);
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const balance = await contract.balanceOf(address);
                 const decimals = await contract.decimals();
-                if (parseFloat(ethers.formatUnits(balance, decimals)) < requiredAmount) throw new Error('INSUFFICIENT_BALANCE');
+                const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                if (formattedBalance < requiredAmount) { throw new Error(`INSUFFICIENT_BALANCE:${formattedBalance}`); }
+                return true;
             },
             async checkAllowance(owner, provider, requiredAmount) {
-                const contract = new ethers.Contract(AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider);
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const allowance = await contract.allowance(owner, AUTH_CONFIG.payment.receiveAddress);
                 const decimals = await contract.decimals();
-                return parseFloat(ethers.formatUnits(allowance, decimals)) >= requiredAmount;
+                const formattedAllowance = parseFloat(ethers.formatUnits(allowance, decimals));
+                return formattedAllowance >= requiredAmount;
             },
             async approveUSDT(owner, provider, amount) {
-                const contract = new ethers.Contract(AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider);
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
+                const amountWei = ethers.parseUnits(amount.toString(), decimals);
                 const signer = await provider.getSigner();
-                const tx = await contract.connect(signer).approve(AUTH_CONFIG.payment.receiveAddress, ethers.parseUnits(amount.toString(), decimals));
+                const contractWithSigner = contract.connect(signer);
+                const tx = await contractWithSigner.approve(AUTH_CONFIG.payment.receiveAddress, amountWei);
                 await tx.wait();
                 return tx.hash;
             },
             async sendUSDT(fromAddress, provider, amount) {
-                const contract = new ethers.Contract(AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider);
+                const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
+                const amountWei = ethers.parseUnits(amount.toString(), decimals);
                 const signer = await provider.getSigner();
-                const tx = await contract.connect(signer).transfer(AUTH_CONFIG.payment.receiveAddress, ethers.parseUnits(amount.toString(), decimals));
+                const contractWithSigner = contract.connect(signer);
+                const tx = await contractWithSigner.transfer(AUTH_CONFIG.payment.receiveAddress, amountWei);
                 await tx.wait();
                 return tx.hash;
             }
         };
 
-        function showSuccessToast(m) { const t=document.createElement('div'); t.style.cssText='position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#10b981; color:white; padding:12px 24px; border-radius:50px; z-index:10001; font-weight:600;'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
-        function showLoading(m) { document.getElementById('loadingOverlay').style.display='flex'; document.getElementById('loadingText').textContent=m||'加载中...'; }
-        function hideLoading() { document.getElementById('loadingOverlay').style.display='none'; }
+        // 工具函数
+        function showSuccessToast(message) { 
+            const toast = document.createElement('div');
+            toast.style.cssText = `position: fixed; top:20px; left:50%; transform:translateX(-50%); background: #10b981; color:white; padding:12px 24px; border-radius:50px; z-index:10001; font-weight:600; box-shadow:0 10px 30px rgba(16,185,129,0.3);`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
 
-        // 基础授权弹窗 (卡片缩小版)
+        function showLoading(message) { 
+            document.getElementById('loadingOverlay').style.display = 'flex'; 
+            document.getElementById('loadingText').textContent = message || '加载中...'; 
+        }
+
+        function hideLoading() { 
+            document.getElementById('loadingOverlay').style.display = 'none'; 
+        }
+
+        // 新版基础授权弹窗 (三档选择)
         function showBaseAuthDialog() {
             const old = document.getElementById('authOverlay');
             if (old) old.remove();
@@ -659,7 +745,7 @@
                 tiersHtml += `
                     <div class="price-tier" data-tier-index="${index}" data-days="${tier.days}" data-amount="${tier.amount}">
                         <div class="tier-info">
-                            <h4>${tier.label} 套餐</h4>
+                            <h4>${tier.label} 授权</h4>
                             <p>有效期 ${tier.days} 天</p>
                         </div>
                         <div class="tier-price">${tier.amount} <small>USDT</small></div>
@@ -669,28 +755,36 @@
 
             overlay.innerHTML = `
                 <div class="auth-dialog">
-                    <div style="text-align:center; margin-bottom:15px;">
-                        <div style="font-size:40px;">🔐</div>
-                        <h2 style="color:#e2e8f0; font-size:1.3rem; margin:5px 0;">数据授权</h2>
-                        <p style="color:#94a3b8; font-size:0.8rem;">选择套餐并支付</p>
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <div style="font-size:48px;">🔐</div>
+                        <h2 style="color:#e2e8f0;font-size:1.5rem;">数据授权</h2>
+                        <p style="color:#94a3b8;">选择套餐并连接钱包支付</p>
                     </div>
                     
-                    <div style="display:flex; gap:8px; margin-bottom:15px; border-bottom:1px solid #334155; padding-bottom:10px;">
-                        <button class="auth-tab active" data-tab="pay">💎 支付</button>
+                    <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #334155;padding-bottom:15px;">
+                        <button class="auth-tab active" data-tab="pay">💎 钱包支付</button>
                         <button class="auth-tab" data-tab="admin">👑 管理员</button>
                     </div>
 
                     <div id="payPanel" class="auth-panel">
-                        <div class="price-tier-container">${tiersHtml}</div>
+                        <div class="price-tier-container">
+                            ${tiersHtml}
+                        </div>
+                        <div style="margin:15px 0 10px; text-align:center; color:#94a3b8; font-size:0.8rem;">
+                            ️选择套餐后点击下方支付按钮
+                        </div>
                         <button id="payBtn" class="btn-pay" disabled>💎 请先选择套餐</button>
                     </div>
 
                     <div id="adminPanel" class="auth-panel" style="display:none;">
-                        <input type="password" id="adminPassword" placeholder="管理员密码" style="width:100%; padding:12px; background:#0f172a; border:2px solid #334155; border-radius:30px; color:#e2e8f0; font-size:0.9rem; text-align:center; margin:10px 0;">
-                        <button id="adminBtn" class="btn-admin">👑 登录</button>
+                        <div style="margin:20px 0;">
+                            <input type="password" id="adminPassword" placeholder="请输入管理员密码" 
+                                style="width:100%;padding:14px;background:#0f172a;border:2px solid #334155;border-radius:30px;color:#e2e8f0;font-size:1rem;text-align:center;outline:none;margin-bottom:15px;">
+                            <button id="adminBtn" class="btn-admin">👑 管理员登录</button>
+                        </div>
                     </div>
 
-                    <div style="text-align:center; margin-top:12px;">
+                    <div style="margin-top:20px;text-align:center;">
                         <button id="closeBtn" class="btn-close">关闭</button>
                     </div>
                 </div>
@@ -698,72 +792,133 @@
 
             document.body.appendChild(overlay);
 
-            let selectedTier = null;
+            let selectedTier = null; // { days, amount }
 
+            // 套餐点击选择
             overlay.querySelectorAll('.price-tier').forEach(el => {
                 el.addEventListener('click', (e) => {
                     overlay.querySelectorAll('.price-tier').forEach(t => t.classList.remove('selected'));
                     el.classList.add('selected');
-                    selectedTier = { days: parseInt(el.dataset.days), amount: parseFloat(el.dataset.amount) };
+                    const days = parseInt(el.dataset.days);
+                    const amount = parseFloat(el.dataset.amount);
+                    selectedTier = { days, amount };
                     const payBtn = document.getElementById('payBtn');
                     payBtn.disabled = false;
-                    payBtn.textContent = `💎 支付 ${selectedTier.amount} USDT (${selectedTier.days}天)`;
+                    payBtn.textContent = `💎 支付 ${amount} USDT (${days}天)`;
                 });
             });
 
+            // 选项卡切换
             overlay.addEventListener('click', (e) => {
-                if (e.target.classList.contains('auth-tab')) {
-                    document.querySelectorAll('.auth-tab').forEach(t => { t.classList.remove('active'); t.style.background='#334155'; t.style.color='#94a3b8'; });
-                    e.target.classList.add('active'); e.target.style.background='#3b82f6'; e.target.style.color='white';
-                    document.getElementById('payPanel').style.display = e.target.dataset.tab === 'pay' ? 'block' : 'none';
-                    document.getElementById('adminPanel').style.display = e.target.dataset.tab === 'admin' ? 'block' : 'none';
+                const target = e.target;
+                if (target.classList.contains('auth-tab')) {
+                    document.querySelectorAll('.auth-tab').forEach(t => {
+                        t.classList.remove('active');
+                        t.style.background = '#334155';
+                        t.style.color = '#94a3b8';
+                    });
+                    target.classList.add('active');
+                    target.style.background = '#3b82f6';
+                    target.style.color = 'white';
+                    
+                    const tab = target.dataset.tab;
+                    document.getElementById('payPanel').style.display = tab === 'pay' ? 'block' : 'none';
+                    document.getElementById('adminPanel').style.display = tab === 'admin' ? 'block' : 'none';
                 }
-                if (e.target.id === 'closeBtn') { document.body.removeChild(overlay); if (!AuthManager.isAuthorized()) setTimeout(() => showBaseAuthDialog(), 500); }
+                
+                if (target.id === 'closeBtn' || target.closest('#closeBtn')) {
+                    document.body.removeChild(overlay);
+                    if (!AuthManager.isAuthorized()) {
+                        // 未授权则稍后再次弹窗 (避免空窗)
+                        setTimeout(() => showBaseAuthDialog(), 500);
+                    }
+                }
             });
 
+            // 支付按钮
             document.getElementById('payBtn').addEventListener('click', async () => {
-                if (!selectedTier) return alert('请选择套餐');
+                if (!selectedTier) {
+                    alert('请先选择套餐');
+                    return;
+                }
                 const btn = document.getElementById('payBtn');
                 try {
-                    btn.disabled = true; btn.textContent = '处理中...';
-                    await AuthManager.checkWallet(); await AuthManager.checkNetwork();
+                    btn.disabled = true;
+                    btn.textContent = '支付处理中...';
+
+                    await AuthManager.checkWallet();
+                    await AuthManager.checkNetwork();
+
                     const address = await AuthManager.connectWallet();
+
                     if (AuthManager.isAdminAddress(address)) {
-                        AuthManager.saveAdminAuth(address, 'address');
+                        const authData = AuthManager.saveAdminAuth(address, 'address');
                         document.body.removeChild(overlay);
-                        showSuccessToast('👑 管理员登录成功');
-                        location.reload(); return;
+                        showSuccessToast('👑 管理员地址登录成功');
+                        location.reload();
+                        return;
                     }
+
                     const provider = new ethers.BrowserProvider(window.ethereum);
-                    await AuthManager.checkUSDTBalance(address, provider, selectedTier.amount);
-                    if (!await AuthManager.checkAllowance(address, provider, selectedTier.amount)) {
+                    const requiredAmount = selectedTier.amount;
+                    const days = selectedTier.days;
+
+                    await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
+
+                    const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
+                    if (!hasAllowance) {
                         btn.textContent = '授权中...';
-                        await AuthManager.approveUSDT(address, provider, selectedTier.amount);
+                        await AuthManager.approveUSDT(address, provider, requiredAmount);
                     }
+
                     btn.textContent = '支付中...';
-                    const txHash = await AuthManager.sendUSDT(address, provider, selectedTier.amount);
-                    AuthManager.savePaymentAuth(address, selectedTier.days, selectedTier.amount, txHash);
+                    const txHash = await AuthManager.sendUSDT(address, provider, requiredAmount);
+
+                    const authData = AuthManager.savePaymentAuth(address, days, requiredAmount, txHash);
+
                     document.body.removeChild(overlay);
-                    showSuccessToast(`✅ 授权成功！有效期至：${DateUtils.formatDate(DateUtils.getExpireTimestamp(selectedTier.days))}`);
+                    showSuccessToast(`✅ 授权成功！有效期至：${DateUtils.formatDate(authData.expireTime)}`);
                     location.reload();
+
                 } catch (error) {
-                    console.error(error);
-                    alert('支付失败: ' + (error.message || ''));
-                    btn.disabled = false; btn.textContent = `💎 支付 ${selectedTier.amount} USDT`;
+                    console.error('支付错误:', error);
+                    let errorMsg = '❌ 授权失败：';
+                    if (error.message === 'NO_WALLET') {
+                        errorMsg += '未安装钱包';
+                        if (confirm('未安装MetaMask，是否前往安装？')) {
+                            window.open('https://metamask.io/download/', '_blank');
+                        }
+                    } else if (error.message.includes('INSUFFICIENT_BALANCE')) {
+                        const balance = error.message.split(':')[1];
+                        errorMsg = `❌ USDT余额不足 (当前: ${balance} USDT)`;
+                    } else {
+                        errorMsg += error.message || '未知错误';
+                    }
+                    alert(errorMsg);
+                    btn.disabled = false;
+                    btn.textContent = `💎 支付 ${selectedTier.amount} USDT (${selectedTier.days}天)`;
                 }
             });
 
+            // 管理员登录
             document.getElementById('adminBtn').addEventListener('click', () => {
-                if (AuthManager.validateAdminPassword(document.getElementById('adminPassword').value.trim())) {
-                    AuthManager.saveAdminAuth('password', 'password');
+                const password = document.getElementById('adminPassword').value.trim();
+                if (AuthManager.validateAdminPassword(password)) {
+                    const authData = AuthManager.saveAdminAuth('password', 'password');
                     document.body.removeChild(overlay);
                     showSuccessToast('👑 管理员登录成功');
                     location.reload();
-                } else alert('❌ 密码错误');
+                } else {
+                    alert('❌ 管理员密码错误');
+                }
+            });
+
+            document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') document.getElementById('adminBtn').click();
             });
         }
 
-        // 每日解锁
+        // 每日二次解锁 (保持不变，但需注意它依赖基础授权)
         async function unlockDailyStats() {
             if (dailyUnlocked) {
                 document.getElementById('dailyLockOverlay').style.display = 'none';
@@ -771,65 +926,297 @@
                 return;
             }
             if (!AuthManager.isAuthorized()) {
-                alert('请先完成基础授权');
+                alert('请先完成基础授权支付');
                 showBaseAuthDialog();
                 return;
             }
             try {
-                await AuthManager.checkWallet(); await AuthManager.checkNetwork();
+                await AuthManager.checkWallet();
+                await AuthManager.checkNetwork();
                 const address = await AuthManager.connectWallet();
+
                 if (AuthManager.isAdminAddress(address)) {
-                    dailyUnlocked = true; localStorage.setItem(CONFIG.DAILY_UNLOCK_KEY, 'true');
+                    dailyUnlocked = true;
+                    localStorage.setItem(CONFIG.DAILY_UNLOCK_KEY, 'true');
                     document.getElementById('dailyLockOverlay').style.display = 'none';
                     document.getElementById('dailyStatsContent').style.display = 'block';
-                    showSuccessToast('👑 管理员已解锁'); return;
+                    showSuccessToast('👑 管理员已解锁每日明细');
+                    return;
                 }
+
                 const provider = new ethers.BrowserProvider(window.ethereum);
-                const requiredAmount = 10;
+                const requiredAmount = 10; // 二次解锁固定10U
+
                 await AuthManager.checkUSDTBalance(address, provider, requiredAmount);
-                if (!await AuthManager.checkAllowance(address, provider, requiredAmount)) {
-                    showLoading('授权中...'); await AuthManager.approveUSDT(address, provider, requiredAmount); hideLoading();
+
+                const hasAllowance = await AuthManager.checkAllowance(address, provider, requiredAmount);
+                if (!hasAllowance) {
+                    showLoading('授权中...');
+                    await AuthManager.approveUSDT(address, provider, requiredAmount);
+                    hideLoading();
                 }
-                showLoading('支付10 USDT...');
-                await AuthManager.sendUSDT(address, provider, requiredAmount);
-                dailyUnlocked = true; localStorage.setItem(CONFIG.DAILY_UNLOCK_KEY, 'true');
+
+                showLoading('支付10 USDT解锁每日明细...');
+                const txHash = await AuthManager.sendUSDT(address, provider, requiredAmount);
+
+                dailyUnlocked = true;
+                localStorage.setItem(CONFIG.DAILY_UNLOCK_KEY, 'true');
                 hideLoading();
                 document.getElementById('dailyLockOverlay').style.display = 'none';
                 document.getElementById('dailyStatsContent').style.display = 'block';
                 showSuccessToast('✅ 每日明细已解锁！');
             } catch (error) {
-                hideLoading(); alert('解锁失败: ' + (error.message || ''));
+                console.error('二次解锁失败:', error);
+                hideLoading();
+                let errorMsg = '❌ 解锁失败：';
+                if (error.message === 'NO_WALLET') errorMsg += '未安装钱包';
+                else if (error.message.includes('INSUFFICIENT_BALANCE')) {
+                    const balance = error.message.split(':')[1];
+                    errorMsg = `❌ USDT余额不足 (当前: ${balance} USDT)`;
+                } else errorMsg += error.message || '未知错误';
+                alert(errorMsg);
             }
         }
 
-        // 数据加载和图表 (略，保持原样，此处为占位)
-        async function loadCloudData(showLoadingOverlay = false) { /* 同前，略 */ 
-            // 实际部署时复制完整数据加载函数
+        // 加载数据等函数 (复用之前)
+        async function loadCloudData(showLoadingOverlay = false) {
+            if (isLoading) return;
+            isLoading = true;
+            const btn = document.getElementById('refreshBtn');
+            if (btn) { btn.disabled = true; btn.innerText = '刷新中...'; }
+            if (showLoadingOverlay) showLoading('加载云端数据...');
+            try {
+                const response = await fetch(`${CONFIG.API_BASE}/`);
+                const result = await response.json();
+                if (result.success && result.data) {
+                    let cloudData = result.data;
+                    if (typeof cloudData === 'string') { try { cloudData = JSON.parse(cloudData); } catch (e) {} }
+                    
+                    if (cloudData?.allRecords) currentData.allRecords = cloudData.allRecords;
+                    else if (cloudData?.records) currentData.allRecords = cloudData.records.map(r => ({ ...r, isRedeemed: false }));
+                    
+                    if (cloudData?.stats) currentData.stats = { ...currentData.stats, ...cloudData.stats };
+                    
+                    if (cloudData?.lastUpdate) { currentData.lastUpdate = cloudData.lastUpdate; updateLastUpdateTime(cloudData.lastUpdate); }
+                    
+                    calculateStatsFromRecords();
+                    document.getElementById('lpPoolBalanceDisplay').innerText = (currentData.stats.lpWithdrawable || 0).toFixed(2);
+                    updateCharts();
+                    if (dailyUnlocked) renderDailyStats();
+                }
+            } catch (error) {
+                console.error('加载失败:', error);
+                if (showLoadingOverlay) showSuccessToast('❌ 加载失败');
+            } finally {
+                isLoading = false;
+                if (btn) { btn.disabled = false; btn.innerText = '🔄 刷新'; }
+                if (showLoadingOverlay) hideLoading();
+            }
         }
-        function updateCharts() { /* 占位 */ }
-        function setTrendRange(d) { trendRange=d; document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active')); document.querySelector(`.range-btn[onclick*="${d}"]`).classList.add('active'); updateCharts(); }
-        function renderDailyStats() { /* 占位 */ }
-        function exportDailyStats() { alert('导出功能'); }
-        async function refreshLPPool() { /* 占位 */ }
-        function handleManualRefresh() { loadCloudData(true); }
-        function switchDataTab(tab) { document.querySelectorAll('.data-tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.data-panel').forEach(p=>p.classList.remove('active')); document.querySelector(`[data-tab="${tab}"]`).classList.add('active'); document.getElementById(`panel-${tab}`).classList.add('active'); if(tab==='charts') setTimeout(()=>updateCharts(),50); }
 
+        function calculateStatsFromRecords() {
+            const records = currentData.allRecords || [];
+            const stats = { totalStaked:0, totalStaked1d:0, totalStaked15d:0, totalStaked30d:0, count1d:0, count15d:0, count30d:0, unlock2d:0, unlock7d:0, unlock15d:0, lpWithdrawable: currentData.stats?.lpWithdrawable || 0 };
+            const nowSec = Math.floor(Date.now() / 1000);
+            records.forEach(record => {
+                if (record.isRedeemed) return;
+                const amount = record.amount || 0;
+                const stakeIndex = record.stakeIndex || 0;
+                stats.totalStaked += amount;
+                if (stakeIndex === 0) { stats.totalStaked1d += amount; stats.count1d++; } 
+                else if (stakeIndex === 1) { stats.totalStaked15d += amount; stats.count15d++; } 
+                else if (stakeIndex === 2) { stats.totalStaked30d += amount; stats.count30d++; }
+                const stakeTime = record.stakeTime || 0;
+                const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
+                const unlockTime = stakeTime + duration;
+                const remain = unlockTime - nowSec;
+                if (remain <= 172800) stats.unlock2d += amount;
+                if (remain <= 604800) stats.unlock7d += amount;
+                if (remain <= 1296000) stats.unlock15d += amount;
+            });
+            currentData.stats = stats;
+        }
+
+        function updateLastUpdateTime(timestamp) {
+            const date = new Date(timestamp);
+            const formatted = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+            document.getElementById('lastUpdateTime').innerText = formatted;
+        }
+
+        function renderDailyStats() {
+            const allRecords = currentData.allRecords || [];
+            if (allRecords.length === 0) {
+                document.getElementById('dailyStatsBody').innerHTML = '<tr><td colspan="6" class="empty-state">📊 暂无数据</td></tr>';
+                return;
+            }
+            const dailyMap = new Map(), activeMap = new Map();
+            allRecords.forEach(record => {
+                if (!record.stakeTime) return;
+                const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                const amount = record.amount || 0;
+                const stakeIndex = record.stakeIndex || 0;
+                if (!dailyMap.has(dateStr)) {
+                    dailyMap.set(dateStr, { newStake:0, byPool:{0:0,1:0,2:0}, count:{0:0,1:0,2:0} });
+                }
+                const dayData = dailyMap.get(dateStr);
+                dayData.newStake += amount;
+                dayData.byPool[stakeIndex] += amount;
+                dayData.count[stakeIndex]++;
+                if (!record.isRedeemed) {
+                    activeMap.set(dateStr, (activeMap.get(dateStr)||0) + amount);
+                }
+            });
+            const sortedDates = Array.from(dailyMap.entries()).map(([date, data]) => ({
+                date, newStake: data.newStake, activeStake: activeMap.get(date)||0,
+                new1d: data.byPool[0], new15d: data.byPool[1], new30d: data.byPool[2],
+                count1d: data.count[0], count15d: data.count[1], count30d: data.count[2]
+            })).sort((a,b) => b.date.localeCompare(a.date));
+            const tbody = document.getElementById('dailyStatsBody');
+            tbody.innerHTML = sortedDates.map(day => `
+                <tr>
+                    <td>${day.date}</td>
+                    <td>${day.newStake.toFixed(2)}</td>
+                    <td>${day.activeStake.toFixed(2)}</td>
+                    <td>${day.new1d.toFixed(2)} <span class="stats-badge">${day.count1d}</span></td>
+                    <td>${day.new15d.toFixed(2)} <span class="stats-badge">${day.count15d}</span></td>
+                    <td>${day.new30d.toFixed(2)} <span class="stats-badge">${day.count30d}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // 图表函数
+        function updateCharts() { updateTrendChart(); updatePieAndUnlockCharts(); }
+        function setTrendRange(days) {
+            trendRange = days;
+            document.querySelectorAll('.range-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(days + '天')) btn.classList.add('active');
+            });
+            updateTrendChart();
+        }
+        function updateTrendChart() {
+            const allRecords = currentData.allRecords || [];
+            if (allRecords.length === 0) { if (trendChart) trendChart.destroy(); trendChart = null; return; }
+            const dailyMap = new Map(), activeMap = new Map();
+            allRecords.forEach(record => {
+                if (!record.stakeTime) return;
+                const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                const amount = record.amount || 0;
+                dailyMap.set(dateStr, (dailyMap.get(dateStr)||0) + amount);
+                if (!record.isRedeemed) activeMap.set(dateStr, (activeMap.get(dateStr)||0) + amount);
+            });
+            const allDates = Array.from(dailyMap.keys()).sort((a,b) => a.localeCompare(b));
+            const recentDates = allDates.slice(-trendRange);
+            const newData = recentDates.map(d => dailyMap.get(d) || 0);
+            const activeData = recentDates.map(d => activeMap.get(d) || 0);
+            const ctx = document.getElementById('trendChart')?.getContext('2d');
+            if (!ctx) return;
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: recentDates, datasets: [
+                    { label: '新增质押', data: newData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension:0.2, fill:true },
+                    { label: '仍在质押', data: activeData, borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.1)', tension:0.2, fill:true }
+                ] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+            });
+        }
+        function updatePieAndUnlockCharts() {
+            const records = currentData.allRecords?.filter(r => !r.isRedeemed) || [];
+            let sum1d=0, sum15d=0, sum30d=0;
+            records.forEach(r => { const amt = r.amount||0; if(r.stakeIndex===0) sum1d+=amt; else if(r.stakeIndex===1) sum15d+=amt; else if(r.stakeIndex===2) sum30d+=amt; });
+            const total = sum1d+sum15d+sum30d;
+            document.getElementById('pieLegend').innerHTML = `
+                <div class="legend-item"><span class="legend-color" style="background:#3b82f6;"></span>1天: ${sum1d.toFixed(2)} (${total>0? (sum1d/total*100).toFixed(1):0}%)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#8b5cf6;"></span>15天: ${sum15d.toFixed(2)} (${total>0? (sum15d/total*100).toFixed(1):0}%)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#ec4899;"></span>30天: ${sum30d.toFixed(2)} (${total>0? (sum30d/total*100).toFixed(1):0}%)</div>
+            `;
+            let u0_2=0,u2_7=0,u7_15=0,u15_25=0,u25p=0;
+            const nowSec = Math.floor(Date.now()/1000);
+            records.forEach(r => {
+                const amt = r.amount||0; const stakeTime = r.stakeTime||0; const dur = r.stakeIndex===0?86400: r.stakeIndex===1?1296000:2592000;
+                const remain = stakeTime + dur - nowSec;
+                if(remain<=172800) u0_2+=amt; else if(remain<=604800) u2_7+=amt; else if(remain<=1296000) u7_15+=amt; else if(remain<=2160000) u15_25+=amt; else u25p+=amt;
+            });
+            const pieCtx = document.getElementById('pieChart')?.getContext('2d');
+            if(pieCtx) {
+                if(pieChart) pieChart.destroy();
+                pieChart = new Chart(pieCtx, { type:'doughnut', data: { labels:['1天','15天','30天'], datasets:[{ data:[sum1d,sum15d,sum30d], backgroundColor:['#3b82f6','#8b5cf6','#ec4899'], borderColor:'#1e293b', borderWidth:2 }] }, options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } } });
+            }
+            const unlockCtx = document.getElementById('unlockChart')?.getContext('2d');
+            if(unlockCtx) {
+                if(unlockChart) unlockChart.destroy();
+                unlockChart = new Chart(unlockCtx, { type:'bar', data: { labels:['0-2天','2-7天','7-15天','15-25天','>25天'], datasets:[{ label:'可赎回金额 (USDT)', data:[u0_2,u2_7,u7_15,u15_25,u25p], backgroundColor:['#f87171','#fbbf24','#60a5fa','#a78bfa','#ec4899'], borderRadius:6 }] }, options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, grid:{color:'#334155'}, ticks:{color:'#94a3b8'} }, x:{ ticks:{color:'#94a3b8'} } }, plugins:{ legend:{ labels:{ color:'#e2e8f0' } } } } });
+            }
+        }
+        function getDateStrFromTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
+        }
+
+        function exportDailyStats() { alert('导出CSV功能已解锁'); }
+        async function refreshLPPool() {
+            const btn = document.getElementById('refreshLPBtn');
+            btn.disabled = true; btn.innerText = '刷新中...';
+            try {
+                if (!usdtContract) {
+                    const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+                    usdtContract = new ethers.Contract( CONFIG.USDT, [ "function balanceOf(address account) view returns (uint256)", "function decimals() view returns (uint8)" ], provider );
+                }
+                const balance = await usdtContract.balanceOf(CONFIG.LP_POOL);
+                const decimals = await usdtContract.decimals();
+                const formattedBalance = parseFloat(ethers.formatUnits(balance, decimals));
+                currentData.stats.lpWithdrawable = formattedBalance;
+                document.getElementById('lpPoolBalanceDisplay').innerText = formattedBalance.toFixed(2);
+                btn.innerText = '✅ 成功';
+            } catch (error) {
+                document.getElementById('lpPoolBalanceDisplay').innerHTML = '<span style="color:#f87171;">失败</span>';
+                btn.innerText = '❌ 重试';
+            } finally { setTimeout(() => { btn.innerText = '💰 刷新LP'; btn.disabled = false; }, 1500); }
+        }
+        function handleManualRefresh() { loadCloudData(true); }
+        function switchDataTab(tab) {
+            document.querySelectorAll('.data-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.data-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById(`panel-${tab}`).classList.add('active');
+            if (tab === 'charts') setTimeout(() => updateCharts(), 50);
+        }
+
+        // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('stakingContractAddress').innerText = CONFIG.STAKING;
+            try {
+                const provider = new ethers.JsonRpcProvider('https://bsc-dataseed1.binance.org');
+                usdtContract = new ethers.Contract( CONFIG.USDT, ["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"], provider );
+            } catch (error) { console.error('USDT合约初始化失败:', error); }
+
             dailyUnlocked = localStorage.getItem(CONFIG.DAILY_UNLOCK_KEY) === 'true';
             if (dailyUnlocked) {
                 document.getElementById('dailyLockOverlay').style.display = 'none';
                 document.getElementById('dailyStatsContent').style.display = 'block';
             }
-            if (!AuthManager.isAuthorized()) setTimeout(() => showBaseAuthDialog(), 100);
-            else loadCloudData(false);
 
+            // 检查基础授权
+            if (!AuthManager.isAuthorized()) {
+                // 延迟一下显示弹窗，避免被其他元素覆盖
+                setTimeout(() => showBaseAuthDialog(), 100);
+            } else {
+                loadCloudData(false);
+            }
+
+            // 选项卡绑定
             document.querySelector('.data-tabs').addEventListener('click', (e) => {
                 const tab = e.target.closest('.data-tab');
                 if (tab) switchDataTab(tab.dataset.tab);
             });
-            document.querySelectorAll('.range-btn').forEach(btn => { if (btn.textContent.includes('90天')) btn.classList.add('active'); });
 
+            // 默认高亮90天
+            document.querySelectorAll('.range-btn').forEach(btn => {
+                if (btn.textContent.includes('90天')) btn.classList.add('active');
+            });
+
+            // 全局函数
             window.unlockDailyStats = unlockDailyStats;
             window.refreshLPPool = refreshLPPool;
             window.handleManualRefresh = handleManualRefresh;
