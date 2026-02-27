@@ -2074,6 +2074,165 @@ async function incrementalQuery() {
         isQuerying = false;
     }, 3000);
 }
+
+async function fullQuery() {
+    if (!stakingContract) {
+        alert("❌ 合约未初始化");
+        return;
+    }
+    
+    if (isQuerying) return;
+
+    const text = document.getElementById('addressList').value;
+    const addresses = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.startsWith('0x') && l.length === 42);
+    
+    if (addresses.length === 0) {
+        alert("❌ 没有有效地址");
+        return;
+    }
+    
+    if (addresses.length > CONFIG.MAX_ADDRESSES) {
+        alert(`❌ 最多 ${CONFIG.MAX_ADDRESSES} 个地址`);
+        return;
+    }
+
+    isQuerying = true;
+    failedAddresses = [];
+    lastAddressList = text;
+    
+    document.getElementById('queryMode').innerText = '全量查询';
+    document.getElementById('queryMode').className = 'query-mode mode-full';
+    document.getElementById('incrementalBtn').disabled = true;
+    document.getElementById('fullQueryBtn').disabled = true;
+    document.getElementById('progressContainer').style.display = 'block';
+
+    // 重置数据
+    queryResults = [];
+    allStakeRecords = [];
+    addressCache.clear();
+    recordCache.clear();
+    
+    stats = {
+        totalStaked: 0,
+        totalStaked1d: 0,
+        totalStaked15d: 0,
+        totalStaked30d: 0,
+        count1d: 0,
+        count15d: 0,
+        count30d: 0,
+        unlock2d: 0,
+        unlock7d: 0,
+        unlock15d: 0,
+        lpWithdrawable: 0
+    };
+
+    try {
+        const lpBalance = await getLPPoolBalance();
+        stats.lpWithdrawable = lpBalance;
+    } catch (error) {
+        console.error("获取LP池USDT余额失败:", error);
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const limits = {
+        '2d': now + 172800,
+        '7d': now + 604800,
+        '15d': now + 1296000
+    };
+
+    let processed = 0;
+    let totalActiveRecords = 0;
+    let successCount = 0;
+
+    // 用于存储所有记录的数组
+    const allQueryResults = [];
+    const allAllStakeRecords = [];
+
+    for (let i = 0; i < addresses.length; i += CONFIG.BATCH_SIZE) {
+        const batch = addresses.slice(i, i + CONFIG.BATCH_SIZE);
+        
+        const promises = batch.map(address => queryAddress(address, now, limits));
+        const results = await Promise.all(promises);
+        
+        results.forEach(result => {
+            processed++;
+            if (result.success) {
+                successCount++;
+                allQueryResults.push(...result.active);
+                allAllStakeRecords.push(...result.all);
+                totalActiveRecords += result.active.length;
+            }
+        });
+
+        const progress = Math.round((processed / addresses.length) * 100);
+        document.getElementById('progressFill').style.width = progress + '%';
+        document.getElementById('progressText').innerHTML = 
+            `查询中 ${processed}/${addresses.length} (成功 ${successCount}, 失败 ${failedAddresses.length}, 找到 ${totalActiveRecords} 条活跃记录)`;
+        
+        updateStats();
+        
+        await new Promise(r => setTimeout(r, 100));
+    }
+
+    // 更新全局变量
+    queryResults = allQueryResults;
+    allStakeRecords = allAllStakeRecords;
+
+    // 更新缓存
+    queryResults.forEach(record => {
+        const key = `${record.address}_${record.stakeTime}`;
+        recordCache.set(key, record);
+    });
+
+    // 重新构建每日统计
+    const dailyStats = new Map();
+    const activeDaily = new Map();
+    
+    allStakeRecords.forEach(record => {
+        const dateStr = getDateStrFromTimestamp(record.stakeTime);
+        
+        if (!dailyStats.has(dateStr)) {
+            dailyStats.set(dateStr, {
+                newStake: 0,
+                byPool: {0: 0, 1: 0, 2: 0},
+                count: {0: 0, 1: 0, 2: 0}
+            });
+        }
+        
+        const dayData = dailyStats.get(dateStr);
+        dayData.newStake += record.amount;
+        dayData.byPool[record.stakeIndex] += record.amount;
+        dayData.count[record.stakeIndex]++;
+        
+        if (!record.isRedeemed) {
+            if (!activeDaily.has(dateStr)) {
+                activeDaily.set(dateStr, 0);
+            }
+            activeDaily.set(dateStr, activeDaily.get(dateStr) + record.amount);
+        }
+    });
+
+    queryResults.sort((a, b) => b.stakeTime - a.stakeTime);
+    applyFilters();
+    renderDailyStats(dailyStats, activeDaily);
+    updateStats();
+    saveToStorage();
+
+    let completeMsg = `✅ 完成: ${totalActiveRecords}条活跃记录`;
+    if (failedAddresses.length > 0) {
+        completeMsg += `, ${failedAddresses.length}个地址查询失败`;
+    }
+    document.getElementById('progressText').innerHTML = completeMsg;
+    
+    setTimeout(() => {
+        document.getElementById('incrementalBtn').disabled = false;
+        document.getElementById('fullQueryBtn').disabled = false;
+        document.getElementById('progressContainer').style.display = 'none';
+        isQuerying = false;
+    }, 3000);
+}
         
         function copyAddress(address) {
             navigator.clipboard.writeText(address);
