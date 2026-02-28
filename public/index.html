@@ -1605,7 +1605,8 @@ async function loadCloudData(showLoadingOverlay = false) {
 
          //  柱状图区域
         function updatePieAndUnlockCharts() {
-            if(!queryResults.length){ 
+            const records = currentData.allRecords || [];
+            if(!records || records.length === 0){ 
                 if (pieChart) pieChart.destroy();
                 if (unlockChart) unlockChart.destroy();
                 pieChart = unlockChart = null;
@@ -1650,8 +1651,14 @@ async function loadCloudData(showLoadingOverlay = false) {
     let u15_25 = 0;       // 7-15天（未来）
     let u25p = 0;         // ＞25天（未来）
 
-    queryResults.forEach(r => { 
-        const remain = r.unlockTime - nowSec; 
+    records.forEach(r => {
+        if (r.isRedeemed) return;
+        const amount = r.amount || 0;
+        const stakeTime = r.stakeTime || 0;
+        const stakeIndex = r.stakeIndex || 0;
+        const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
+        const unlockTime = stakeTime + duration;
+        const remain = unlockTime - nowSec;
         
         if (remain <= 0) {
             expired += r.amount;  // 已到期未赎回
@@ -1759,14 +1766,9 @@ async function loadCloudData(showLoadingOverlay = false) {
                         label: (context) => {
                             const label = context.dataset.label || '';
                             const value = context.raw;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
 
                             // 对于第一个柱子，显示总数（已到期 + 未来）
                             if (context.dataIndex === 0) {
-                                const expiredValue = expired;
-                                const futureValue = u0_2;
-                                const totalValue = expiredValue + futureValue;
-
                                 if (context.datasetIndex === 0) {
                                     return `已到期未赎回: ${value.toFixed(2)} USDT`;
                                 } else {
