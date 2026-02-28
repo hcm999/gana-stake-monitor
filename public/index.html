@@ -741,7 +741,7 @@
             <div class="table-container">
                 <div class="stats-info">
                     <h5>📅 每日质押数据</h5>
-                    <button class="btn-export" onclick="exportDailyStats()">📥 付费导出数据</button>
+                    <button class="btn-export" onclick="exportDailyStats()">📥 导出CSV</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table">
@@ -775,8 +775,7 @@
             USDT: "0x55d398326f99059fF775485246999027B3197955",
             API_BASE: '/api',  // 或你的实际API地址，如 'http://localhost:3000/api'
             AUTH_STORAGE_KEY: 'HYBRID_AUTH',
-            UNLOCK_STORAGE_KEY: 'RESTRICTED_UNLOCKED',
-            EXPORT_STORAGE_KEY: 'EXPORT_UNLOCKED' // 新增：导出功能解锁标识
+            UNLOCK_STORAGE_KEY: 'RESTRICTED_UNLOCKED'
         };
 
         const USDT_ABI = [
@@ -810,7 +809,6 @@
         let isLoading = false;
         let provider = null;
         let restrictedUnlocked = localStorage.getItem(CONFIG.UNLOCK_STORAGE_KEY) === 'true';
-        let exportUnlocked = localStorage.getItem(CONFIG.EXPORT_STORAGE_KEY) === 'true'; // 新增：导出功能解锁状态
 
         const AUTH_CONFIG = {
             enabled: true,
@@ -818,13 +816,7 @@
                 usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
                 receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
                 days: 30,
-                amount: 5
-            },
-            exportPayment: { // 新增：导出功能二次付费
-                usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
-                receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
-                amount: 5, // 二次付费5 USDT
-                description: "导出CSV和未来赎回数据"
+                amount: 10
             },
             admin: {
                 password: "admin9120",
@@ -910,30 +902,30 @@
                 if (formattedBalance < requiredAmount) { throw new Error(`INSUFFICIENT_BALANCE:${formattedBalance}`); }
                 return true;
             },
-            async checkAllowance(owner, provider, requiredAmount, toAddress = AUTH_CONFIG.payment.receiveAddress) {
+            async checkAllowance(owner, provider, requiredAmount) {
                 const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
-                const allowance = await contract.allowance(owner, toAddress);
+                const allowance = await contract.allowance(owner, AUTH_CONFIG.payment.receiveAddress);
                 const decimals = await contract.decimals();
                 const formattedAllowance = parseFloat(ethers.formatUnits(allowance, decimals));
                 return formattedAllowance >= requiredAmount;
             },
-            async approveUSDT(owner, provider, amount, toAddress = AUTH_CONFIG.payment.receiveAddress) {
+            async approveUSDT(owner, provider, amount) {
                 const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
                 const amountWei = ethers.parseUnits(amount.toString(), decimals);
                 const signer = await provider.getSigner();
                 const contractWithSigner = contract.connect(signer);
-                const tx = await contractWithSigner.approve(toAddress, amountWei);
+                const tx = await contractWithSigner.approve(AUTH_CONFIG.payment.receiveAddress, amountWei);
                 await tx.wait();
                 return tx.hash;
             },
-            async sendUSDT(fromAddress, provider, amount, toAddress = AUTH_CONFIG.payment.receiveAddress) {
+            async sendUSDT(fromAddress, provider, amount) {
                 const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
                 const amountWei = ethers.parseUnits(amount.toString(), decimals);
                 const signer = await provider.getSigner();
                 const contractWithSigner = contract.connect(signer);
-                const tx = await contractWithSigner.transfer(toAddress, amountWei);
+                const tx = await contractWithSigner.transfer(AUTH_CONFIG.payment.receiveAddress, amountWei);
                 await tx.wait();
                 return tx.hash;
             }
@@ -1198,7 +1190,7 @@
             }
             
             if (!AuthManager.isAuthorized()) {
-                alert('请先完成基础授权支付（5 USDT）');
+                alert('请先完成基础授权支付（10 USDT）');
                 showBaseAuthDialog();
                 return;
             }
@@ -1208,22 +1200,19 @@
                 await AuthManager.checkNetwork();
                 const address = await AuthManager.connectWallet();
 
-                // 管理员直接解锁
                 if (AuthManager.isAdminAddress(address)) {
-                    exportUnlocked = true;
-                    localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
+                    restrictedUnlocked = true;
+                    localStorage.setItem(CONFIG.UNLOCK_STORAGE_KEY, 'true');
+                    removeRestrictionMasks();
                     showSuccessToast('👑 管理员无限制');
-                    performExport();
                     return;
                 }
 
                 const browserProvider = new ethers.BrowserProvider(window.ethereum);
-                const requiredAmount = 5;
+                const requiredAmount = 10;
 
-                // 检查余额
                 await AuthManager.checkUSDTBalance(address, browserProvider, requiredAmount);
 
-                // 检查授权
                 const hasAllowance = await AuthManager.checkAllowance(address, browserProvider, requiredAmount);
                 if (!hasAllowance) {
                     showLoading('授权中...');
@@ -1231,15 +1220,15 @@
                     hideLoading();
                 }
 
-                showLoading(`支付5 USDT 解锁导出功能...`);
+                showLoading('支付10 USDT解锁敏感数据...');
                 const txHash = await AuthManager.sendUSDT(address, browserProvider, requiredAmount);
 
                 restrictedUnlocked = true;
-                localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
+                localStorage.setItem(CONFIG.UNLOCK_STORAGE_KEY, 'true');
                 hideLoading();
                 removeRestrictionMasks();
                 showSuccessToast('✅ 敏感数据已解锁！');
-                
+
             } catch (error) {
                 console.error('解锁支付失败:', error);
                 hideLoading();
@@ -1258,232 +1247,6 @@
                 alert(errorMsg);
             }
         }
-
-        async function unlockExportFeature() {
-    if (exportUnlocked) {
-        performExport();
-        return;
-    }
-    
-    if (!AuthManager.isAuthorized()) {
-        alert('请先完成基础授权支付（10 USDT）');
-        showBaseAuthDialog();
-        return;
-    }
-    
-    try {
-        await AuthManager.checkWallet();
-        await AuthManager.checkNetwork();
-        const address = await AuthManager.connectWallet();
-
-        if (AuthManager.isAdminAddress(address)) {
-            exportUnlocked = true;
-            localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
-            showSuccessToast('👑 管理员已解锁导出功能');
-            performExport();
-            return;
-        }
-
-        const browserProvider = new ethers.BrowserProvider(window.ethereum);
-        const requiredAmount = AUTH_CONFIG.exportPayment.amount;
-
-        await AuthManager.checkUSDTBalance(address, browserProvider, requiredAmount);
-
-        const hasAllowance = await AuthManager.checkAllowance(
-            address, 
-            browserProvider, 
-            requiredAmount,
-            AUTH_CONFIG.exportPayment.receiveAddress
-        );
-        
-        if (!hasAllowance) {
-            showLoading('授权中...');
-            await AuthManager.approveUSDT(
-                address, 
-                browserProvider, 
-                requiredAmount,
-                AUTH_CONFIG.exportPayment.receiveAddress
-            );
-            hideLoading();
-        }
-
-        showLoading(`支付 ${requiredAmount} USDT 解锁导出功能...`);
-        const txHash = await AuthManager.sendUSDT(
-            address, 
-            browserProvider, 
-            requiredAmount,
-            AUTH_CONFIG.exportPayment.receiveAddress
-        );
-
-        exportUnlocked = true;
-        localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
-        hideLoading();
-        showSuccessToast('✅ 导出功能已解锁！');
-        performExport();
-
-    } catch (error) {
-        console.error('解锁导出功能失败:', error);
-        hideLoading();
-        let errorMsg = '❌ 解锁失败：';
-        if (error.message === 'NO_WALLET') {
-            errorMsg += '未安装钱包';
-            if (confirm('未安装MetaMask，是否前往安装？')) {
-                window.open('https://metamask.io/download/', '_blank');
-            }
-        } else if (error.message.includes('INSUFFICIENT_BALANCE')) {
-            const balance = error.message.split(':')[1];
-            errorMsg = `❌ USDT余额不足 (当前: ${balance} USDT)`;
-        } else {
-            errorMsg += error.message || '未知错误';
-        }
-        alert(errorMsg);
-    }
-}
-
-        function handleExportClick() {
-    if (exportUnlocked) {
-        performExport();
-    } else {
-        if (confirm('导出CSV和未来赎回数据需要支付 5 USDT，是否继续？')) {
-            unlockExportFeature();
-        }
-    }
-}
-
-function performExport() {
-    const allRecords = currentData.allRecords || [];
-    
-    if (allRecords.length === 0) {
-        alert('暂无数据可导出');
-        return;
-    }
-
-    // Sheet 1: 每日质押数据
-    const dailyRows = [];
-    dailyRows.push('日期,新增质押,仍在质押,1天新增,15天新增,30天新增,1天人数,15天人数,30天人数');
-    
-    const dailyMap = new Map();
-    const activeMap = new Map();
-    
-    allRecords.forEach(record => {
-        if (!record.stakeTime) return;
-        
-        const dateStr = getDateStrFromTimestamp(record.stakeTime);
-        const amount = record.amount || 0;
-        const stakeIndex = record.stakeIndex || 0;
-        
-        if (!dailyMap.has(dateStr)) {
-            dailyMap.set(dateStr, {
-                newStake: 0,
-                byPool: {0: 0, 1: 0, 2: 0},
-                count: {0: 0, 1: 0, 2: 0}
-            });
-        }
-        
-        const dayData = dailyMap.get(dateStr);
-        dayData.newStake += amount;
-        dayData.byPool[stakeIndex] += amount;
-        dayData.count[stakeIndex]++;
-        
-        if (!record.isRedeemed) {
-            if (!activeMap.has(dateStr)) {
-                activeMap.set(dateStr, 0);
-            }
-            activeMap.set(dateStr, activeMap.get(dateStr) + amount);
-        }
-    });
-
-    const sortedDates = Array.from(dailyMap.entries())
-        .map(([date, data]) => ({
-            date,
-            newStake: data.newStake,
-            activeStake: activeMap.get(date) || 0,
-            new1d: data.byPool[0],
-            new15d: data.byPool[1],
-            new30d: data.byPool[2],
-            count1d: data.count[0],
-            count15d: data.count[1],
-            count30d: data.count[2]
-        }))
-        .sort((a, b) => b.date.localeCompare(a.date));
-
-    sortedDates.forEach(day => {
-        dailyRows.push([
-            day.date,
-            day.newStake.toFixed(2),
-            day.activeStake.toFixed(2),
-            day.new1d.toFixed(2),
-            day.new15d.toFixed(2),
-            day.new30d.toFixed(2),
-            day.count1d,
-            day.count15d,
-            day.count30d
-        ].join(','));
-    });
-
-    // Sheet 2: 未来赎回数据
-    const redeemRows = [];
-    redeemRows.push('质押时间,质押金额,质押周期,解锁时间,剩余天数,状态');
-    
-    const nowSec = Math.floor(Date.now() / 1000);
-    
-    const sortedRecords = [...allRecords]
-        .filter(r => !r.isRedeemed)
-        .sort((a, b) => {
-            const aUnlock = (a.stakeTime || 0) + (a.stakeIndex === 0 ? 86400 : a.stakeIndex === 1 ? 1296000 : 2592000);
-            const bUnlock = (b.stakeTime || 0) + (b.stakeIndex === 0 ? 86400 : b.stakeIndex === 1 ? 1296000 : 2592000);
-            return aUnlock - bUnlock;
-        });
-    
-    sortedRecords.forEach(r => {
-        const stakeTime = r.stakeTime || 0;
-        const amount = r.amount || 0;
-        const stakeIndex = r.stakeIndex || 0;
-        const cycle = stakeIndex === 0 ? '1天' : stakeIndex === 1 ? '15天' : '30天';
-        const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
-        const unlockTime = stakeTime + duration;
-        const remainDays = Math.ceil((unlockTime - nowSec) / 86400);
-        const status = unlockTime <= nowSec ? '已到期' : `${remainDays}天后`;
-        
-        const stakeDate = new Date(stakeTime * 1000).toLocaleString('zh-CN', {hour12: false});
-        const unlockDate = new Date(unlockTime * 1000).toLocaleString('zh-CN', {hour12: false});
-        
-        redeemRows.push([
-            stakeDate,
-            amount.toFixed(2),
-            cycle,
-            unlockDate,
-            remainDays <= 0 ? '已到期' : remainDays,
-            status
-        ].join(','));
-    });
-
-    // 导出两个文件
-    downloadCSV(dailyRows.join('\n'), `质押日报_${new Date().toISOString().slice(0,10)}.csv`);
-    downloadCSV(redeemRows.join('\n'), `未来赎回_${new Date().toISOString().slice(0,10)}.csv`);
-    
-    showSuccessToast('✅ 数据导出成功');
-}
-
-function downloadCSV(content, filename) {
-    const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.display = 'none';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
-
-// 修改原有的导出函数
-function exportDailyStats() {
-    handleExportClick();
-}
 
         function removeRestrictionMasks() {
             document.querySelectorAll('.restriction-mask').forEach(mask => mask.remove());
@@ -1996,8 +1759,6 @@ async function loadCloudData(showLoadingOverlay = false) {
         }
 
 function exportDailyStats() {
-    handleExportClick();
-}
     const allRecords = currentData.allRecords || [];
     
     if (allRecords.length === 0) {
