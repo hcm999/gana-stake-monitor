@@ -1639,15 +1639,15 @@
             document.getElementById('pieLegend').innerHTML = `
                 <div class="legend-item">
                     <span class="legend-color" style="background:#3b82f6;"></span>
-                    1天: ${sum1d.toFixed(2)} (${p1d}%)
+                    1天: ${p1d}%  // 只显示百分比
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background:#8b5cf6;"></span>
-                    15天: ${sum15d.toFixed(2)} (${p15d}%)
+                    15天: ${p15d}%
                 </div>
                 <div class="legend-item">
                     <span class="legend-color" style="background:#ec4899;"></span>
-                    30天: ${sum30d.toFixed(2)} (${p30d}%)
+                    30天: ${sum30d.toFixed(2)} (${p30d}%) // 显示百金额
                 </div>
             `;
 
