@@ -741,7 +741,7 @@
             <div class="table-container">
                 <div class="stats-info">
                     <h5>📅 每日质押数据</h5>
-                    <button class="btn-export" onclick="exportDailyStats()">📥 导出CSV</button>
+                    <button class="btn-export" onclick="exportDailyStats()">📥 付费导出数据</button>
                 </div>
                 <div class="table-responsive">
                     <table class="table">
@@ -810,6 +810,7 @@
         let isLoading = false;
         let provider = null;
         let restrictedUnlocked = localStorage.getItem(CONFIG.UNLOCK_STORAGE_KEY) === 'true';
+        let exportUnlocked = localStorage.getItem(CONFIG.EXPORT_STORAGE_KEY) === 'true'; // 新增：导出功能解锁状态
 
         const AUTH_CONFIG = {
             enabled: true,
