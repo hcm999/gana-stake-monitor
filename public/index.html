@@ -776,6 +776,7 @@
             API_BASE: '/api',  // 或你的实际API地址，如 'http://localhost:3000/api'
             AUTH_STORAGE_KEY: 'HYBRID_AUTH',
             UNLOCK_STORAGE_KEY: 'RESTRICTED_UNLOCKED'
+            EXPORT_STORAGE_KEY: 'EXPORT_UNLOCKED' // 新增：导出功能解锁标识
         };
 
         const USDT_ABI = [
@@ -816,7 +817,13 @@
                 usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
                 receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
                 days: 30,
-                amount: 10
+                amount: 5
+            },
+            exportPayment: { // 新增：导出功能二次付费
+                usdtAddress: "0x55d398326f99059fF775485246999027B3197955",
+                receiveAddress: "0x9728D428764F846E8DD62C34371db716A9228238",
+                amount: 5, // 二次付费5 USDT
+                description: "导出CSV和未来赎回数据"
             },
             admin: {
                 password: "admin9120",
