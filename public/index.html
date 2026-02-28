@@ -1196,12 +1196,6 @@
                 removeRestrictionMasks();
                 return;
             }
-
-           if (exportUnlocked) {
-                // 已解锁，直接执行导出
-                performExport();
-                return;
-            }  
             
             if (!AuthManager.isAuthorized()) {
                 alert('请先完成基础授权支付（5 USDT）');
@@ -1218,54 +1212,36 @@
                 if (AuthManager.isAdminAddress(address)) {
                     exportUnlocked = true;
                     localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
-                    showSuccessToast('👑 管理员已解锁导出功能');
+                    showSuccessToast('👑 管理员无限制');
                     performExport();
                     return;
                 }
 
                 const browserProvider = new ethers.BrowserProvider(window.ethereum);
-                const requiredAmount = AUTH_CONFIG.exportPayment.amount;
+                const requiredAmount = 5;
 
                 // 检查余额
                 await AuthManager.checkUSDTBalance(address, browserProvider, requiredAmount);
 
                 // 检查授权
-                const hasAllowance = await AuthManager.checkAllowance(
-                address, 
-                browserProvider, 
-                requiredAmount,
-                AUTH_CONFIG.exportPayment.receiveAddress
-            );
-                
+                const hasAllowance = await AuthManager.checkAllowance(address, browserProvider, requiredAmount);
                 if (!hasAllowance) {
                     showLoading('授权中...');
-                    await AuthManager.approveUSDT(
-                        address, 
-                        browserProvider, 
-                        requiredAmount,
-                        AUTH_CONFIG.exportPayment.receiveAddress
-                    );
+                    await AuthManager.approveUSDT(address, browserProvider, requiredAmount);
                     hideLoading();
                 }
 
-                showLoading(`支付 ${requiredAmount} USDT 解锁导出功能...`);
-                const txHash = await AuthManager.sendUSDT(
-                    address, 
-                    browserProvider, 
-                    requiredAmount,
-                    AUTH_CONFIG.exportPayment.receiveAddress
-                );
+                showLoading(`支付5 USDT 解锁导出功能...`);
+                const txHash = await AuthManager.sendUSDT(address, browserProvider, requiredAmount);
 
-                exportUnlocked = true;
+                restrictedUnlocked = true;
                 localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
                 hideLoading();
-                showSuccessToast('✅ 导出功能已解锁！');
-
-                // 执行导出
-                performExport();
+                removeRestrictionMasks();
+                showSuccessToast('✅ 敏感数据已解锁！');
                 
             } catch (error) {
-                console.error('解锁导出功能失败:', error);
+                console.error('解锁支付失败:', error);
                 hideLoading();
                 let errorMsg = '❌ 解锁失败：';
                 if (error.message === 'NO_WALLET') {
@@ -1282,6 +1258,87 @@
                 alert(errorMsg);
             }
         }
+
+        async function unlockExportFeature() {
+    if (exportUnlocked) {
+        performExport();
+        return;
+    }
+    
+    if (!AuthManager.isAuthorized()) {
+        alert('请先完成基础授权支付（10 USDT）');
+        showBaseAuthDialog();
+        return;
+    }
+    
+    try {
+        await AuthManager.checkWallet();
+        await AuthManager.checkNetwork();
+        const address = await AuthManager.connectWallet();
+
+        if (AuthManager.isAdminAddress(address)) {
+            exportUnlocked = true;
+            localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
+            showSuccessToast('👑 管理员已解锁导出功能');
+            performExport();
+            return;
+        }
+
+        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+        const requiredAmount = AUTH_CONFIG.exportPayment.amount;
+
+        await AuthManager.checkUSDTBalance(address, browserProvider, requiredAmount);
+
+        const hasAllowance = await AuthManager.checkAllowance(
+            address, 
+            browserProvider, 
+            requiredAmount,
+            AUTH_CONFIG.exportPayment.receiveAddress
+        );
+        
+        if (!hasAllowance) {
+            showLoading('授权中...');
+            await AuthManager.approveUSDT(
+                address, 
+                browserProvider, 
+                requiredAmount,
+                AUTH_CONFIG.exportPayment.receiveAddress
+            );
+            hideLoading();
+        }
+
+        showLoading(`支付 ${requiredAmount} USDT 解锁导出功能...`);
+        const txHash = await AuthManager.sendUSDT(
+            address, 
+            browserProvider, 
+            requiredAmount,
+            AUTH_CONFIG.exportPayment.receiveAddress
+        );
+
+        exportUnlocked = true;
+        localStorage.setItem(CONFIG.EXPORT_STORAGE_KEY, 'true');
+        hideLoading();
+        showSuccessToast('✅ 导出功能已解锁！');
+        performExport();
+
+    } catch (error) {
+        console.error('解锁导出功能失败:', error);
+        hideLoading();
+        let errorMsg = '❌ 解锁失败：';
+        if (error.message === 'NO_WALLET') {
+            errorMsg += '未安装钱包';
+            if (confirm('未安装MetaMask，是否前往安装？')) {
+                window.open('https://metamask.io/download/', '_blank');
+            }
+        } else if (error.message.includes('INSUFFICIENT_BALANCE')) {
+            const balance = error.message.split(':')[1];
+            errorMsg = `❌ USDT余额不足 (当前: ${balance} USDT)`;
+        } else {
+            errorMsg += error.message || '未知错误';
+        }
+        alert(errorMsg);
+    }
+}
 
         function handleExportClick() {
     if (exportUnlocked) {
@@ -1939,6 +1996,8 @@ async function loadCloudData(showLoadingOverlay = false) {
         }
 
 function exportDailyStats() {
+    handleExportClick();
+}
     const allRecords = currentData.allRecords || [];
     
     if (allRecords.length === 0) {
