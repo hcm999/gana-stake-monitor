@@ -1642,7 +1642,8 @@ async function loadCloudData(showLoadingOverlay = false) {
                 </div>
             `;
 
-            let u0_2 = 0, u2_7 = 0, u7_15 = 0, u15_25 = 0, u25p = 0;
+            // 修改这里：增加已到期变量
+            let uExpired = 0, u0_2 = 0, u2_7 = 0, u7_15 = 0, u15_25 = 0, u25p = 0;
             const nowSec = Math.floor(Date.now() / 1000);
             
             records.forEach(r => {
@@ -1651,8 +1652,11 @@ async function loadCloudData(showLoadingOverlay = false) {
                 const duration = r.stakeIndex === 0 ? 86400 : r.stakeIndex === 1 ? 1296000 : 2592000;
                 const unlockTime = stakeTime + duration;
                 const remain = unlockTime - nowSec;
-                
-                if (remain <= 172800) u0_2 += amount;
+
+                // 修改判断逻辑：先判断是否已到期
+                if (remain <= 0) {
+                    uExpired += amount;  // 已到期未赎回
+                else if (remain <= 172800) u0_2 += amount;
                 else if (remain <= 604800) u2_7 += amount;
                 else if (remain <= 1296000) u7_15 += amount;
                 else if (remain <= 2160000) u15_25 += amount;
@@ -1698,11 +1702,13 @@ async function loadCloudData(showLoadingOverlay = false) {
                 unlockChart = new Chart(unlockCtx, {
                     type: 'bar',
                     data: {
-                        labels: ['0-2天', '2-7天', '7-15天', '15-25天', '>25天'],
+                        // 修改标签，增加"已到期"
+                        labels: ['已到期', '0-2天', '2-7天', '7-15天', '15-25天', '>25天'],
                         datasets: [{
                             label: '可赎回金额 (USDT)',
-                            data: [u0_2, u2_7, u7_15, u15_25, u25p],
-                            backgroundColor: ['#f87171', '#fbbf24', '#60a5fa', '#a78bfa', '#ec4899'],
+                            // 修改数据，增加 uExpired
+                            data: [uExpired, u0_2, u2_7, u7_15, u15_25, u25p],
+                            backgroundColor: ['#10b981', '#f87171', '#fbbf24', '#60a5fa', '#a78bfa', '#ec4899'],
                             borderRadius: 6
                         }]
                     },
@@ -1727,6 +1733,13 @@ async function loadCloudData(showLoadingOverlay = false) {
                         plugins: { 
                             legend: { 
                                 labels: { color: '#e2e8f0' } 
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        return `${context.dataset.label}: ${context.raw.toFixed(2)} USDT`;
+                                    }
+                                }
                             }
                         }
                     }
