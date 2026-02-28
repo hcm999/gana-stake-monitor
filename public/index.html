@@ -1661,6 +1661,7 @@ async function loadCloudData(showLoadingOverlay = false) {
                 else if (remain <= 1296000) u7_15 += amount;
                 else if (remain <= 2160000) u15_25 += amount;
                 else u25p += amount;
+                }
             });
 
             const pieCtx = document.getElementById('pieChart')?.getContext('2d');
