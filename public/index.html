@@ -702,33 +702,7 @@
             <span class="data-tab active" data-tab="daily">📅 每日质押数据</span>
         </div>
 
-        <div id="panel-daily" class="data-panel active">
-            <div class="table-container">
-                <div class="stats-info">
-                    <h5>📅 每日质押数据</h5>
-                    <button class="btn-export" onclick="exportDailyStats()">📥 导出CSV</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>日期</th>
-                                <th>新增质押</th>
-                                <th>仍在质押</th>
-                                <th>1天新增</th>
-                                <th>15天新增</th>
-                                <th>30天新增</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dailyStatsBody">
-                            <tr><td colspan="6" class="empty-state">⏳ 加载云端数据中...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="panel-charts" class="data-panel">
+        <div id="panel-charts" class="data-panel active">
             <div class="chart-grid">
                 <div class="chart-card">
                     <div class="chart-header">
@@ -762,6 +736,32 @@
             </div>
         </div>
     </div>
+
+            <div id="panel-daily" class="data-panel">
+            <div class="table-container">
+                <div class="stats-info">
+                    <h5>📅 每日质押数据</h5>
+                    <button class="btn-export" onclick="exportDailyStats()">📥 导出CSV</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>新增质押</th>
+                                <th>仍在质押</th>
+                                <th>1天新增</th>
+                                <th>15天新增</th>
+                                <th>30天新增</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyStatsBody">
+                            <tr><td colspan="6" class="empty-state">⏳ 加载云端数据中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
