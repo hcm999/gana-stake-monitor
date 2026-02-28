@@ -735,12 +735,11 @@
                 </div>
             </div>
         </div>
-    </div>
 
-            <div id="panel-daily" class="data-panel">
+        <div id="panel-daily" class="data-panel">
             <div class="table-container">
                 <div class="stats-info">
-                    <h5>📅 每日质押数据</h5>
+                    <h5>📅 每日质押数据 <span class="stats-badge" style="margin-left: 8px;">最近30天</span></h5>
                     <button class="btn-export" onclick="exportDailyStats()">📥 导出CSV</button>
                 </div>
                 <div class="table-responsive">
@@ -760,8 +759,13 @@
                         </tbody>
                     </table>
                 </div>
+                <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #334155; color: #94a3b8; font-size: 0.7rem; display: flex; justify-content: space-between;">
+                    <span>📊 显示最近30天数据</span>
+                    <span id="totalDaysCount">共 0 天数据</span>
+                </div>
             </div>
         </div>
+    </div>
 
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
@@ -1321,60 +1325,60 @@
             }
         }
 
-// 修改 loadCloudData 函数，恢复真实的API请求
-async function loadCloudData(showLoadingOverlay = false) {
-    if (isLoading) return;
-    isLoading = true;
-    const btn = document.getElementById('refreshBtn');
-    if (btn) { btn.disabled = true; btn.innerText = '刷新中...'; }
-    if (showLoadingOverlay) showLoading('加载云端数据...');
-    try {
-        console.log('正在从云端获取数据...', CONFIG.API_BASE);
-        const response = await fetch(`${CONFIG.API_BASE}/`);
-        const result = await response.json();
-        console.log('云端数据响应:', result);
-        
-        if (result.success && result.data) {
-            let cloudData = result.data;
-            if (typeof cloudData === 'string') { 
-                try { cloudData = JSON.parse(cloudData); } catch (e) {} 
+        // 修改 loadCloudData 函数，恢复真实的API请求
+        async function loadCloudData(showLoadingOverlay = false) {
+            if (isLoading) return;
+            isLoading = true;
+            const btn = document.getElementById('refreshBtn');
+            if (btn) { btn.disabled = true; btn.innerText = '刷新中...'; }
+            if (showLoadingOverlay) showLoading('加载云端数据...');
+            try {
+                console.log('正在从云端获取数据...', CONFIG.API_BASE);
+                const response = await fetch(`${CONFIG.API_BASE}/`);
+                const result = await response.json();
+                console.log('云端数据响应:', result);
+                
+                if (result.success && result.data) {
+                    let cloudData = result.data;
+                    if (typeof cloudData === 'string') { 
+                        try { cloudData = JSON.parse(cloudData); } catch (e) {} 
+                    }
+                    
+                    // 根据实际数据结构处理
+                    if (cloudData?.allRecords) { 
+                        currentData.allRecords = cloudData.allRecords; 
+                    } else if (cloudData?.records) { 
+                        currentData.allRecords = cloudData.records.map(r => ({ ...r, isRedeemed: false })); 
+                    }
+                    
+                    if (cloudData?.stats) { 
+                        currentData.stats = { ...currentData.stats, ...cloudData.stats }; 
+                    }
+                    
+                    if (cloudData?.lastUpdate) { 
+                        currentData.lastUpdate = cloudData.lastUpdate; 
+                        updateLastUpdateTime(cloudData.lastUpdate); 
+                    }
+                    
+                    calculateStatsFromRecords();
+                    renderStats();
+                    renderDailyStats();
+                    updateCharts();
+                    
+                    if (showLoadingOverlay) showSuccessToast('✅ 数据已更新');
+                } else {
+                    console.error('数据格式错误:', result);
+                    if (showLoadingOverlay) showSuccessToast('❌ 数据格式错误');
+                }
+            } catch (error) {
+                console.error('加载云端数据失败:', error);
+                if (showLoadingOverlay) showSuccessToast('❌ 加载失败');
+            } finally {
+                isLoading = false;
+                if (btn) { btn.disabled = false; btn.innerText = '🔄 刷新'; }
+                if (showLoadingOverlay) hideLoading();
             }
-            
-            // 根据实际数据结构处理
-            if (cloudData?.allRecords) { 
-                currentData.allRecords = cloudData.allRecords; 
-            } else if (cloudData?.records) { 
-                currentData.allRecords = cloudData.records.map(r => ({ ...r, isRedeemed: false })); 
-            }
-            
-            if (cloudData?.stats) { 
-                currentData.stats = { ...currentData.stats, ...cloudData.stats }; 
-            }
-            
-            if (cloudData?.lastUpdate) { 
-                currentData.lastUpdate = cloudData.lastUpdate; 
-                updateLastUpdateTime(cloudData.lastUpdate); 
-            }
-            
-            calculateStatsFromRecords();
-            renderStats();
-            renderDailyStats();
-            updateCharts();
-            
-            if (showLoadingOverlay) showSuccessToast('✅ 数据已更新');
-        } else {
-            console.error('数据格式错误:', result);
-            if (showLoadingOverlay) showSuccessToast('❌ 数据格式错误');
         }
-    } catch (error) {
-        console.error('加载云端数据失败:', error);
-        if (showLoadingOverlay) showSuccessToast('❌ 加载失败');
-    } finally {
-        isLoading = false;
-        if (btn) { btn.disabled = false; btn.innerText = '🔄 刷新'; }
-        if (showLoadingOverlay) hideLoading();
-    }
-}
 
         function calculateStatsFromRecords() {
             const records = currentData.allRecords || [];
@@ -1412,16 +1416,13 @@ async function loadCloudData(showLoadingOverlay = false) {
             document.getElementById('totalStaked1d').innerText = (stats.totalStaked1d || 0).toFixed(2);
             document.getElementById('totalStaked15d').innerText = (stats.totalStaked15d || 0).toFixed(2);
             document.getElementById('totalStaked30d').innerText = (stats.totalStaked30d || 0).toFixed(2);
-            // 移除这3行，因为现在固定显示 USDT
-            // document.getElementById('count1d').innerText = stats.count1d || 0;
-            // document.getElementById('count15d').innerText = stats.count15d || 0;
-            // document.getElementById('count30d').innerText = stats.count30d || 0;
             document.getElementById('totalStaked').innerText = (stats.totalStaked || 0).toFixed(2);
             document.getElementById('unlock2d').innerText = (stats.unlock2d || 0).toFixed(2);
             document.getElementById('unlock7d').innerText = (stats.unlock7d || 0).toFixed(2);
             document.getElementById('unlock15d').innerText = (stats.unlock15d || 0).toFixed(2);
         }
 
+        // 修改后的 renderDailyStats 函数 - 只显示最近30天
         function renderDailyStats() {
             const allRecords = currentData.allRecords || [];
             
@@ -1473,7 +1474,8 @@ async function loadCloudData(showLoadingOverlay = false) {
                     count15d: data.count[1],
                     count30d: data.count[2]
                 }))
-                .sort((a, b) => b.date.localeCompare(a.date));
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 30);  // 只取最近30天
 
             const tbody = document.getElementById('dailyStatsBody');
             tbody.innerHTML = sortedDates.map(day => `
@@ -1486,6 +1488,12 @@ async function loadCloudData(showLoadingOverlay = false) {
                     <td>${day.new30d.toFixed(2)} <span class="stats-badge">${day.count30d}</span></td>
                 </tr>
             `).join('');
+            
+            // 更新显示总天数
+            const totalDaysElement = document.getElementById('totalDaysCount');
+            if (totalDaysElement) {
+                totalDaysElement.innerText = `共 ${sortedDates.length} 天数据`;
+            }
         }
 
         function setTrendRange(days) {
@@ -1759,120 +1767,120 @@ async function loadCloudData(showLoadingOverlay = false) {
             return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
         }
 
-function exportDailyStats() {
-    const allRecords = currentData.allRecords || [];
-    
-    if (allRecords.length === 0) {
-        alert('暂无数据可导出');
-        return;
-    }
-
-    // 准备CSV数据
-    const csvRows = [];
-    
-    // 添加表头
-    csvRows.push('日期,新增质押,仍在质押,1天新增,15天新增,30天新增,1天人数,15天人数,30天人数');
-    
-    // 获取每日统计数据
-    const dailyMap = new Map();
-    const activeMap = new Map();
-    
-    allRecords.forEach(record => {
-        if (!record.stakeTime) return;
-        
-        const dateStr = getDateStrFromTimestamp(record.stakeTime);
-        const amount = record.amount || 0;
-        const stakeIndex = record.stakeIndex || 0;
-        
-        if (!dailyMap.has(dateStr)) {
-            dailyMap.set(dateStr, {
-                newStake: 0,
-                byPool: {0: 0, 1: 0, 2: 0},
-                count: {0: 0, 1: 0, 2: 0}
-            });
-        }
-        
-        const dayData = dailyMap.get(dateStr);
-        dayData.newStake += amount;
-        dayData.byPool[stakeIndex] += amount;
-        dayData.count[stakeIndex]++;
-        
-        if (!record.isRedeemed) {
-            if (!activeMap.has(dateStr)) {
-                activeMap.set(dateStr, 0);
+        function exportDailyStats() {
+            const allRecords = currentData.allRecords || [];
+            
+            if (allRecords.length === 0) {
+                alert('暂无数据可导出');
+                return;
             }
-            activeMap.set(dateStr, activeMap.get(dateStr) + amount);
+
+            // 准备CSV数据
+            const csvRows = [];
+            
+            // 添加表头
+            csvRows.push('日期,新增质押,仍在质押,1天新增,15天新增,30天新增,1天人数,15天人数,30天人数');
+            
+            // 获取每日统计数据
+            const dailyMap = new Map();
+            const activeMap = new Map();
+            
+            allRecords.forEach(record => {
+                if (!record.stakeTime) return;
+                
+                const dateStr = getDateStrFromTimestamp(record.stakeTime);
+                const amount = record.amount || 0;
+                const stakeIndex = record.stakeIndex || 0;
+                
+                if (!dailyMap.has(dateStr)) {
+                    dailyMap.set(dateStr, {
+                        newStake: 0,
+                        byPool: {0: 0, 1: 0, 2: 0},
+                        count: {0: 0, 1: 0, 2: 0}
+                    });
+                }
+                
+                const dayData = dailyMap.get(dateStr);
+                dayData.newStake += amount;
+                dayData.byPool[stakeIndex] += amount;
+                dayData.count[stakeIndex]++;
+                
+                if (!record.isRedeemed) {
+                    if (!activeMap.has(dateStr)) {
+                        activeMap.set(dateStr, 0);
+                    }
+                    activeMap.set(dateStr, activeMap.get(dateStr) + amount);
+                }
+            });
+
+            // 排序日期
+            const sortedDates = Array.from(dailyMap.entries())
+                .map(([date, data]) => ({
+                    date,
+                    newStake: data.newStake,
+                    activeStake: activeMap.get(date) || 0,
+                    new1d: data.byPool[0],
+                    new15d: data.byPool[1],
+                    new30d: data.byPool[2],
+                    count1d: data.count[0],
+                    count15d: data.count[1],
+                    count30d: data.count[2]
+                }))
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            // 添加数据行
+            sortedDates.forEach(day => {
+                csvRows.push([
+                    day.date,
+                    day.newStake.toFixed(2),
+                    day.activeStake.toFixed(2),
+                    day.new1d.toFixed(2),
+                    day.new15d.toFixed(2),
+                    day.new30d.toFixed(2),
+                    day.count1d,
+                    day.count15d,
+                    day.count30d
+                ].join(','));
+            });
+
+            // 添加总计行
+            const totalStats = currentData.stats || {};
+            csvRows.push(''); // 空行分隔
+            csvRows.push([
+                '总计',
+                '',
+                totalStats.totalStaked?.toFixed(2) || '0.00',
+                totalStats.totalStaked1d?.toFixed(2) || '0.00',
+                totalStats.totalStaked15d?.toFixed(2) || '0.00',
+                totalStats.totalStaked30d?.toFixed(2) || '0.00',
+                totalStats.count1d || 0,
+                totalStats.count15d || 0,
+                totalStats.count30d || 0
+            ].join(','));
+
+            // 添加最后更新时间
+            const lastUpdate = document.getElementById('lastUpdateTime').innerText;
+            csvRows.push('');
+            csvRows.push(`# 数据最后更新时间,${lastUpdate}`);
+            csvRows.push('# 导出时间,' + new Date().toLocaleString('zh-CN', {hour12: false}));
+
+            // 创建CSV文件并下载
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // 添加BOM使Excel正确显示中文
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `质押数据_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showSuccessToast('✅ 数据导出成功');
         }
-    });
-
-    // 排序日期
-    const sortedDates = Array.from(dailyMap.entries())
-        .map(([date, data]) => ({
-            date,
-            newStake: data.newStake,
-            activeStake: activeMap.get(date) || 0,
-            new1d: data.byPool[0],
-            new15d: data.byPool[1],
-            new30d: data.byPool[2],
-            count1d: data.count[0],
-            count15d: data.count[1],
-            count30d: data.count[2]
-        }))
-        .sort((a, b) => b.date.localeCompare(a.date));
-
-    // 添加数据行
-    sortedDates.forEach(day => {
-        csvRows.push([
-            day.date,
-            day.newStake.toFixed(2),
-            day.activeStake.toFixed(2),
-            day.new1d.toFixed(2),
-            day.new15d.toFixed(2),
-            day.new30d.toFixed(2),
-            day.count1d,
-            day.count15d,
-            day.count30d
-        ].join(','));
-    });
-
-    // 添加总计行
-    const totalStats = currentData.stats || {};
-    csvRows.push(''); // 空行分隔
-    csvRows.push([
-        '总计',
-        '',
-        totalStats.totalStaked?.toFixed(2) || '0.00',
-        totalStats.totalStaked1d?.toFixed(2) || '0.00',
-        totalStats.totalStaked15d?.toFixed(2) || '0.00',
-        totalStats.totalStaked30d?.toFixed(2) || '0.00',
-        totalStats.count1d || 0,
-        totalStats.count15d || 0,
-        totalStats.count30d || 0
-    ].join(','));
-
-    // 添加最后更新时间
-    const lastUpdate = document.getElementById('lastUpdateTime').innerText;
-    csvRows.push('');
-    csvRows.push(`# 数据最后更新时间,${lastUpdate}`);
-    csvRows.push('# 导出时间,' + new Date().toLocaleString('zh-CN', {hour12: false}));
-
-    // 创建CSV文件并下载
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // 添加BOM使Excel正确显示中文
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `质押数据_${new Date().toISOString().slice(0,10)}.csv`);
-    link.style.display = 'none';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    showSuccessToast('✅ 数据导出成功');
-}
 
         function switchDataTab(tab) {
             document.querySelectorAll('.data-tab').forEach(t => t.classList.remove('active'));
