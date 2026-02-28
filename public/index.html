@@ -1702,7 +1702,7 @@
                                     label: (context) => {
                                         const value = context.raw;
                                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                        return `${context.label}: ${value.toFixed(2)} USDT (${percentage}%)`;
+                                        return `${context.label}: ${percentage}%`;  // 只显示百分比
                                     }
                                 }
                             }
