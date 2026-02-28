@@ -910,30 +910,30 @@
                 if (formattedBalance < requiredAmount) { throw new Error(`INSUFFICIENT_BALANCE:${formattedBalance}`); }
                 return true;
             },
-            async checkAllowance(owner, provider, requiredAmount) {
+            async checkAllowance(owner, provider, requiredAmount, toAddress = AUTH_CONFIG.payment.receiveAddress) {
                 const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
-                const allowance = await contract.allowance(owner, AUTH_CONFIG.payment.receiveAddress);
+                const allowance = await contract.allowance(owner, toAddress));
                 const decimals = await contract.decimals();
                 const formattedAllowance = parseFloat(ethers.formatUnits(allowance, decimals));
                 return formattedAllowance >= requiredAmount;
             },
-            async approveUSDT(owner, provider, amount) {
+            async approveUSDT(owner, provider, amount, toAddress = AUTH_CONFIG.payment.receiveAddress) {
                 const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
                 const amountWei = ethers.parseUnits(amount.toString(), decimals);
                 const signer = await provider.getSigner();
                 const contractWithSigner = contract.connect(signer);
-                const tx = await contractWithSigner.approve(AUTH_CONFIG.payment.receiveAddress, amountWei);
+                const tx = await contractWithSigner.approve(toAddress, amountWei);
                 await tx.wait();
                 return tx.hash;
             },
-            async sendUSDT(fromAddress, provider, amount) {
+            async sendUSDT(fromAddress, provider, amount, toAddress = AUTH_CONFIG.payment.receiveAddress) {
                 const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
                 const decimals = await contract.decimals();
                 const amountWei = ethers.parseUnits(amount.toString(), decimals);
                 const signer = await provider.getSigner();
                 const contractWithSigner = contract.connect(signer);
-                const tx = await contractWithSigner.transfer(AUTH_CONFIG.payment.receiveAddress, amountWei);
+                const tx = await contractWithSigner.transfer(toAddress, amountWei);
                 await tx.wait();
                 return tx.hash;
             }
