@@ -1474,6 +1474,8 @@ async function loadCloudData(showLoadingOverlay = false) {
                     count30d: data.count[2]
                 }))
                 .sort((a, b) => b.date.localeCompare(a.date));
+                 // 新增：只取前30条数据
+                .slice(0, 30);
 
             const tbody = document.getElementById('dailyStatsBody');
             tbody.innerHTML = sortedDates.map(day => `
