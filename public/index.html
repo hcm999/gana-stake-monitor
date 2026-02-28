@@ -912,7 +912,7 @@
             },
             async checkAllowance(owner, provider, requiredAmount, toAddress = AUTH_CONFIG.payment.receiveAddress) {
                 const contract = new ethers.Contract( AUTH_CONFIG.payment.usdtAddress, USDT_ABI, provider );
-                const allowance = await contract.allowance(owner, toAddress));
+                const allowance = await contract.allowance(owner, toAddress);
                 const decimals = await contract.decimals();
                 const formattedAllowance = parseFloat(ethers.formatUnits(allowance, decimals));
                 return formattedAllowance >= requiredAmount;
