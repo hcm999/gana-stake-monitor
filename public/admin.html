@@ -1037,7 +1037,12 @@
                         
     <!-- 将状态筛选改为日期选择器 -->
     <input type="date" id="filterDate" class="filter-select" style="width: auto;" 
-           onchange="applyFilters()" value="<?php echo date('Y-m-d'); ?>">
+           onchange="applyFilters()">
+
+    <script>
+    // 一行代码搞定默认今天
+    document.getElementById('filterDate').valueAsDate = new Date();
+    </script>
     
     <input type="text" id="searchAddress" class="search-input" 
            placeholder="搜索地址..." oninput="applyFilters()">
