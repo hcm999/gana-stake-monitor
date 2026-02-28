@@ -1603,10 +1603,10 @@ async function loadCloudData(showLoadingOverlay = false) {
             });
         }
 
-         //  柱状图区域
         function updatePieAndUnlockCharts() {
-            const records = currentData.allRecords || [];
-            if(!records || records.length === 0){ 
+            const records = currentData.allRecords?.filter(r => !r.isRedeemed) || [];
+            
+            if (records.length === 0) {
                 if (pieChart) pieChart.destroy();
                 if (unlockChart) unlockChart.destroy();
                 pieChart = unlockChart = null;
@@ -1614,9 +1614,9 @@ async function loadCloudData(showLoadingOverlay = false) {
                 return;
             }
 
-            // 计算各周期质押分布（饼图用）
             let sum1d = 0, sum15d = 0, sum30d = 0;
-            queryResults.forEach(r=>{
+            records.forEach(r => {
+                const amount = r.amount || 0;
                 if (r.stakeIndex === 0) sum1d += amount;
                 else if (r.stakeIndex === 1) sum15d += amount;
                 else if (r.stakeIndex === 2) sum30d += amount;
@@ -1642,54 +1642,26 @@ async function loadCloudData(showLoadingOverlay = false) {
                 </div>
             `;
 
-     // 计算解锁分布（柱状图用）
-    const nowSec = Math.floor(Date.now() / 1000);
-    let expired = 0;      // 已到期未赎回
-    let u0_2 = 0;         // 0-2天（未来）
-    let u2_7 = 0;         // 2-7天（未来）
-    let u7_15 = 0;        // 2-7天（未来）
-    let u15_25 = 0;       // 7-15天（未来）
-    let u25p = 0;         // ＞25天（未来）
-
-    records.forEach(r => {
-        if (r.isRedeemed) return;
-        const amount = r.amount || 0;
-        const stakeTime = r.stakeTime || 0;
-        const stakeIndex = r.stakeIndex || 0;
-        const duration = stakeIndex === 0 ? 86400 : stakeIndex === 1 ? 1296000 : 2592000;
-        const unlockTime = stakeTime + duration;
-        const remain = unlockTime - nowSec;
-        
-        if (remain <= 0) {
-            expired += r.amount;  // 已到期未赎回
-        } else if (remain <= 172800) {
-            u0_2 += r.amount;     // 未来2天内到期
-        } else if (remain <= 604800) {
-            u2_7 += r.amount;
-        } else if (remain <= 1296000) {
-            u7_15 += r.amount;
-        } else if (remain <= 2160000) {
-            u15_25 += r.amount;
-        } else {
-            u25p += r.amount;
-        }
-    });
-    // 在控制台输出详细信息（方便调试）    
-    console.log('=== 解锁分布详情 ===');
-    console.log(`已到期未赎回: ${expired.toFixed(2)} USDT`);
-    console.log(`0-2天(未来): ${u0_2.toFixed(2)} USDT`);
-    console.log(`2-7天: ${u2_7.toFixed(2)} USDT`);
-    console.log(`7-15天: ${u7_15.toFixed(2)} USDT`);
-    console.log(`15-25天: ${u15_25.toFixed(2)} USDT`);
-    console.log(`>25天: ${u25p.toFixed(2)} USDT`);
-    
-    // 饼图
-    const pieCtx = document.getElementById('pieChart')?.getContext('2d'); 
-    const unlockCtx = document.getElementById('unlockChart')?.getContext('2d'); 
-    if(!pieCtx||!unlockCtx) return;
-    if(pieChart)pieChart.destroy(); 
-    if(unlockChart)unlockChart.destroy();
+            let u0_2 = 0, u2_7 = 0, u7_15 = 0, u15_25 = 0, u25p = 0;
+            const nowSec = Math.floor(Date.now() / 1000);
+            
+            records.forEach(r => {
+                const amount = r.amount || 0;
+                const stakeTime = r.stakeTime || 0;
+                const duration = r.stakeIndex === 0 ? 86400 : r.stakeIndex === 1 ? 1296000 : 2592000;
+                const unlockTime = stakeTime + duration;
+                const remain = unlockTime - nowSec;
                 
+                if (remain <= 172800) u0_2 += amount;
+                else if (remain <= 604800) u2_7 += amount;
+                else if (remain <= 1296000) u7_15 += amount;
+                else if (remain <= 2160000) u15_25 += amount;
+                else u25p += amount;
+            });
+
+            const pieCtx = document.getElementById('pieChart')?.getContext('2d');
+            if (pieCtx) {
+                if (pieChart) pieChart.destroy();
                 pieChart = new Chart(pieCtx, {
                     type: 'doughnut',
                     data: {
@@ -1718,29 +1690,22 @@ async function loadCloudData(showLoadingOverlay = false) {
                         }
                     }
                 });
+            }
 
-               // 创建堆叠柱状图（彩色未来 + 绿色已到期）
-               unlockChart = new Chart(unlockCtx, {
+            const unlockCtx = document.getElementById('unlockChart')?.getContext('2d');
+            if (unlockCtx) {
+                if (unlockChart) unlockChart.destroy();
+                unlockChart = new Chart(unlockCtx, {
                     type: 'bar',
                     data: {
                         labels: ['0-2天', '2-7天', '7-15天', '15-25天', '>25天'],
-                        datasets: [
-                            {
-                            label: '已到期未赎回',
-                            data: [expired, 0, 0, 0, 0],  // 只在第一个柱子有数据
-                            backgroundColor:  '#4ade80',  // 绿色
-                            borderRadius: 6,
-                            stack: 'combined'             // 与下面的数据集堆叠
-                        },
-                        {
-                            label: '未来可赎回',
+                        datasets: [{
+                            label: '可赎回金额 (USDT)',
                             data: [u0_2, u2_7, u7_15, u15_25, u25p],
                             backgroundColor: ['#f87171', '#fbbf24', '#60a5fa', '#a78bfa', '#ec4899'],
-                            borderRadius: 6,
-                            stack: 'combined'              // 与上面的数据集堆叠
-                        }
-                    ]
-                },
+                            borderRadius: 6
+                        }]
+                    },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
@@ -1748,54 +1713,26 @@ async function loadCloudData(showLoadingOverlay = false) {
                             y: { 
                                 beginAtZero: true, 
                                 grid: { color: '#334155' }, 
-                                ticks: { color: '#94a3b8',
-                                stacked: true,  // 启用堆叠
-                            },                
+                                ticks: { 
+                                    color: '#94a3b8',
+                                    callback: function(value) {
+                                        return value.toFixed(0);
+                                    }
+                                } 
+                            },
                             x: { 
                                 ticks: { color: '#94a3b8' } 
-                                stacked: true,  // 启用堆叠
                             } 
                         },
                         plugins: { 
                             legend: { 
-                                labels: { color: '#e2e8f0' }, 
-                                position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => {
-                            const label = context.dataset.label || '';
-                            const value = context.raw;
-
-                            // 对于第一个柱子，显示总数（已到期 + 未来）
-                            if (context.dataIndex === 0) {
-                                if (context.datasetIndex === 0) {
-                                    return `已到期未赎回: ${value.toFixed(2)} USDT`;
-                                } else {
-                                    return `未来0-2天: ${value.toFixed(2)} USDT`;
-                                }
+                                labels: { color: '#e2e8f0' } 
                             }
-                            
-                            return `${label}: ${value.toFixed(2)} USDT`;
-                        },
-                        footer: (tooltipItems) => {
-                            // 在第一个柱子上显示总计
-                            if (tooltipItems[0].dataIndex === 0) {
-                                const total = expired + u0_2;
-                                return `总计: ${total.toFixed(2)} USDT`;
-                            }
-                            return '';
                         }
                     }
-                }
+                });
             }
         }
-    });
-
-    // 添加总计标签到图表下方（可选）
-    const totalExpiredFuture = expired + u0_2;
-    console.log(`0-2天总计可赎回: ${totalExpiredFuture.toFixed(2)} USDT (已到期: ${expired.toFixed(2)}, 未来: ${u0_2.toFixed(2)})`);
-}
 
         function getDateStrFromTimestamp(timestamp) {
             const date = new Date(timestamp * 1000);
