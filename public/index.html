@@ -1656,11 +1656,16 @@ async function loadCloudData(showLoadingOverlay = false) {
                 // 修改判断逻辑：先判断是否已到期
                 if (remain <= 0) {
                     uExpired += amount;  // 已到期未赎回
-                else if (remain <= 172800) u0_2 += amount;
-                else if (remain <= 604800) u2_7 += amount;
-                else if (remain <= 1296000) u7_15 += amount;
-                else if (remain <= 2160000) u15_25 += amount;
-                else u25p += amount;
+                } else if (remain <= 172800) {
+                    u0_2 += amount;
+                } else if (remain <= 604800) {
+                    u2_7 += amount;
+                } else if (remain <= 1296000) {
+                    u7_15 += amount;
+                } else if (remain <= 2160000) {
+                    u15_25 += amount;
+                } else {
+                    u25p += amount;
                 }
             });
 
