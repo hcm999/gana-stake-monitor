@@ -1758,9 +1758,120 @@ async function loadCloudData(showLoadingOverlay = false) {
             return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
         }
 
-        function exportDailyStats() {
-            alert('导出功能正常');
+function exportDailyStats() {
+    const allRecords = currentData.allRecords || [];
+    
+    if (allRecords.length === 0) {
+        alert('暂无数据可导出');
+        return;
+    }
+
+    // 准备CSV数据
+    const csvRows = [];
+    
+    // 添加表头
+    csvRows.push('日期,新增质押,仍在质押,1天新增,15天新增,30天新增,1天人数,15天人数,30天人数');
+    
+    // 获取每日统计数据
+    const dailyMap = new Map();
+    const activeMap = new Map();
+    
+    allRecords.forEach(record => {
+        if (!record.stakeTime) return;
+        
+        const dateStr = getDateStrFromTimestamp(record.stakeTime);
+        const amount = record.amount || 0;
+        const stakeIndex = record.stakeIndex || 0;
+        
+        if (!dailyMap.has(dateStr)) {
+            dailyMap.set(dateStr, {
+                newStake: 0,
+                byPool: {0: 0, 1: 0, 2: 0},
+                count: {0: 0, 1: 0, 2: 0}
+            });
         }
+        
+        const dayData = dailyMap.get(dateStr);
+        dayData.newStake += amount;
+        dayData.byPool[stakeIndex] += amount;
+        dayData.count[stakeIndex]++;
+        
+        if (!record.isRedeemed) {
+            if (!activeMap.has(dateStr)) {
+                activeMap.set(dateStr, 0);
+            }
+            activeMap.set(dateStr, activeMap.get(dateStr) + amount);
+        }
+    });
+
+    // 排序日期
+    const sortedDates = Array.from(dailyMap.entries())
+        .map(([date, data]) => ({
+            date,
+            newStake: data.newStake,
+            activeStake: activeMap.get(date) || 0,
+            new1d: data.byPool[0],
+            new15d: data.byPool[1],
+            new30d: data.byPool[2],
+            count1d: data.count[0],
+            count15d: data.count[1],
+            count30d: data.count[2]
+        }))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+    // 添加数据行
+    sortedDates.forEach(day => {
+        csvRows.push([
+            day.date,
+            day.newStake.toFixed(2),
+            day.activeStake.toFixed(2),
+            day.new1d.toFixed(2),
+            day.new15d.toFixed(2),
+            day.new30d.toFixed(2),
+            day.count1d,
+            day.count15d,
+            day.count30d
+        ].join(','));
+    });
+
+    // 添加总计行
+    const totalStats = currentData.stats || {};
+    csvRows.push(''); // 空行分隔
+    csvRows.push([
+        '总计',
+        '',
+        totalStats.totalStaked?.toFixed(2) || '0.00',
+        totalStats.totalStaked1d?.toFixed(2) || '0.00',
+        totalStats.totalStaked15d?.toFixed(2) || '0.00',
+        totalStats.totalStaked30d?.toFixed(2) || '0.00',
+        totalStats.count1d || 0,
+        totalStats.count15d || 0,
+        totalStats.count30d || 0
+    ].join(','));
+
+    // 添加最后更新时间
+    const lastUpdate = document.getElementById('lastUpdateTime').innerText;
+    csvRows.push('');
+    csvRows.push(`# 数据最后更新时间,${lastUpdate}`);
+    csvRows.push('# 导出时间,' + new Date().toLocaleString('zh-CN', {hour12: false}));
+
+    // 创建CSV文件并下载
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // 添加BOM使Excel正确显示中文
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `质押数据_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showSuccessToast('✅ 数据导出成功');
+}
 
         function switchDataTab(tab) {
             document.querySelectorAll('.data-tab').forEach(t => t.classList.remove('active'));
