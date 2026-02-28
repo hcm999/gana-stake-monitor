@@ -1013,13 +1013,13 @@
 
             <!-- 数据选项卡 -->
             <div class="data-tabs">
-                <span class="data-tab active" onclick="switchDataTab('charts')" id="tab-charts">📊 图表</span>
+                <span class="data-tab active" onclick="switchDataTab('charts')" id="tab-charts">📊 数据图表</span>
                 <span class="data-tab" onclick="switchDataTab('daily')" id="tab-daily">📅 每日统计</span>
                 <span class="data-tab" onclick="switchDataTab('records')" id="tab-records">📋 质押记录</span>
             </div>
 
             <!-- 质押记录面板 - 增加了筛选功能 -->
-            <div id="panel-records" class="data-panel active">
+            <div id="panel-records" class="data-panel">
                 <div class="table-container">
                     <div class="stats-info">
                         <h5>📊 质押记录 <span class="stats-badge" id="resultCount">0</span></h5>
@@ -1098,7 +1098,7 @@
             </div>
 
             <!-- 图表面板 -->
-            <div id="panel-charts" class="data-panel">
+            <div id="panel-charts" class="data-panel active">
                 <div class="chart-grid">
                     <div class="chart-card">
                         <div class="chart-title">
